@@ -1,0 +1,38 @@
+{
+  "name": "funnel-analytics",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Funnel Analytics SaaS monorepo",
+  "packageManager": "pnpm@11.19.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev --parallel",
+    "dev:web": "pnpm --filter @funnel/web dev",
+    "dev:admin": "pnpm --filter @funnel/admin dev",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint .",
+    "test": "turbo run test",
+    "test:e2e": "playwright test",
+    "typecheck": "turbo run typecheck",
+    "supabase": "supabase"
+  },
+  "devDependencies": {
+    "@funnel/config": "workspace:*",
+    "@playwright/test": "1.62.1",
+    "@types/node": "26.4.0",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.3",
+    "eslint": "9.39.2",
+    "eslint-config-next": "16.3.3",
+    "prettier": "3.9.6",
+    "supabase": "2.116.0",
+    "turbo": "2.10.12",
+    "typescript": "5.9.3",
+    "vitest": "4.1.11"
+  }
+}
