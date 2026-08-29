@@ -7,7 +7,8 @@
 - repositório: `agencia-prisma/funnel-analytics`
 - ambiente permitido: Preview
 
-O build parte da raiz do monorepo para que os packages compartilhados permaneçam disponíveis.
+O projeto usa `apps/web` como Root Directory, com a inclusão de arquivos externos
+habilitada para que os packages compartilhados do monorepo permaneçam disponíveis.
 
 ## Preview
 
@@ -23,4 +24,6 @@ Não execute `vercel --prod` nem promova o Preview sem autorização explícita.
 
 ## Configuração
 
-`vercel.json` define instalação, build e output do web app. O admin não cria um segundo projeto neste Epic.
+O projeto usa o preset Next.js, Node.js 22 e o `vercel.json` de `apps/web`. Instalação,
+build e output seguem os padrões detectados a partir do package da aplicação. O admin
+não cria um segundo projeto neste Epic.
