@@ -1,0 +1,14 @@
+packages:
+  - apps/*
+  - packages/*
+
+allowBuilds:
+  unrs-resolver: true
+
+minimumReleaseAgeExclude:
+  - zod@4.5.4
+
+onlyBuiltDependencies:
+  - esbuild
+  - sharp
+  - supabase

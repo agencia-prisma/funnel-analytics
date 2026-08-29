@@ -1,0 +1,20 @@
+import { describe, expect, it } from 'vitest';
+
+import { GET } from './route';
+
+describe('GET /api/health', () => {
+  it('returns an uncached safe health response', async () => {
+    const response = GET();
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('cache-control')).toBe('no-store');
+    expect(body).toMatchObject({
+      service: 'web',
+      status: 'ok',
+      version: '0.1.0',
+    });
+    expect(Number.isNaN(Date.parse(body.timestamp))).toBe(false);
+    expect(JSON.stringify(body)).not.toContain('secret');
+  });
+});
