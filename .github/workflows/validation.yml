@@ -56,3 +56,37 @@ jobs:
 
       - name: Build
         run: pnpm build
+
+  database:
+    name: Database + RLS
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Start isolated Supabase
+        run: pnpm supabase start
+
+      - name: Run database tests
+        run: pnpm supabase test db
+
+      - name: Stop isolated Supabase
+        if: always()
+        run: pnpm supabase stop --no-backup
