@@ -11,7 +11,6 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
-  output: 'standalone',
   transpilePackages: [
     '@funnel/config',
     '@funnel/db',
