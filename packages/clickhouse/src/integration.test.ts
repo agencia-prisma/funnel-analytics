@@ -4,9 +4,18 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 import { HttpClickHouseWriter } from './writer';
 
-const url = process.env.CLICKHOUSE_URL ?? 'http://127.0.0.1:8123';
-const username = process.env.CLICKHOUSE_USERNAME ?? 'default';
-const password = process.env.CLICKHOUSE_PASSWORD ?? '';
+const runtimeEnv =
+  (
+    globalThis as typeof globalThis & {
+      process?: {
+        env?: Record<string, string | undefined>;
+      };
+    }
+  ).process?.env ?? {};
+
+const url = runtimeEnv.CLICKHOUSE_URL ?? 'http://127.0.0.1:8123';
+const username = runtimeEnv.CLICKHOUSE_USERNAME ?? 'default';
+const password = runtimeEnv.CLICKHOUSE_PASSWORD ?? '';
 
 const client = createClient({
   url,
