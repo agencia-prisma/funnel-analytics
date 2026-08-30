@@ -50,7 +50,11 @@ function safeText(value: string, maxLength: number): string {
 
 export function sanitizeUrl(value: string): string {
   try {
-    const url = new URL(value, window.location.href);
+    const baseUrl =
+      typeof window === 'undefined'
+        ? 'https://invalid.local/'
+        : window.location.href;
+    const url = new URL(value, baseUrl);
 
     for (const key of Array.from(url.searchParams.keys())) {
       if (SENSITIVE_QUERY_KEYS.has(key.toLowerCase())) {
