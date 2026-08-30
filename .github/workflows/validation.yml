@@ -90,3 +90,48 @@ jobs:
       - name: Stop isolated Supabase
         if: always()
         run: pnpm supabase stop --no-backup
+
+  e2e:
+    name: Auth E2E
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install browser
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Start isolated Supabase
+        run: pnpm supabase start
+
+      - name: Export local Supabase environment
+        shell: bash
+        run: |
+          eval "$(pnpm supabase status -o env)"
+          echo "NEXT_PUBLIC_SUPABASE_URL=$API_URL" >> "$GITHUB_ENV"
+          echo "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$ANON_KEY" >> "$GITHUB_ENV"
+          echo "NEXT_PUBLIC_APP_URL=http://127.0.0.1:3000" >> "$GITHUB_ENV"
+
+      - name: Run E2E
+        run: pnpm test:e2e
+
+      - name: Stop isolated Supabase
+        if: always()
+        run: pnpm supabase stop --no-backup
