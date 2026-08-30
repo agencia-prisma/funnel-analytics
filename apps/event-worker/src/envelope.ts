@@ -12,7 +12,9 @@ import {
 import { PipelineError } from './errors';
 
 const UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const UUID_V7_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const HOST_PATTERN =
   /^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)*[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/i;
 
@@ -113,9 +115,9 @@ function validateEvent(value: unknown): asserts value is BrowserEventV1 {
   if (
     value.event_version !== 1 ||
     (value.event_name !== 'page_view' && value.event_name !== 'custom_event') ||
-    !UUID_PATTERN.test(value.event_id as string) ||
-    !UUID_PATTERN.test(value.visitor_id as string) ||
-    !UUID_PATTERN.test(value.session_id as string)
+    !UUID_V7_PATTERN.test(value.event_id as string) ||
+    !UUID_V7_PATTERN.test(value.visitor_id as string) ||
+    !UUID_V7_PATTERN.test(value.session_id as string)
   ) {
     throw new PipelineError('PERMANENT', 'INVALID_ENVELOPE');
   }
