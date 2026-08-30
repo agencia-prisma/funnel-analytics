@@ -44,6 +44,8 @@ export async function createPixelAction(formData: FormData) {
     initialWildcard = normalized.wildcard;
   }
 
+  let pixelId: string;
+
   try {
     await requireWorkspacePermission(workspace.id, 'pixels.create');
     const supabase = await createServerSupabaseClient();
@@ -64,16 +66,18 @@ export async function createPixelAction(formData: FormData) {
       throw new Error('PIXEL_NOT_FOUND');
     }
 
+    pixelId = created.pixel_id;
+
     logger.info('pixel.created', {
       actor_user_id: user.id,
-      pixel_id: created.pixel_id,
+      pixel_id: pixelId,
       workspace_id: workspace.id,
     });
-
-    redirect(`/app/pixels/${created.pixel_id}?created=1`);
   } catch (error) {
     actionError('/app/pixels', error);
   }
+
+  redirect(`/app/pixels/${pixelId}?created=1`);
 }
 
 export async function updatePixelAction(formData: FormData) {
