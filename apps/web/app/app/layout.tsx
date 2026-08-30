@@ -6,7 +6,11 @@ import type { ReactNode } from 'react';
 
 import { logoutAction } from '@/app/(auth)/actions';
 import { requireUser } from '@/lib/auth/session';
-import { getCurrentWorkspace, listUserWorkspaces } from '@/lib/workspaces';
+import {
+  getCurrentWorkspace,
+  hasWorkspacePermission,
+  listUserWorkspaces,
+} from '@/lib/workspaces';
 
 import { switchWorkspaceAction } from './actions';
 
@@ -23,6 +27,11 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   if (!workspace) {
     redirect('/onboarding');
   }
+
+  const canViewPixels = await hasWorkspacePermission(
+    workspace.id,
+    'pixels.view',
+  );
 
   return (
     <div className="min-h-screen">
@@ -49,6 +58,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
             </Button>
           </form>
           <nav className="flex items-center gap-4 text-sm text-zinc-300">
+            {canViewPixels ? <Link href="/app/pixels">Pixels</Link> : null}
             {can(workspace.role, 'workspace.view') ? (
               <Link href="/app/settings/workspace">Configurações</Link>
             ) : null}
