@@ -403,7 +403,7 @@ returns void
 language plpgsql
 security definer
 set search_path = ''
-as $$
+as $
 declare
   actor_id uuid := auth.uid();
   target_pixel public.pixels%rowtype;
@@ -417,6 +417,7 @@ begin
   into target_pixel
   from public.pixels p
   where p.id = target_pixel_id
+    and p.workspace_id = target_workspace_id
   for update;
 
   if not found then
@@ -500,7 +501,7 @@ returns uuid
 language plpgsql
 security definer
 set search_path = ''
-as $$
+as $
 declare
   actor_id uuid := auth.uid();
   target_pixel public.pixels%rowtype;
@@ -514,7 +515,8 @@ begin
   select *
   into target_pixel
   from public.pixels p
-  where p.id = target_pixel_id;
+  where p.id = target_pixel_id
+    and p.workspace_id = target_workspace_id;
 
   if not found then
     raise exception 'PIXEL_NOT_FOUND' using errcode = 'P0001';
