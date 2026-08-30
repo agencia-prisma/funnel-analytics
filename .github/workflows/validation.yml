@@ -174,4 +174,3 @@ jobs:
 
       - name: Pixel browser tests
         run: pnpm test:pixel-browser
-
