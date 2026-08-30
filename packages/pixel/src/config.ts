@@ -1,3 +1,5 @@
+import { EVENT_BATCH_V1_MAX_EVENTS } from '@funnel/event-contracts';
+
 import { isPixelPublicKey } from './public-key';
 
 export const SDK_VERSION = '0.2.0';
@@ -5,7 +7,7 @@ export const SDK_VERSION = '0.2.0';
 export const DEFAULT_SESSION_TIMEOUT_MS = 30 * 60 * 1000;
 export const DEFAULT_VISITOR_MAX_AGE_DAYS = 365;
 export const DEFAULT_FLUSH_INTERVAL_MS = 5_000;
-export const DEFAULT_MAX_BATCH_EVENTS = 20;
+export const DEFAULT_MAX_BATCH_EVENTS = EVENT_BATCH_V1_MAX_EVENTS;
 export const DEFAULT_MAX_QUEUE_EVENTS = 100;
 export const DEFAULT_MAX_PAYLOAD_BYTES = 64 * 1024;
 export const DEFAULT_MAX_RETRIES = 3;

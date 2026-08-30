@@ -13,6 +13,9 @@ export interface EventEnvelope<TPayload = unknown> {
   schema_version: string;
 }
 
+export const EVENT_BATCH_V1_MAX_EVENTS = 20;
+export const EVENT_BATCH_V1_MAX_BODY_BYTES = 128 * 1024;
+
 export type ConsentStateV1 = 'unknown' | 'granted' | 'denied';
 export type DeviceTypeV1 = 'mobile' | 'tablet' | 'desktop' | 'unknown';
 
@@ -90,5 +93,17 @@ export type BrowserEventV1 = PageViewEventV1 | CustomEventV1;
 export interface EventBatchV1 {
   batch_version: 1;
   sent_at: string;
+  events: BrowserEventV1[];
+}
+
+export interface CollectorEnvelopeV1 {
+  envelope_version: 1;
+  request_id: string;
+  received_at: string;
+  collector_version: string;
+  workspace_id: string;
+  pixel_id: string;
+  origin_host: string;
+  source: 'browser';
   events: BrowserEventV1[];
 }

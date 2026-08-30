@@ -8,7 +8,7 @@ export const CUSTOM_PROPERTY_LIMITS = {
   maxArrayLength: 10,
 } as const;
 
-const PII_KEYS = new Set([
+export const PII_CUSTOM_PROPERTY_KEYS = new Set([
   'email',
   'phone',
   'telephone',
@@ -23,7 +23,7 @@ const PII_KEYS = new Set([
   'cvv',
 ]);
 
-const RESERVED_KEYS = new Set([
+export const RESERVED_CUSTOM_PROPERTY_KEYS = new Set([
   'event_id',
   'visitor_id',
   'session_id',
@@ -37,11 +37,11 @@ function normalizedKey(key: string): string {
   return key.toLowerCase().replace(/[\s.-]/g, '');
 }
 
-function isBlockedKey(key: string): boolean {
+export function isBlockedCustomPropertyKey(key: string): boolean {
   return (
-    PII_KEYS.has(key.toLowerCase()) ||
-    PII_KEYS.has(normalizedKey(key)) ||
-    RESERVED_KEYS.has(key.toLowerCase())
+    PII_CUSTOM_PROPERTY_KEYS.has(key.toLowerCase()) ||
+    PII_CUSTOM_PROPERTY_KEYS.has(normalizedKey(key)) ||
+    RESERVED_CUSTOM_PROPERTY_KEYS.has(key.toLowerCase())
   );
 }
 
@@ -85,7 +85,7 @@ function sanitizeValue(value: unknown, depth: number): JsonValue | undefined {
         count >= CUSTOM_PROPERTY_LIMITS.maxProperties ||
         !key ||
         key.length > CUSTOM_PROPERTY_LIMITS.maxKeyLength ||
-        isBlockedKey(key)
+        isBlockedCustomPropertyKey(key)
       ) {
         continue;
       }
