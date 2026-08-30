@@ -37,8 +37,9 @@ async function injectPixel(
     debug?: boolean;
   } = {},
 ) {
-  await page.evaluate(
+  return page.evaluate(
     ({ source, options }) => {
+      const startedAt = performance.now();
       const script = document.createElement('script');
       script.dataset.pixelId =
         options.pixelId ?? 'px_pub_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
@@ -61,6 +62,8 @@ async function injectPixel(
 
       script.textContent = source;
       document.head.appendChild(script);
+
+      return performance.now() - startedAt;
     },
     { source: bundle, options },
   );
@@ -88,7 +91,8 @@ test('pixel.js creates ids, page_view and keeps session attribution in SPA navig
     'https://example.test/?utm_source=meta&utm_campaign=teste&fbclid=abc',
     'https://facebook.com/post',
   );
-  await injectPixel(page);
+  const bootstrapMs = await injectPixel(page);
+  expect(bootstrapMs).toBeLessThan(100);
 
   const initialIds = await page.evaluate(() => ({
     visitor: window.funnelAnalytics?.getVisitorId(),
