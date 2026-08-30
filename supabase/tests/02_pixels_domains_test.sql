@@ -101,6 +101,7 @@ select throws_ok(
 select set_config('request.jwt.claim.sub', '11000000-0000-0000-0000-000000000004', true);
 select throws_ok(
   $$select public.update_pixel(
+      '21000000-0000-0000-0000-000000000001',
       '31000000-0000-0000-0000-000000000001',
       'Analyst mutation'
     )$$,
@@ -123,6 +124,7 @@ select lives_ok(
 select set_config('request.jwt.claim.sub', '11000000-0000-0000-0000-000000000001', true);
 select throws_ok(
   $$select public.add_pixel_domain(
+      '21000000-0000-0000-0000-000000000001',
       '31000000-0000-0000-0000-000000000002',
       'checkout.example.com',
       false
@@ -134,6 +136,7 @@ select throws_ok(
 
 select lives_ok(
   $$select public.add_pixel_domain(
+      '21000000-0000-0000-0000-000000000001',
       '31000000-0000-0000-0000-000000000001',
       'example.com',
       false
@@ -143,6 +146,7 @@ select lives_ok(
 
 select throws_ok(
   $$select public.add_pixel_domain(
+      '21000000-0000-0000-0000-000000000001',
       '31000000-0000-0000-0000-000000000001',
       'example.com',
       false
@@ -154,6 +158,7 @@ select throws_ok(
 
 select lives_ok(
   $$select public.set_pixel_status(
+      '21000000-0000-0000-0000-000000000001',
       '31000000-0000-0000-0000-000000000001',
       'archived'
     )$$,
