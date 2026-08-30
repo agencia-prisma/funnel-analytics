@@ -17,6 +17,16 @@ export interface Transport {
   ): Promise<TransportResult>;
 }
 
+export function isRetryableCollectorStatus(status: number): boolean {
+  return (
+    status === 429 ||
+    status === 500 ||
+    status === 502 ||
+    status === 503 ||
+    status === 504
+  );
+}
+
 export class HttpTransport implements Transport {
   constructor(
     private readonly endpoint: string,
@@ -67,11 +77,7 @@ export class HttpTransport implements Transport {
 
       return {
         ok: false,
-        retryable:
-          response.status === 408 ||
-          response.status === 425 ||
-          response.status === 429 ||
-          response.status >= 500,
+        retryable: isRetryableCollectorStatus(response.status),
         status: response.status,
       };
     } catch {

@@ -20,7 +20,10 @@
     "test:e2e": "playwright test",
     "typecheck": "turbo run typecheck",
     "supabase": "supabase",
-    "test:pixel-browser": "playwright test --config=playwright.pixel.config.ts"
+    "test:pixel-browser": "playwright test --config=playwright.pixel.config.ts",
+    "collector:dev": "pnpm --filter @funnel/collector dev",
+    "collector:build": "pnpm --filter @funnel/collector build",
+    "test:collector-browser": "playwright test --config=playwright.collector.config.ts"
   },
   "devDependencies": {
     "@funnel/config": "workspace:*",

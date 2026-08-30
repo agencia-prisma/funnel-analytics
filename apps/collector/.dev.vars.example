@@ -1,0 +1,5 @@
+# Local-only example. Copy to .dev.vars for wrangler dev.
+# Never commit real Supabase secret keys.
+SUPABASE_URL="https://PROJECT_REF.supabase.co"
+SUPABASE_SECRET_KEY="sb_secret_REPLACE_ME"
+LOCAL_PIXEL_REGISTRY_JSON='{"pixels":[{"id":"31000000-0000-0000-0000-000000000001","workspace_id":"21000000-0000-0000-0000-000000000001","public_key":"px_pub_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"active","health_status":"pending","domains":[{"id":"41000000-0000-0000-0000-000000000001","domain":"shop.localhost","wildcard":false,"status":"pending"}]}]}'

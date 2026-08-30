@@ -1,0 +1,85 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "funnel-analytics-collector",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-29",
+  "workers_dev": false,
+  "vars": {
+    "COLLECTOR_ENV": "local",
+  },
+  "queues": {
+    "producers": [
+      {
+        "binding": "EVENTS_QUEUE",
+        "queue": "funnel-analytics-events-local",
+      },
+    ],
+    "consumers": [
+      {
+        "queue": "funnel-analytics-events-local",
+        "max_batch_size": 10,
+        "max_batch_timeout": 1,
+      },
+    ],
+  },
+  "ratelimits": [
+    {
+      "name": "EVENTS_RATE_LIMITER",
+      "namespace_id": "4001",
+      "simple": {
+        "limit": 120,
+        "period": 60,
+      },
+    },
+  ],
+  "env": {
+    "preview": {
+      "name": "funnel-analytics-collector-preview",
+      "vars": {
+        "COLLECTOR_ENV": "preview",
+      },
+      "queues": {
+        "producers": [
+          {
+            "binding": "EVENTS_QUEUE",
+            "queue": "funnel-analytics-events-preview",
+          },
+        ],
+      },
+      "ratelimits": [
+        {
+          "name": "EVENTS_RATE_LIMITER",
+          "namespace_id": "4002",
+          "simple": {
+            "limit": 120,
+            "period": 60,
+          },
+        },
+      ],
+    },
+    "production": {
+      "name": "funnel-analytics-collector-production",
+      "vars": {
+        "COLLECTOR_ENV": "production",
+      },
+      "queues": {
+        "producers": [
+          {
+            "binding": "EVENTS_QUEUE",
+            "queue": "funnel-analytics-events-production",
+          },
+        ],
+      },
+      "ratelimits": [
+        {
+          "name": "EVENTS_RATE_LIMITER",
+          "namespace_id": "4003",
+          "simple": {
+            "limit": 120,
+            "period": 60,
+          },
+        },
+      ],
+    },
+  },
+}

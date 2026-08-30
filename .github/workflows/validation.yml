@@ -177,3 +177,81 @@ jobs:
 
       - name: Pixel browser tests
         run: pnpm test:pixel-browser
+
+  collector:
+    name: Collector
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Audit production dependencies
+        run: pnpm audit --prod --audit-level high
+
+      - name: Collector typecheck
+        run: pnpm --filter @funnel/collector typecheck
+
+      - name: Collector unit tests
+        run: pnpm --filter @funnel/collector test
+
+      - name: Worker build
+        run: pnpm --filter @funnel/collector build
+
+      - name: Build Pixel SDK
+        run: pnpm --filter @funnel/pixel build
+
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Prepare local Collector environment
+        run: cp apps/collector/.dev.vars.example apps/collector/.dev.vars
+
+      - name: Start local Cloudflare Worker
+        shell: bash
+        run: |
+          pnpm collector:dev > /tmp/collector.log 2>&1 &
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent http://127.0.0.1:8787/health > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/collector.log
+          exit 1
+
+      - name: Start browser fixture server
+        shell: bash
+        run: |
+          node tests/collector/fixture-server.mjs > /tmp/fixture.log 2>&1 &
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:4173/ > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/fixture.log
+          exit 1
+
+      - name: Browser to Collector integration
+        run: pnpm test:collector-browser
+
+      - name: Show Collector logs on failure
+        if: failure()
+        run: cat /tmp/collector.log || true

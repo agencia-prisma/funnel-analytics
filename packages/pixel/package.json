@@ -4,7 +4,10 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./domains": "./src/domains.ts",
+    "./properties": "./src/properties.ts",
+    "./transport": "./src/transport.ts"
   },
   "scripts": {
     "build": "node scripts/build.mjs",
