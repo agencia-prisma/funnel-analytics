@@ -86,7 +86,7 @@ export async function requireCurrentWorkspace() {
   return workspace;
 }
 
-export async function requireWorkspacePermission(
+export async function hasWorkspacePermission(
   workspaceId: string,
   permission: Permission,
 ) {
@@ -100,7 +100,14 @@ export async function requireWorkspacePermission(
     throw error;
   }
 
-  if (!data) {
+  return Boolean(data);
+}
+
+export async function requireWorkspacePermission(
+  workspaceId: string,
+  permission: Permission,
+) {
+  if (!(await hasWorkspacePermission(workspaceId, permission))) {
     throw new Error('INSUFFICIENT_PERMISSION');
   }
 }
