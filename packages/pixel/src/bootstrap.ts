@@ -342,7 +342,7 @@ export class PixelRuntime {
       return;
     }
 
-    this.windowRef.console?.debug('[FunnelAnalytics]', event, metadata ?? {});
+    globalThis.console?.debug('[FunnelAnalytics]', event, metadata ?? {});
   }
 
   private safe<T>(operation: () => T, fallback?: T): T {
