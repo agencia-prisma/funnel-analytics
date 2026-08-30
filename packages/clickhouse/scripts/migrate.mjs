@@ -24,8 +24,7 @@ for (const file of files) {
     method: 'POST',
     headers: {
       Authorization:
-        'Basic ' +
-        Buffer.from(`${username}:${password}`).toString('base64'),
+        'Basic ' + Buffer.from(`${username}:${password}`).toString('base64'),
       'Content-Type': 'text/plain; charset=utf-8',
     },
     body: sql,

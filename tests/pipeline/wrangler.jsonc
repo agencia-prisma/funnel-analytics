@@ -8,18 +8,18 @@
     "EVENT_WORKER_ENV": "local",
     "CLICKHOUSE_URL": "http://127.0.0.1:8123",
     "CLICKHOUSE_USERNAME": "default",
-    "LOCAL_PIXEL_REGISTRY_JSON": "{\"pixels\":[{\"id\":\"31000000-0000-0000-0000-000000000001\",\"workspace_id\":\"21000000-0000-0000-0000-000000000001\",\"public_key\":\"px_pub_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"status\":\"active\",\"health_status\":\"healthy\",\"domains\":[{\"id\":\"41000000-0000-0000-0000-000000000001\",\"domain\":\"shop.localhost\",\"wildcard\":false,\"status\":\"active\"}]}]}"
+    "LOCAL_PIXEL_REGISTRY_JSON": "{\"pixels\":[{\"id\":\"31000000-0000-0000-0000-000000000001\",\"workspace_id\":\"21000000-0000-0000-0000-000000000001\",\"public_key\":\"px_pub_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"status\":\"active\",\"health_status\":\"healthy\",\"domains\":[{\"id\":\"41000000-0000-0000-0000-000000000001\",\"domain\":\"shop.localhost\",\"wildcard\":false,\"status\":\"active\"}]}]}",
   },
   "queues": {
     "producers": [
       {
         "binding": "EVENTS_QUEUE",
-        "queue": "funnel-analytics-events-pipeline-local"
+        "queue": "funnel-analytics-events-pipeline-local",
       },
       {
         "binding": "EVENTS_DLQ",
-        "queue": "funnel-analytics-events-dlq-pipeline-local"
-      }
+        "queue": "funnel-analytics-events-dlq-pipeline-local",
+      },
     ],
     "consumers": [
       {
@@ -27,15 +27,15 @@
         "max_batch_size": 10,
         "max_batch_timeout": 1,
         "max_retries": 3,
-        "dead_letter_queue": "funnel-analytics-events-dlq-pipeline-local"
-      }
-    ]
+        "dead_letter_queue": "funnel-analytics-events-dlq-pipeline-local",
+      },
+    ],
   },
   "r2_buckets": [
     {
       "binding": "EVENTS_RAW_BUCKET",
-      "bucket_name": "funnel-analytics-events-raw-pipeline-local"
-    }
+      "bucket_name": "funnel-analytics-events-raw-pipeline-local",
+    },
   ],
   "ratelimits": [
     {
@@ -43,8 +43,8 @@
       "namespace_id": "5001",
       "simple": {
         "limit": 120,
-        "period": 60
-      }
-    }
-  ]
+        "period": 60,
+      },
+    },
+  ],
 }

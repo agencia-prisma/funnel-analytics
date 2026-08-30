@@ -5,10 +5,7 @@ import { R2RawArchive } from './raw-archive';
 import type { EventWorkerEnv, QueueBatchLike } from './types';
 
 export default {
-  async queue(
-    batch: QueueBatchLike,
-    env: EventWorkerEnv,
-  ): Promise<void> {
+  async queue(batch: QueueBatchLike, env: EventWorkerEnv): Promise<void> {
     const consume = createEventConsumer({
       rawArchive: new R2RawArchive(env.EVENTS_RAW_BUCKET),
       writer: clickHouseWriterFromEnv(env),

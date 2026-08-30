@@ -7,9 +7,7 @@ import {
 import { PipelineError } from './errors';
 import type { EventWorkerEnv } from './types';
 
-export function clickHouseWriterFromEnv(
-  env: EventWorkerEnv,
-): ClickHouseWriter {
+export function clickHouseWriterFromEnv(env: EventWorkerEnv): ClickHouseWriter {
   return new HttpClickHouseWriter({
     url: env.CLICKHOUSE_URL,
     username: env.CLICKHOUSE_USERNAME,

@@ -33,9 +33,7 @@ describe('event normalization', () => {
       },
     };
 
-    const [event] = normalizeEnvelope(
-      envelope({ events: [custom as never] }),
-    );
+    const [event] = normalizeEnvelope(envelope({ events: [custom as never] }));
 
     expect(event.event_name).toBe('cta_clicked');
     expect(event.custom_event_name).toBe('cta_clicked');

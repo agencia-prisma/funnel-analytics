@@ -178,4 +178,3 @@ export interface DeadLetterEnvelopeV1 {
   retry_count: number;
   envelope: unknown;
 }
-

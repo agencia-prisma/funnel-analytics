@@ -11,8 +11,7 @@ describe('Event Worker performance smoke', () => {
     for (let batch = 0; batch < 250; batch += 1) {
       const base = envelope();
       base.request_id =
-        '550e8400-e29b-41d4-a716-' +
-        String(batch + 1).padStart(12, '0');
+        '550e8400-e29b-41d4-a716-' + String(batch + 1).padStart(12, '0');
       base.events = Array.from({ length: 20 }, (_, index) => ({
         ...base.events[0],
         event_id:

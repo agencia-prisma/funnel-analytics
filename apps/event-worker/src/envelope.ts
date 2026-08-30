@@ -132,9 +132,7 @@ function validateEvent(value: unknown): asserts value is BrowserEventV1 {
   }
 }
 
-export function validateCollectorEnvelope(
-  value: unknown,
-): CollectorEnvelopeV1 {
+export function validateCollectorEnvelope(value: unknown): CollectorEnvelopeV1 {
   if (!isRecord(value)) {
     throw new PipelineError('PERMANENT', 'INVALID_ENVELOPE');
   }

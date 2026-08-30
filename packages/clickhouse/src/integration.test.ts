@@ -22,9 +22,7 @@ const writer = new HttpClickHouseWriter({
   database: 'funnel_analytics',
 });
 
-function event(
-  overrides: Partial<NormalizedEventV1> = {},
-): NormalizedEventV1 {
+function event(overrides: Partial<NormalizedEventV1> = {}): NormalizedEventV1 {
   return {
     event_id: '018bcfe5-6800-7000-8000-000000000001',
     event_version: 1,
@@ -107,7 +105,7 @@ describe('ClickHouse events integration', () => {
       test_mode: number;
       properties_json: string;
     }>(
-      "SELECT event_name, test_mode, toJSONString(properties) AS properties_json FROM funnel_analytics.events FINAL ORDER BY event_name",
+      'SELECT event_name, test_mode, toJSONString(properties) AS properties_json FROM funnel_analytics.events FINAL ORDER BY event_name',
     );
 
     expect(result).toHaveLength(2);
@@ -145,7 +143,10 @@ describe('ClickHouse events integration', () => {
     await writer.insertEvents([duplicate]);
     await writer.insertEvents([duplicate]);
 
-    const result = await rows<{ logical_count: string; physical_count: string }>(
+    const result = await rows<{
+      logical_count: string;
+      physical_count: string;
+    }>(
       'SELECT toString(count()) AS physical_count, toString(count()) AS logical_count FROM funnel_analytics.events FINAL',
     );
 

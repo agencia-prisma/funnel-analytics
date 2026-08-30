@@ -1,10 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { normalizeEnvelope } from './normalization';
-import {
-  R2RawArchive,
-  rawArchiveKey,
-} from './raw-archive';
+import { R2RawArchive, rawArchiveKey } from './raw-archive';
 import { envelope } from './test-fixtures';
 import type { R2BucketLike } from './types';
 
@@ -58,8 +55,6 @@ describe('R2 raw archive', () => {
     const replayed = await archive.read(key);
 
     expect(replayed).not.toBeNull();
-    expect(normalizeEnvelope(replayed!)).toEqual(
-      normalizeEnvelope(input),
-    );
+    expect(normalizeEnvelope(replayed!)).toEqual(normalizeEnvelope(input));
   });
 });

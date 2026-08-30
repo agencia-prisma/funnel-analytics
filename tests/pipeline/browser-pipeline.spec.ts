@@ -43,8 +43,7 @@ async function injectPixel(page: Page) {
   await page.evaluate(
     ({ source, endpoint }) => {
       const script = document.createElement('script');
-      script.dataset.pixelId =
-        'px_pub_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+      script.dataset.pixelId = 'px_pub_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
       script.dataset.endpoint = endpoint;
       script.textContent = source;
       document.head.appendChild(script);
@@ -121,8 +120,7 @@ test('SPA landing to checkout becomes two page_views in ClickHouse', async ({
 });
 
 test('duplicate Queue delivery is one logical ClickHouse event', async () => {
-  const duplicatedEventId =
-    '018bcfe5-6800-7000-8000-000000000099';
+  const duplicatedEventId = '018bcfe5-6800-7000-8000-000000000099';
   const body = {
     envelope_version: 1,
     request_id: '550e8400-e29b-41d4-a716-446655440099',

@@ -28,9 +28,7 @@ export interface EventConsumerDependencies {
   now?: () => number;
 }
 
-export function createEventConsumer(
-  dependencies: EventConsumerDependencies,
-) {
+export function createEventConsumer(dependencies: EventConsumerDependencies) {
   const now = dependencies.now ?? Date.now;
 
   return async function consume(batch: QueueBatchLike): Promise<void> {
@@ -61,12 +59,7 @@ export function createEventConsumer(
 
         if (pipelineError.kind === 'PERMANENT') {
           try {
-            await dlqAndAck(
-              dependencies.dlq,
-              message,
-              pipelineError,
-              now,
-            );
+            await dlqAndAck(dependencies.dlq, message, pipelineError, now);
             metrics.events_dlq += 1;
             logEventWorker('event_worker.message.dlq', {
               queue_batch_size: batch.messages.length,
@@ -124,9 +117,7 @@ export function createEventConsumer(
             ? candidates[0].envelope.workspace_id
             : undefined,
         pixel_id:
-          candidates.length === 1
-            ? candidates[0].envelope.pixel_id
-            : undefined,
+          candidates.length === 1 ? candidates[0].envelope.pixel_id : undefined,
         raw_archive_ms: Math.round(rawArchiveMs),
         clickhouse_insert_ms: Math.round(clickhouseMs),
         processing_ms: Math.round(metrics.processing_latency),
