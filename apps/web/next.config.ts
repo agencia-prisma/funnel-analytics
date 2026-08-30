@@ -17,6 +17,7 @@ const nextConfig: NextConfig = {
     '@funnel/db',
     '@funnel/event-contracts',
     '@funnel/observability',
+    '@funnel/pixel',
     '@funnel/ui',
   ],
   async headers() {
