@@ -424,7 +424,15 @@ begin
     raise exception 'PIXEL_NOT_FOUND' using errcode = 'P0001';
   end if;
 
-  if not private.permission_allowed(
+  if target_status = 'archived' then
+    if not private.permission_allowed(
+      target_pixel.workspace_id,
+      actor_id,
+      'pixels.delete'
+    ) then
+      raise exception 'PIXEL_ACCESS_DENIED' using errcode = 'P0001';
+    end if;
+  elsif not private.permission_allowed(
     target_pixel.workspace_id,
     actor_id,
     'pixels.update'
