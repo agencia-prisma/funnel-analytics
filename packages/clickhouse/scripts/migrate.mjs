@@ -1,14 +1,13 @@
 import { readdir, readFile } from 'node:fs/promises';
-import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import process from 'node:process';
 
 const url = process.env.CLICKHOUSE_URL ?? 'http://127.0.0.1:8123';
 const username = process.env.CLICKHOUSE_USERNAME ?? 'default';
 const password = process.env.CLICKHOUSE_PASSWORD ?? '';
 
-const migrationsDir = path.resolve(
-  process.cwd(),
-  'infra/clickhouse/migrations',
+const migrationsDir = fileURLToPath(
+  new URL('../../../infra/clickhouse/migrations/', import.meta.url),
 );
 
 const files = (await readdir(migrationsDir))
