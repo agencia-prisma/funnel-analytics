@@ -6,24 +6,11 @@ const pixelBundle = await readFile(
   path.join(process.cwd(), 'packages/pixel/dist/pixel.min.js'),
   'utf8',
 );
-const fixture = await readFile(
-  path.join(process.cwd(), 'tests/fixtures/pixel.html'),
-  'utf8',
-);
-
 const collectorEndpoint = 'http://127.0.0.1:8787/v1/events';
 
 async function openSite(page: Page) {
-  await page.route('http://shop.localhost:3001/**', (route) =>
-    route.fulfill({
-      status: 200,
-      contentType: 'text/html',
-      body: fixture,
-    }),
-  );
-
   await page.goto(
-    'http://shop.localhost:3001/?utm_source=meta&utm_campaign=collector&fbclid=abc',
+    'http://shop.localhost:4173/?utm_source=meta&utm_campaign=collector&fbclid=abc',
   );
 }
 
