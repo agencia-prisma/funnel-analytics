@@ -93,6 +93,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@funnel/auth':
+        specifier: workspace:*
+        version: link:../../packages/auth
       '@funnel/config':
         specifier: workspace:*
         version: link:../../packages/config
@@ -139,6 +142,15 @@ importers:
       tailwindcss:
         specifier: 4.3.3
         version: 4.3.3
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@types/node@26.4.0)(vite@8.2.2(@types/node@26.4.0)(jiti@2.7.0))
+
+  packages/auth:
+    devDependencies:
       typescript:
         specifier: 5.9.3
         version: 5.9.3
@@ -5322,3 +5334,4 @@ snapshots:
   zod@4.5.1: {}
 
   zod@4.5.4: {}
+

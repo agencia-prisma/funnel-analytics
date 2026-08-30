@@ -1,4 +1,5 @@
 export interface LogContext {
+  actor_user_id?: string;
   error_code?: string;
   event_id?: string;
   journey_id?: string;
