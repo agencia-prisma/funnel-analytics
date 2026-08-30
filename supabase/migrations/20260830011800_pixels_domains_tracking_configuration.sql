@@ -310,6 +310,7 @@ as $$
 $$;
 
 create function private.update_pixel_impl(
+  target_workspace_id uuid,
   target_pixel_id uuid,
   pixel_name text
 )
@@ -330,6 +331,7 @@ begin
   into target_pixel
   from public.pixels p
   where p.id = target_pixel_id
+    and p.workspace_id = target_workspace_id
   for update;
 
   if not found then
@@ -376,6 +378,7 @@ end;
 $$;
 
 create function public.update_pixel(
+  target_workspace_id uuid,
   target_pixel_id uuid,
   pixel_name text
 )
@@ -384,10 +387,15 @@ language sql
 security invoker
 set search_path = ''
 as $$
-  select private.update_pixel_impl(target_pixel_id, pixel_name);
+  select private.update_pixel_impl(
+    target_workspace_id,
+    target_pixel_id,
+    pixel_name
+  );
 $$;
 
 create function private.set_pixel_status_impl(
+  target_workspace_id uuid,
   target_pixel_id uuid,
   target_status public.pixel_status
 )
@@ -466,6 +474,7 @@ end;
 $$;
 
 create function public.set_pixel_status(
+  target_workspace_id uuid,
   target_pixel_id uuid,
   target_status public.pixel_status
 )
@@ -474,10 +483,15 @@ language sql
 security invoker
 set search_path = ''
 as $$
-  select private.set_pixel_status_impl(target_pixel_id, target_status);
+  select private.set_pixel_status_impl(
+    target_workspace_id,
+    target_pixel_id,
+    target_status
+  );
 $$;
 
 create function private.add_pixel_domain_impl(
+  target_workspace_id uuid,
   target_pixel_id uuid,
   target_domain text,
   target_wildcard boolean
@@ -579,6 +593,7 @@ end;
 $$;
 
 create function public.add_pixel_domain(
+  target_workspace_id uuid,
   target_pixel_id uuid,
   target_domain text,
   target_wildcard boolean default false
@@ -589,6 +604,7 @@ security invoker
 set search_path = ''
 as $$
   select private.add_pixel_domain_impl(
+    target_workspace_id,
     target_pixel_id,
     target_domain,
     target_wildcard
@@ -596,6 +612,7 @@ as $$
 $$;
 
 create function private.remove_pixel_domain_impl(
+  target_workspace_id uuid,
   target_domain_id uuid
 )
 returns void
@@ -615,6 +632,7 @@ begin
   into target_domain
   from public.pixel_domains pd
   where pd.id = target_domain_id
+    and pd.workspace_id = target_workspace_id
   for update;
 
   if not found then
@@ -657,6 +675,7 @@ end;
 $$;
 
 create function public.remove_pixel_domain(
+  target_workspace_id uuid,
   target_domain_id uuid
 )
 returns void
@@ -664,7 +683,10 @@ language sql
 security invoker
 set search_path = ''
 as $$
-  select private.remove_pixel_domain_impl(target_domain_id);
+  select private.remove_pixel_domain_impl(
+    target_workspace_id,
+    target_domain_id
+  );
 $$;
 
 alter table public.pixels enable row level security;
@@ -765,24 +787,24 @@ grant select on public.pixel_domains to authenticated;
 
 revoke all on function public.create_pixel(uuid, text, text, boolean)
 from public, anon, authenticated;
-revoke all on function public.update_pixel(uuid, text)
+revoke all on function public.update_pixel(uuid, uuid, text)
 from public, anon, authenticated;
-revoke all on function public.set_pixel_status(uuid, public.pixel_status)
+revoke all on function public.set_pixel_status(uuid, uuid, public.pixel_status)
 from public, anon, authenticated;
-revoke all on function public.add_pixel_domain(uuid, text, boolean)
+revoke all on function public.add_pixel_domain(uuid, uuid, text, boolean)
 from public, anon, authenticated;
-revoke all on function public.remove_pixel_domain(uuid)
+revoke all on function public.remove_pixel_domain(uuid, uuid)
 from public, anon, authenticated;
 
 grant execute on function public.create_pixel(uuid, text, text, boolean)
 to authenticated;
-grant execute on function public.update_pixel(uuid, text)
+grant execute on function public.update_pixel(uuid, uuid, text)
 to authenticated;
-grant execute on function public.set_pixel_status(uuid, public.pixel_status)
+grant execute on function public.set_pixel_status(uuid, uuid, public.pixel_status)
 to authenticated;
-grant execute on function public.add_pixel_domain(uuid, text, boolean)
+grant execute on function public.add_pixel_domain(uuid, uuid, text, boolean)
 to authenticated;
-grant execute on function public.remove_pixel_domain(uuid)
+grant execute on function public.remove_pixel_domain(uuid, uuid)
 to authenticated;
 
 revoke all on function private.protect_pixel_identity()
@@ -791,22 +813,22 @@ revoke all on function private.is_valid_configured_domain(text)
 from public, anon, authenticated;
 revoke all on function private.create_pixel_impl(uuid, text, text, boolean)
 from public, anon, authenticated;
-revoke all on function private.update_pixel_impl(uuid, text)
+revoke all on function private.update_pixel_impl(uuid, uuid, text)
 from public, anon, authenticated;
-revoke all on function private.set_pixel_status_impl(uuid, public.pixel_status)
+revoke all on function private.set_pixel_status_impl(uuid, uuid, public.pixel_status)
 from public, anon, authenticated;
-revoke all on function private.add_pixel_domain_impl(uuid, text, boolean)
+revoke all on function private.add_pixel_domain_impl(uuid, uuid, text, boolean)
 from public, anon, authenticated;
-revoke all on function private.remove_pixel_domain_impl(uuid)
+revoke all on function private.remove_pixel_domain_impl(uuid, uuid)
 from public, anon, authenticated;
 
 grant execute on function private.create_pixel_impl(uuid, text, text, boolean)
 to authenticated;
-grant execute on function private.update_pixel_impl(uuid, text)
+grant execute on function private.update_pixel_impl(uuid, uuid, text)
 to authenticated;
-grant execute on function private.set_pixel_status_impl(uuid, public.pixel_status)
+grant execute on function private.set_pixel_status_impl(uuid, uuid, public.pixel_status)
 to authenticated;
-grant execute on function private.add_pixel_domain_impl(uuid, text, boolean)
+grant execute on function private.add_pixel_domain_impl(uuid, uuid, text, boolean)
 to authenticated;
-grant execute on function private.remove_pixel_domain_impl(uuid)
+grant execute on function private.remove_pixel_domain_impl(uuid, uuid)
 to authenticated;
