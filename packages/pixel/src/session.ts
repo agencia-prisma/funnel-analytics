@@ -37,7 +37,7 @@ export function getOrCreateSession(
       last_activity_at: now,
     };
 
-    if (storage) {
+    if (storage && now - existing.last_activity_at >= 60_000) {
       writeJson(storage, STORAGE_KEYS.session, state);
     }
 
