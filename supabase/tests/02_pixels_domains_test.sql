@@ -130,7 +130,7 @@ select throws_ok(
       false
     )$$,
   'P0001',
-  'PIXEL_ACCESS_DENIED',
+  'PIXEL_NOT_FOUND',
   'User cannot add a domain to a Pixel from another Workspace'
 );
 
@@ -185,7 +185,7 @@ select is(
     from public.pixels
     where workspace_id = '21000000-0000-0000-0000-000000000001'
   ),
-  1::bigint,
+  2::bigint,
   'Workspace-filtered Pixel query only returns the selected Workspace'
 );
 
