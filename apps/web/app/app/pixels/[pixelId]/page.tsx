@@ -55,7 +55,10 @@ export default async function PixelDetailPage({
 
   return (
     <main className="mx-auto w-full max-w-6xl px-6 py-12">
-      <Link className="text-sm text-zinc-500 hover:text-white" href="/app/pixels">
+      <Link
+        className="text-sm text-zinc-500 hover:text-white"
+        href="/app/pixels"
+      >
         ← Pixels
       </Link>
 
@@ -254,7 +257,10 @@ export default async function PixelDetailPage({
         <h2 className="mt-2 text-xl font-semibold text-white">Pixel</h2>
 
         {canUpdate && !isArchived ? (
-          <form action={updatePixelAction} className="mt-6 flex flex-wrap items-end gap-3">
+          <form
+            action={updatePixelAction}
+            className="mt-6 flex flex-wrap items-end gap-3"
+          >
             <input name="pixel_id" type="hidden" value={pixel.id} />
             <label className="min-w-[280px] flex-1 text-sm font-medium text-zinc-200">
               Nome
@@ -289,7 +295,9 @@ export default async function PixelDetailPage({
                   className="inline-flex h-10 items-center rounded-lg border border-white/10 bg-white/5 px-4 text-sm font-semibold text-white hover:bg-white/10"
                   type="submit"
                 >
-                  {pixel.status === 'paused' ? 'Reativar Pixel' : 'Pausar Pixel'}
+                  {pixel.status === 'paused'
+                    ? 'Reativar Pixel'
+                    : 'Pausar Pixel'}
                 </button>
               </form>
             ) : null}

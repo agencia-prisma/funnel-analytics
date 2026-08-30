@@ -31,9 +31,9 @@ describe('domain configuration', () => {
   it('matches wildcard subdomains without matching lookalike domains', () => {
     const pattern = { domain: 'example.com', wildcard: true };
 
-    expect(domainMatchesAuthorizedPattern('checkout.example.com', pattern)).toBe(
-      true,
-    );
+    expect(
+      domainMatchesAuthorizedPattern('checkout.example.com', pattern),
+    ).toBe(true);
     expect(domainMatchesAuthorizedPattern('www.example.com', pattern)).toBe(
       true,
     );

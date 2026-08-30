@@ -19,9 +19,7 @@ function stringField(formData: FormData, name: string) {
 }
 
 function actionError(path: string, error: unknown): never {
-  redirect(
-    `${path}?error=${encodeURIComponent(domainErrorMessage(error))}`,
-  );
+  redirect(`${path}?error=${encodeURIComponent(domainErrorMessage(error))}`);
 }
 
 export async function createPixelAction(formData: FormData) {
@@ -109,9 +107,7 @@ export async function updatePixelAction(formData: FormData) {
   }
 
   redirect(
-    `/app/pixels/${pixelId}?message=${encodeURIComponent(
-      'Pixel atualizado.',
-    )}`,
+    `/app/pixels/${pixelId}?message=${encodeURIComponent('Pixel atualizado.')}`,
   );
 }
 
@@ -152,9 +148,7 @@ export async function setPixelStatusAction(formData: FormData) {
   }
 
   if (status === 'archived') {
-    redirect(
-      '/app/pixels?message=' + encodeURIComponent('Pixel arquivado.'),
-    );
+    redirect('/app/pixels?message=' + encodeURIComponent('Pixel arquivado.'));
   }
 
   redirect(
@@ -237,8 +231,6 @@ export async function removePixelDomainAction(formData: FormData) {
   }
 
   redirect(
-    `/app/pixels/${pixelId}?message=${encodeURIComponent(
-      'Domínio removido.',
-    )}`,
+    `/app/pixels/${pixelId}?message=${encodeURIComponent('Domínio removido.')}`,
   );
 }

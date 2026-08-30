@@ -33,7 +33,9 @@ describe('workspace permissions', () => {
   });
 
   it('applies explicit permission overrides after role defaults', () => {
-    expect(can('viewer', 'pixels.create', { 'pixels.create': true })).toBe(true);
+    expect(can('viewer', 'pixels.create', { 'pixels.create': true })).toBe(
+      true,
+    );
     expect(can('owner', 'pixels.update', { 'pixels.update': false })).toBe(
       false,
     );

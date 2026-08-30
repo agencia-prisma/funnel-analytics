@@ -46,8 +46,8 @@ export default async function PixelsPage({
             Pixels
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">
-            Gerencie os identificadores de tracking e os domínios autorizados
-            do Workspace {workspace.name}.
+            Gerencie os identificadores de tracking e os domínios autorizados do
+            Workspace {workspace.name}.
           </p>
         </div>
         <p className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-zinc-400">

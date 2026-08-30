@@ -46,7 +46,9 @@ test('Owner creates and manages a Pixel control plane', async ({ page }) => {
 
   const publicKey = page.getByTestId('pixel-public-key');
   await expect(publicKey).toHaveText(/^px_pub_[0-9a-f]{36}$/);
-  await expect(page.getByText('www.example.com', { exact: true })).toBeVisible();
+  await expect(
+    page.getByText('www.example.com', { exact: true }),
+  ).toBeVisible();
   await expect(
     page.getByText('Aguardando instalação / primeiro evento.'),
   ).toBeVisible();
@@ -119,7 +121,9 @@ test('Viewer can view Pixels but cannot mutate them', async ({ browser }) => {
   ).toHaveCount(0);
 
   await viewerPage.getByRole('link', { name: 'Abrir Pixel' }).click();
-  await expect(viewerPage.getByRole('heading', { name: pixelName })).toBeVisible();
+  await expect(
+    viewerPage.getByRole('heading', { name: pixelName }),
+  ).toBeVisible();
   await expect(
     viewerPage.getByRole('button', { name: 'Salvar alterações' }),
   ).toHaveCount(0);

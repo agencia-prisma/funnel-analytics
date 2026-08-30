@@ -13,7 +13,6 @@ import {
   listUserWorkspaces,
 } from '@/lib/workspaces';
 
-
 export default async function AppLayout({ children }: { children: ReactNode }) {
   const user = await requireUser();
   const workspaces = await listUserWorkspaces();
