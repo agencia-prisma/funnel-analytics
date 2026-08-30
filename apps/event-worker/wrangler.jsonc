@@ -1,0 +1,93 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "funnel-analytics-event-worker",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-29",
+  "workers_dev": false,
+  "vars": {
+    "EVENT_WORKER_ENV": "local"
+  },
+  "queues": {
+    "producers": [
+      {
+        "binding": "EVENTS_DLQ",
+        "queue": "funnel-analytics-events-dlq-local"
+      }
+    ],
+    "consumers": [
+      {
+        "queue": "funnel-analytics-events-local",
+        "max_batch_size": 10,
+        "max_batch_timeout": 1,
+        "max_retries": 3,
+        "dead_letter_queue": "funnel-analytics-events-dlq-local"
+      }
+    ]
+  },
+  "r2_buckets": [
+    {
+      "binding": "EVENTS_RAW_BUCKET",
+      "bucket_name": "funnel-analytics-events-raw-local"
+    }
+  ],
+  "env": {
+    "preview": {
+      "name": "funnel-analytics-event-worker-preview",
+      "vars": {
+        "EVENT_WORKER_ENV": "preview"
+      },
+      "queues": {
+        "producers": [
+          {
+            "binding": "EVENTS_DLQ",
+            "queue": "funnel-analytics-events-dlq-preview"
+          }
+        ],
+        "consumers": [
+          {
+            "queue": "funnel-analytics-events-preview",
+            "max_batch_size": 10,
+            "max_batch_timeout": 1,
+            "max_retries": 3,
+            "dead_letter_queue": "funnel-analytics-events-dlq-preview"
+          }
+        ]
+      },
+      "r2_buckets": [
+        {
+          "binding": "EVENTS_RAW_BUCKET",
+          "bucket_name": "funnel-analytics-events-raw-preview"
+        }
+      ]
+    },
+    "production": {
+      "name": "funnel-analytics-event-worker-production",
+      "vars": {
+        "EVENT_WORKER_ENV": "production"
+      },
+      "queues": {
+        "producers": [
+          {
+            "binding": "EVENTS_DLQ",
+            "queue": "funnel-analytics-events-dlq-production"
+          }
+        ],
+        "consumers": [
+          {
+            "queue": "funnel-analytics-events-production",
+            "max_batch_size": 10,
+            "max_batch_timeout": 1,
+            "max_retries": 3,
+            "dead_letter_queue": "funnel-analytics-events-dlq-production"
+          }
+        ]
+      },
+      "r2_buckets": [
+        {
+          "binding": "EVENTS_RAW_BUCKET",
+          "bucket_name": "funnel-analytics-events-raw-production"
+        }
+      ]
+    }
+  }
+}

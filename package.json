@@ -23,7 +23,11 @@
     "test:pixel-browser": "playwright test --config=playwright.pixel.config.ts",
     "collector:dev": "pnpm --filter @funnel/collector dev",
     "collector:build": "pnpm --filter @funnel/collector build",
-    "test:collector-browser": "playwright test --config=playwright.collector.config.ts"
+    "test:collector-browser": "playwright test --config=playwright.collector.config.ts",
+    "event-worker:dev": "pnpm --filter @funnel/event-worker dev",
+    "event-worker:build": "pnpm --filter @funnel/event-worker build",
+    "clickhouse:migrate": "pnpm --filter @funnel/clickhouse migrate",
+    "test:pipeline-browser": "playwright test --config=playwright.pipeline.config.ts"
   },
   "devDependencies": {
     "@funnel/config": "workspace:*",
