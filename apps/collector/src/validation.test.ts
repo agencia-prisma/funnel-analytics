@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
 import { CollectorError } from './errors';
-import { TEST_NOW, validBatch, validPageView } from './test-fixtures';
+import {
+  TEST_NOW,
+  validBatch,
+  validPageView,
+} from './test-fixtures';
 import { validateEventBatch } from './validation';
 
 function expectCode(operation: () => unknown, code: string) {

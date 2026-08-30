@@ -208,46 +208,46 @@ describe('Collector ingestion', () => {
     expect(response.status).toBe(202);
   });
 
-  it.each(['https://fakeexample.com', 'https://example-fake.com'])(
-    'rejects wildcard lookalike %s',
-    async (origin) => {
-      const pixel: PixelRecord = {
-        ...activePixel,
-        domains: [
-          {
-            ...exactDomain,
-            domain: 'example.com',
-            wildcard: true,
-            status: 'active',
-          },
-        ],
-      };
-      const deps = dependencies({ pixel });
-      const { ctx } = context();
-      const collect = createCollector({
-        ...deps,
-        now: () => TEST_NOW,
-      });
+  it.each([
+    'https://fakeexample.com',
+    'https://example-fake.com',
+  ])('rejects wildcard lookalike %s', async (origin) => {
+    const pixel: PixelRecord = {
+      ...activePixel,
+      domains: [
+        {
+          ...exactDomain,
+          domain: 'example.com',
+          wildcard: true,
+          status: 'active',
+        },
+      ],
+    };
+    const deps = dependencies({ pixel });
+    const { ctx } = context();
+    const collect = createCollector({
+      ...deps,
+      now: () => TEST_NOW,
+    });
 
-      const response = await collect(
-        requestFor(
-          validBatch([
-            validPageView({
-              page_url: `${origin}/`,
-            }),
-          ]),
-          origin,
-        ),
-        'request-lookalike',
-        ctx,
-      );
+    const response = await collect(
+      requestFor(
+        validBatch([
+          validPageView({
+            page_url: `${origin}/`,
+          }),
+        ]),
+        origin,
+      ),
+      'request-lookalike',
+      ctx,
+    );
 
-      expect(response.status).toBe(403);
-      await expect(response.json()).resolves.toMatchObject({
-        error: { code: 'ORIGIN_NOT_ALLOWED' },
-      });
-    },
-  );
+    expect(response.status).toBe(403);
+    await expect(response.json()).resolves.toMatchObject({
+      error: { code: 'ORIGIN_NOT_ALLOWED' },
+    });
+  });
 
   it('rejects a page_url hostname that disagrees with Origin', async () => {
     const deps = dependencies();

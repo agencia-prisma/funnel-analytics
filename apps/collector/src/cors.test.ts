@@ -17,12 +17,12 @@ describe('CORS origin parsing', () => {
   });
 
   it('echoes Origin without credentials', () => {
-    const headers = new Headers(corsHeaders('https://example.com'));
+    const headers = corsHeaders('https://example.com');
 
-    expect(headers.get('Access-Control-Allow-Origin')).toBe(
+    expect(headers['Access-Control-Allow-Origin']).toBe(
       'https://example.com',
     );
-    expect(headers.get('Vary')).toBe('Origin');
-    expect(headers.has('Access-Control-Allow-Credentials')).toBe(false);
+    expect(headers['Vary']).toBe('Origin');
+    expect(headers).not.toHaveProperty('Access-Control-Allow-Credentials');
   });
 });

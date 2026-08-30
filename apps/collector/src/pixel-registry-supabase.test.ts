@@ -7,10 +7,11 @@ describe('SupabasePixelRegistry', () => {
     const fetchRef = vi.fn(
       async (input: RequestInfo | URL, init?: RequestInit) => {
         const url = new URL(String(input));
+
         expect(url.pathname).toBe('/rest/v1/pixels');
         expect(url.searchParams.get('public_key')).toMatch(/^eq\.px_pub_/);
         expect(url.searchParams.get('select')).toContain('pixel_domains');
-        expect(new Headers(init?.headers).get('apikey')).toBe('sb_secret_test');
+        expect(new Headers(init?.headers).get('apikey')).toBe('test-secret');
 
         return new Response(
           JSON.stringify([
@@ -42,7 +43,7 @@ describe('SupabasePixelRegistry', () => {
 
     const registry = new SupabasePixelRegistry(
       'https://project.supabase.co',
-      'sb_secret_test',
+      'test-secret',
       fetchRef as typeof fetch,
     );
 
@@ -72,7 +73,7 @@ describe('SupabasePixelRegistry', () => {
 
     const registry = new SupabasePixelRegistry(
       'https://project.supabase.co',
-      'sb_secret_test',
+      'test-secret',
       fetchRef as typeof fetch,
     );
 

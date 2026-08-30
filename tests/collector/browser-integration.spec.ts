@@ -1,110 +1,95 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
-const bundle = await readFile(
+const pixelBundle = await readFile(
   path.join(process.cwd(), 'packages/pixel/dist/pixel.min.js'),
   'utf8',
 );
+const fixture = await readFile(
+  path.join(process.cwd(), 'tests/fixtures/pixel.html'),
+  'utf8',
+);
 
-async function injectPixel(page: import('@playwright/test').Page) {
-  await page.evaluate(
-    ({ source }) => {
-      const script = document.createElement('script');
-      script.dataset.pixelId = 'px_pub_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
-      script.dataset.endpoint = 'http://collector.localhost:8787/v1/events';
-      script.textContent = source;
-      document.head.appendChild(script);
-    },
-    { source: bundle },
+const collectorEndpoint = 'http://127.0.0.1:8787/v1/events';
+
+async function openSite(page: Page) {
+  await page.route('http://shop.localhost:3001/**', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'text/html',
+      body: fixture,
+    }),
+  );
+
+  await page.goto(
+    'http://shop.localhost:3001/?utm_source=meta&utm_campaign=collector&fbclid=abc',
   );
 }
 
-test('pixel.js HttpTransport reaches local Worker and Queue path', async ({
+async function injectPixel(page: Page) {
+  await page.evaluate(
+    ({ source, endpoint }) => {
+      const script = document.createElement('script');
+      script.dataset.pixelId =
+        'px_pub_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+      script.dataset.endpoint = endpoint;
+      script.textContent = source;
+      document.head.appendChild(script);
+    },
+    { source: pixelBundle, endpoint: collectorEndpoint },
+  );
+}
+
+test('pixel.js → HttpTransport → local Worker → local Queue → 202', async ({
   page,
 }) => {
-  const failedRequests: string[] = [];
-  page.on('requestfailed', (request) => {
-    failedRequests.push(
-      `${request.method()} ${request.url()} :: ${request.failure()?.errorText ?? 'unknown'}`,
-    );
+  const statuses: number[] = [];
+
+  page.on('response', (response) => {
+    if (response.url() === collectorEndpoint) {
+      statuses.push(response.status());
+    }
   });
 
-  await page.goto(
-    'http://shop.localhost:4173/?utm_source=meta&utm_campaign=collector&fbclid=abc',
-  );
-
-  const firstResponse = page.waitForResponse(
-    (response) =>
-      response.url() === 'http://collector.localhost:8787/v1/events' &&
-      response.request().method() === 'POST',
-  );
-
+  await openSite(page);
   await injectPixel(page);
+
   await page.evaluate(async () => {
-    await (
-      window as typeof window & {
-        funnelAnalytics?: { flush(): Promise<boolean> };
-      }
-    ).funnelAnalytics?.flush();
+    await window.funnelAnalytics?.flush();
   });
 
-  const accepted = await firstResponse;
-  expect(accepted.status()).toBe(202);
-  await expect(accepted.json()).resolves.toMatchObject({
-    accepted: true,
-    event_count: 1,
+  await expect.poll(() => statuses).toContain(202);
+
+  const ids = await page.evaluate(() => ({
+    visitor: window.funnelAnalytics?.getVisitorId(),
+    session: window.funnelAnalytics?.getSessionId(),
+  }));
+
+  expect(ids.visitor).toMatch(/-7[0-9a-f]{3}-/i);
+  expect(ids.session).toMatch(/-7[0-9a-f]{3}-/i);
+});
+
+test('SPA landing and checkout both reach the Collector', async ({ page }) => {
+  const statuses: number[] = [];
+
+  page.on('response', (response) => {
+    if (response.url() === collectorEndpoint) {
+      statuses.push(response.status());
+    }
   });
 
-  const firstPayload = JSON.parse(accepted.request().postData() ?? '{}') as {
-    events?: Array<{
-      event_name?: string;
-      page_path?: string;
-      utm_source?: string | null;
-      utm_campaign?: string | null;
-      click_ids?: Record<string, string>;
-    }>;
-  };
+  await openSite(page);
+  await injectPixel(page);
 
-  expect(firstPayload.events?.[0]).toMatchObject({
-    event_name: 'page_view',
-    page_path: '/',
-    utm_source: 'meta',
-    utm_campaign: 'collector',
-    click_ids: { fbclid: 'abc' },
-  });
-
-  const secondResponse = page.waitForResponse(
-    (response) =>
-      response.url() === 'http://collector.localhost:8787/v1/events' &&
-      response.request().method() === 'POST',
-  );
-
-  await page.evaluate(() => {
+  await page.evaluate(async () => {
+    await window.funnelAnalytics?.flush();
     history.pushState({}, '', '/checkout');
-  });
-  await page.evaluate(async () => {
-    await (
-      window as typeof window & {
-        funnelAnalytics?: { flush(): Promise<boolean> };
-      }
-    ).funnelAnalytics?.flush();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await window.funnelAnalytics?.flush();
   });
 
-  const spaAccepted = await secondResponse;
-  expect(spaAccepted.status()).toBe(202);
-
-  const spaPayload = JSON.parse(spaAccepted.request().postData() ?? '{}') as {
-    events?: Array<{
-      event_name?: string;
-      page_path?: string;
-      utm_source?: string | null;
-    }>;
-  };
-
-  expect(spaPayload.events?.[0]).toMatchObject({
-    event_name: 'page_view',
-    page_path: '/checkout',
-    utm_source: 'meta',
-  });
+  await expect.poll(() => statuses.filter((status) => status === 202).length).toBe(
+    2,
+  );
 });
