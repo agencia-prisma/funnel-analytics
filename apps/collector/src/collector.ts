@@ -58,7 +58,7 @@ export function createCollector(dependencies: CollectorDependencies) {
 
     try {
       origin = parseOrigin(request.headers.get('origin'));
-      const originHost = originHost;
+      const originHost = origin.host;
       const originValue = origin.origin;
       requireJsonContentType(request);
 
