@@ -139,7 +139,9 @@ test('pixel.js creates ids, page_view and keeps session attribution in SPA navig
   await flush(page);
 
   await page.goBack();
-  await expect(page).toHaveURL('https://example.test/checkout');
+  await expect(page).toHaveURL(
+    'https://example.test/?utm_source=meta&utm_campaign=teste&fbclid=abc',
+  );
   await flush(page);
 
   tracked = await events(page);
