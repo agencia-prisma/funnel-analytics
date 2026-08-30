@@ -911,7 +911,7 @@ begin
     wm.user_id,
     p.display_name,
     case
-      when actor_role in ('owner', 'admin') then u.email
+      when actor_role in ('owner', 'admin') then u.email::text
       else null
     end,
     wm.role,

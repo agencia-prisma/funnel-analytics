@@ -39,7 +39,7 @@ test('signup → onboarding → workspace → dashboard', async ({ page }) => {
   });
   await createWorkspace(page, `Workspace Signup ${suffix}`);
 
-  await expect(page.getByText('owner')).toBeVisible();
+  await expect(page.getByText('owner', { exact: true }).first()).toBeVisible();
   await expect(page).toHaveURL(/\/app$/);
 });
 
@@ -93,7 +93,9 @@ test('owner invites a user and the user accepts the workspace', async ({
   await expect(
     inviteePage.getByRole('heading', { name: workspaceName }),
   ).toBeVisible();
-  await expect(inviteePage.getByText('viewer')).toBeVisible();
+  await expect(
+    inviteePage.getByText('viewer', { exact: true }).first(),
+  ).toBeVisible();
   await expect(inviteePage).toHaveURL(/\/app$/);
 
   await inviteeContext.close();
