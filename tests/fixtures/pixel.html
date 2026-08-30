@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <title>Pixel SDK Fixture</title>
+  </head>
+  <body>
+    <main>
+      <h1>Fixture externa</h1>
+      <button id="safe-button" type="button">Continuar</button>
+      <p id="safe-status">ready</p>
+    </main>
+    <script>
+      document.querySelector('#safe-button').addEventListener('click', () => {
+        document.querySelector('#safe-status').textContent = 'clicked';
+      });
+    </script>
+  </body>
+</html>

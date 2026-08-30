@@ -1,17 +1,21 @@
 {
   "name": "@funnel/pixel",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "exports": {
     ".": "./src/index.ts"
   },
   "scripts": {
+    "build": "node scripts/build.mjs",
+    "check:size": "node scripts/check-size.mjs",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
+    "@funnel/event-contracts": "workspace:*",
     "@types/node": "26.4.0",
+    "esbuild": "0.28.2",
     "typescript": "5.9.3",
     "vitest": "4.1.11"
   }

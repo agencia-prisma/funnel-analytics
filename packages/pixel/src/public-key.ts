@@ -1,9 +1,16 @@
-import { randomBytes } from 'node:crypto';
-
 const PIXEL_PUBLIC_KEY_PREFIX = 'px_pub_';
 
+function randomHex(byteLength: number): string {
+  const bytes = new Uint8Array(byteLength);
+  crypto.getRandomValues(bytes);
+
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join(
+    '',
+  );
+}
+
 export function generatePixelPublicKey(): string {
-  return `${PIXEL_PUBLIC_KEY_PREFIX}${randomBytes(18).toString('hex')}`;
+  return `${PIXEL_PUBLIC_KEY_PREFIX}${randomHex(18)}`;
 }
 
 export function isPixelPublicKey(value: string): boolean {
