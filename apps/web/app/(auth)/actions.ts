@@ -13,7 +13,11 @@ function stringField(formData: FormData, name: string) {
   return String(formData.get(name) ?? '').trim();
 }
 
-function errorRedirect(path: string, error: unknown, next?: string | null): never {
+function errorRedirect(
+  path: string,
+  error: unknown,
+  next?: string | null,
+): never {
   const params = new URLSearchParams({
     error: domainErrorMessage(error),
   });
@@ -119,7 +123,9 @@ export async function forgotPasswordAction(formData: FormData) {
 
   redirect(
     '/login?message=' +
-      encodeURIComponent('Se a conta existir, enviaremos as instruções de acesso.'),
+      encodeURIComponent(
+        'Se a conta existir, enviaremos as instruções de acesso.',
+      ),
   );
 }
 
@@ -141,5 +147,7 @@ export async function resetPasswordAction(formData: FormData) {
     errorRedirect('/reset-password', error);
   }
 
-  redirect('/login?message=' + encodeURIComponent('Senha atualizada com sucesso.'));
+  redirect(
+    '/login?message=' + encodeURIComponent('Senha atualizada com sucesso.'),
+  );
 }

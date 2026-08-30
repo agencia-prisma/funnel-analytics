@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  createWorkspaceSlugCandidate,
-  normalizeWorkspaceSlug,
-} from './slug';
+import { createWorkspaceSlugCandidate, normalizeWorkspaceSlug } from './slug';
 
 describe('workspace slug', () => {
   it('normalizes accents, spaces and punctuation', () => {

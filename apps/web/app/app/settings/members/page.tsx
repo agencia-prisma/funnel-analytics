@@ -128,7 +128,10 @@ export default async function MembersPage({
                   <td className="py-4">
                     <div className="flex justify-end gap-2">
                       {canUpdateRole && manageableRoles.length ? (
-                        <form action={changeMemberRoleAction} className="flex gap-2">
+                        <form
+                          action={changeMemberRoleAction}
+                          className="flex gap-2"
+                        >
                           <input
                             name="workspace_id"
                             type="hidden"
@@ -155,7 +158,8 @@ export default async function MembersPage({
                           </Button>
                         </form>
                       ) : null}
-                      {canRemove && canRemoveRole(workspace.role, member.role) ? (
+                      {canRemove &&
+                      canRemoveRole(workspace.role, member.role) ? (
                         <form action={removeMemberAction}>
                           <input
                             name="workspace_id"

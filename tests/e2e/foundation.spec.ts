@@ -1,6 +1,8 @@
 import { expect, test } from '@playwright/test';
 
-test('access foundation page and health endpoint are available', async ({ page }) => {
+test('access foundation page and health endpoint are available', async ({
+  page,
+}) => {
   await page.goto('/');
 
   await expect(

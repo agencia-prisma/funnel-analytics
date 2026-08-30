@@ -1,9 +1,6 @@
 'use server';
 
-import {
-  domainErrorMessage,
-  type WorkspaceRole,
-} from '@funnel/auth';
+import { domainErrorMessage, type WorkspaceRole } from '@funnel/auth';
 import { createServerSupabaseClient } from '@funnel/db/supabase/server';
 import { createLogger } from '@funnel/observability';
 import { cookies, headers } from 'next/headers';
@@ -27,7 +24,9 @@ async function appOrigin() {
 
   const headerStore = await headers();
   const host =
-    headerStore.get('x-forwarded-host') ?? headerStore.get('host') ?? '127.0.0.1:3000';
+    headerStore.get('x-forwarded-host') ??
+    headerStore.get('host') ??
+    '127.0.0.1:3000';
   const protocol = headerStore.get('x-forwarded-proto') ?? 'http';
 
   return `${protocol}://${host}`;
@@ -39,7 +38,9 @@ export async function createInvitationAction(
 ): Promise<InvitationActionState> {
   const user = await requireUser();
   const workspaceId = String(formData.get('workspace_id') ?? '');
-  const email = String(formData.get('email') ?? '').trim().toLowerCase();
+  const email = String(formData.get('email') ?? '')
+    .trim()
+    .toLowerCase();
   const role = String(formData.get('role') ?? '') as WorkspaceRole;
 
   try {
@@ -104,7 +105,9 @@ export async function changeMemberRoleAction(formData: FormData) {
     );
   }
 
-  redirect('/app/settings/members?message=' + encodeURIComponent('Role atualizado.'));
+  redirect(
+    '/app/settings/members?message=' + encodeURIComponent('Role atualizado.'),
+  );
 }
 
 export async function removeMemberAction(formData: FormData) {
@@ -137,7 +140,9 @@ export async function removeMemberAction(formData: FormData) {
     // Access is revalidated by the protected layout on the next request.
   }
 
-  redirect('/app/settings/members?message=' + encodeURIComponent('Membro removido.'));
+  redirect(
+    '/app/settings/members?message=' + encodeURIComponent('Membro removido.'),
+  );
 }
 
 export async function revokeInvitationAction(formData: FormData) {

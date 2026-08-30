@@ -38,11 +38,7 @@ export default async function WorkspaceSettingsPage({
           </label>
           <label className="text-sm font-medium text-zinc-200">
             Slug
-            <input
-              className={inputClassName}
-              disabled
-              value={workspace.slug}
-            />
+            <input className={inputClassName} disabled value={workspace.slug} />
           </label>
           <div className="grid gap-5 sm:grid-cols-2">
             <label className="text-sm font-medium text-zinc-200">

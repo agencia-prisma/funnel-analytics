@@ -29,7 +29,8 @@ const DOMAIN_MESSAGES: Record<DomainErrorCode, string> = {
   INVITATION_ALREADY_MEMBER: 'Este e-mail já pertence ao Workspace.',
   INVITATION_DUPLICATE: 'Já existe um convite pendente para este e-mail.',
   INVITATION_EMAIL_MISMATCH: 'Entre com o mesmo e-mail que recebeu o convite.',
-  LAST_OWNER_PROTECTION: 'O Workspace precisa manter pelo menos um Owner ativo.',
+  LAST_OWNER_PROTECTION:
+    'O Workspace precisa manter pelo menos um Owner ativo.',
 };
 
 export function extractDomainErrorCode(error: unknown): DomainErrorCode | null {
@@ -40,9 +41,7 @@ export function extractDomainErrorCode(error: unknown): DomainErrorCode | null {
         ? String(error.message)
         : String(error ?? '');
 
-  return (
-    DOMAIN_ERROR_CODES.find((code) => message.includes(code)) ?? null
-  );
+  return DOMAIN_ERROR_CODES.find((code) => message.includes(code)) ?? null;
 }
 
 export function domainErrorMessage(error: unknown): string {

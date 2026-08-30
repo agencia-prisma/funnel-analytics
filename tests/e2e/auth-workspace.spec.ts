@@ -75,7 +75,9 @@ test('owner invites a user and the user accepts the workspace', async ({
   const inviteePage = await inviteeContext.newPage();
   await inviteePage.goto(invitationLink);
 
-  await expect(inviteePage.getByRole('heading', { name: workspaceName })).toBeVisible();
+  await expect(
+    inviteePage.getByRole('heading', { name: workspaceName }),
+  ).toBeVisible();
   await inviteePage.getByRole('link', { name: 'Criar conta' }).click();
 
   await inviteePage.getByLabel('Nome').fill('Invitee E2E');
@@ -83,10 +85,14 @@ test('owner invites a user and the user accepts the workspace', async ({
   await inviteePage.getByLabel('Senha').fill(password);
   await inviteePage.getByRole('button', { name: 'Criar conta' }).click();
 
-  await expect(inviteePage.getByRole('heading', { name: workspaceName })).toBeVisible();
+  await expect(
+    inviteePage.getByRole('heading', { name: workspaceName }),
+  ).toBeVisible();
   await inviteePage.getByRole('button', { name: 'Aceitar convite' }).click();
 
-  await expect(inviteePage.getByRole('heading', { name: workspaceName })).toBeVisible();
+  await expect(
+    inviteePage.getByRole('heading', { name: workspaceName }),
+  ).toBeVisible();
   await expect(inviteePage.getByText('viewer')).toBeVisible();
   await expect(inviteePage).toHaveURL(/\/app$/);
 

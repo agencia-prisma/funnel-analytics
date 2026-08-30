@@ -61,7 +61,10 @@ export default function HomePage() {
             <div className="flex justify-between gap-4">
               <dt className="text-zinc-500">Health</dt>
               <dd>
-                <a className="text-violet-300 hover:underline" href="/api/health">
+                <a
+                  className="text-violet-300 hover:underline"
+                  href="/api/health"
+                >
                   /api/health
                 </a>
               </dd>

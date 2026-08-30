@@ -6,10 +6,7 @@ import type { ReactNode } from 'react';
 
 import { logoutAction } from '@/app/(auth)/actions';
 import { requireUser } from '@/lib/auth/session';
-import {
-  getCurrentWorkspace,
-  listUserWorkspaces,
-} from '@/lib/workspaces';
+import { getCurrentWorkspace, listUserWorkspaces } from '@/lib/workspaces';
 
 import { switchWorkspaceAction } from './actions';
 

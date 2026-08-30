@@ -10,7 +10,10 @@ export async function GET(request: Request) {
 
   if (!code) {
     return NextResponse.redirect(
-      new URL('/login?error=Link%20de%20autentica%C3%A7%C3%A3o%20inv%C3%A1lido.', url),
+      new URL(
+        '/login?error=Link%20de%20autentica%C3%A7%C3%A3o%20inv%C3%A1lido.',
+        url,
+      ),
     );
   }
 
@@ -19,7 +22,10 @@ export async function GET(request: Request) {
 
   if (error) {
     return NextResponse.redirect(
-      new URL('/login?error=N%C3%A3o%20foi%20poss%C3%ADvel%20validar%20o%20acesso.', url),
+      new URL(
+        '/login?error=N%C3%A3o%20foi%20poss%C3%ADvel%20validar%20o%20acesso.',
+        url,
+      ),
     );
   }
 

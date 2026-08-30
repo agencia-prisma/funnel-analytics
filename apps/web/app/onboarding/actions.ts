@@ -1,9 +1,6 @@
 'use server';
 
-import {
-  createWorkspaceSlugCandidate,
-  domainErrorMessage,
-} from '@funnel/auth';
+import { createWorkspaceSlugCandidate, domainErrorMessage } from '@funnel/auth';
 import { createServerSupabaseClient } from '@funnel/db/supabase/server';
 import { createLogger } from '@funnel/observability';
 import { cookies } from 'next/headers';
