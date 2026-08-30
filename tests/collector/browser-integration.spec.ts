@@ -31,8 +31,7 @@ async function injectPixel(page: Page) {
   await page.evaluate(
     ({ source, endpoint }) => {
       const script = document.createElement('script');
-      script.dataset.pixelId =
-        'px_pub_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+      script.dataset.pixelId = 'px_pub_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
       script.dataset.endpoint = endpoint;
       script.textContent = source;
       document.head.appendChild(script);
@@ -89,7 +88,7 @@ test('SPA landing and checkout both reach the Collector', async ({ page }) => {
     await window.funnelAnalytics?.flush();
   });
 
-  await expect.poll(() => statuses.filter((status) => status === 202).length).toBe(
-    2,
-  );
+  await expect
+    .poll(() => statuses.filter((status) => status === 202).length)
+    .toBe(2);
 });

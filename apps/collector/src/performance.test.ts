@@ -50,8 +50,7 @@ describe('Collector performance smoke', () => {
 
     for (let index = 0; index < 200; index += 1) {
       const batch = validBatch();
-      batch.events[0].event_id =
-        `018bcfe5-6800-7000-8000-${String(index + 1).padStart(12, '0')}`;
+      batch.events[0].event_id = `018bcfe5-6800-7000-8000-${String(index + 1).padStart(12, '0')}`;
 
       const response = await collect(
         new Request('https://collector.test/v1/events', {
