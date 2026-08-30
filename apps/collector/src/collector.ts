@@ -47,10 +47,6 @@ function findAuthorizedDomain(
   return null;
 }
 
-function eventForPixelFailure(pixel: PixelRecord | null): string {
-  return pixel ? 'collector.pixel.invalid' : 'collector.pixel.invalid';
-}
-
 export function createCollector(dependencies: CollectorDependencies) {
   return async function collect(
     request: Request,
@@ -62,6 +58,8 @@ export function createCollector(dependencies: CollectorDependencies) {
 
     try {
       origin = parseOrigin(request.headers.get('origin'));
+      const originHost = originHost;
+      const originValue = origin.origin;
       requireJsonContentType(request);
 
       const rawBody = await readJsonBody(request);
@@ -73,7 +71,7 @@ export function createCollector(dependencies: CollectorDependencies) {
       if (!allowed) {
         logCollector('collector.rate_limited', {
           request_id: requestId,
-          origin_host: origin.host,
+          origin_host: originHost,
           event_count: batch.events.length,
           status_code: 429,
           latency_ms: Math.round(performance.now() - startedAt),
@@ -89,7 +87,7 @@ export function createCollector(dependencies: CollectorDependencies) {
         if (error instanceof ControlPlaneUnavailableError) {
           logCollector('collector.control_plane.failed', {
             request_id: requestId,
-            origin_host: origin.host,
+            origin_host: originHost,
             event_count: batch.events.length,
             status_code: 503,
             latency_ms: Math.round(performance.now() - startedAt),
@@ -101,11 +99,11 @@ export function createCollector(dependencies: CollectorDependencies) {
       }
 
       if (!pixel || pixel.status !== 'active') {
-        logCollector(eventForPixelFailure(pixel), {
+        logCollector('collector.pixel.invalid', {
           request_id: requestId,
           workspace_id: pixel?.workspace_id,
           pixel_id: pixel?.id,
-          origin_host: origin.host,
+          origin_host: originHost,
           event_count: batch.events.length,
           status_code: 404,
           latency_ms: Math.round(performance.now() - startedAt),
@@ -113,14 +111,14 @@ export function createCollector(dependencies: CollectorDependencies) {
         throw new CollectorError(404, 'PIXEL_NOT_AVAILABLE');
       }
 
-      const domain = findAuthorizedDomain(pixel, origin.host);
+      const domain = findAuthorizedDomain(pixel, originHost);
 
       if (!domain) {
         logCollector('collector.origin.rejected', {
           request_id: requestId,
           workspace_id: pixel.workspace_id,
           pixel_id: pixel.id,
-          origin_host: origin.host,
+          origin_host: originHost,
           event_count: batch.events.length,
           status_code: 403,
           latency_ms: Math.round(performance.now() - startedAt),
@@ -128,7 +126,7 @@ export function createCollector(dependencies: CollectorDependencies) {
         throw new CollectorError(403, 'ORIGIN_NOT_ALLOWED');
       }
 
-      assertPageUrlsMatchOrigin(batch, origin.host);
+      assertPageUrlsMatchOrigin(batch, originHost);
 
       const receivedAt = new Date(now).toISOString();
       const envelope = createCollectorEnvelope({
@@ -137,7 +135,7 @@ export function createCollector(dependencies: CollectorDependencies) {
         collectorVersion: COLLECTOR_VERSION,
         workspaceId: pixel.workspace_id,
         pixelId: pixel.id,
-        originHost: origin.host,
+        originHost: originHost,
         events: batch.events,
       });
 
@@ -150,7 +148,7 @@ export function createCollector(dependencies: CollectorDependencies) {
           request_id: requestId,
           workspace_id: pixel.workspace_id,
           pixel_id: pixel.id,
-          origin_host: origin.host,
+          origin_host: originHost,
           event_count: batch.events.length,
           status_code: 503,
           latency_ms: Math.round(performance.now() - startedAt),
@@ -167,7 +165,7 @@ export function createCollector(dependencies: CollectorDependencies) {
               request_id: requestId,
               workspace_id: pixel.workspace_id,
               pixel_id: pixel.id,
-              origin_host: origin.host,
+              origin_host: originHost,
               event_count: batch.events.length,
               status_code: 202,
             });
@@ -178,14 +176,14 @@ export function createCollector(dependencies: CollectorDependencies) {
         request_id: requestId,
         workspace_id: pixel.workspace_id,
         pixel_id: pixel.id,
-        origin_host: origin.host,
+        origin_host: originHost,
         event_count: batch.events.length,
         status_code: 202,
         latency_ms: Math.round(performance.now() - startedAt),
         queue_latency_ms: Math.round(performance.now() - queueStartedAt),
       });
 
-      return acceptedResponse(batch.events.length, requestId, origin.origin);
+      return acceptedResponse(batch.events.length, requestId, originValue);
     } catch (error) {
       const collectorError =
         error instanceof CollectorError
