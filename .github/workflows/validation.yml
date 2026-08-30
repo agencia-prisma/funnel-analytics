@@ -242,4 +242,3 @@ jobs:
       - name: Show Collector logs on failure
         if: failure()
         run: cat /tmp/collector.log || true
-
