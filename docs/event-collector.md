@@ -2,15 +2,26 @@
 
 ## Status
 
-EPIC 04 implements the first Data Plane component: a Cloudflare Worker that validates browser batches and produces versioned messages to Cloudflare Queues.
+EPIC 04 implements the first Funnel Analytics Data Plane component as a standalone Cloudflare Worker in `apps/collector`.
 
-ClickHouse, R2 and the definitive Queue consumer remain out of scope until EPIC 05.
+No Cloudflare production Worker, production Queue, route or DNS record is created by this Epic.
 
-## HTTP
+## Runtime and tooling
+
+- Cloudflare Workers
+- Wrangler `4.127.1`
+- versioned `wrangler.jsonc`
+- Cloudflare Queues producer
+- Workers Rate Limiting binding
+- Supabase Data API as Control Plane registry
+
+The Worker is intentionally separate from `apps/web`.
+
+## Endpoints
 
 ### GET /health
 
-Returns `200` with only:
+Returns a minimal response:
 
 ```json
 {
@@ -20,11 +31,13 @@ Returns `200` with only:
 }
 ```
 
+No secret, binding name or environment value is returned.
+
 ### POST /v1/events
 
-Accepts `application/json` containing `EventBatchV1`.
+Accepts `EventBatchV1`.
 
-Success is `202 Accepted` only after the Queue producer binding resolves:
+Successful response:
 
 ```json
 {
@@ -34,47 +47,208 @@ Success is `202 Accepted` only after the Queue producer binding resolves:
 }
 ```
 
-`202` means Queue acceptance, not ClickHouse persistence.
+Status is `202 Accepted` only after `EVENTS_QUEUE.send()` resolves.
 
 ### OPTIONS /v1/events
 
-Returns `204` for a syntactically valid browser Origin with:
+Returns `204` for a syntactically valid browser Origin, with:
 
-- `Access-Control-Allow-Origin` echoing the Origin
+- `Access-Control-Allow-Origin` echoed from Origin
 - `Access-Control-Allow-Methods: POST, OPTIONS`
 - `Access-Control-Allow-Headers: Content-Type`
 - `Access-Control-Max-Age: 600`
 - `Vary: Origin`
 
-No credentials are enabled. CORS is not authentication; the POST performs Pixel/domain authorization.
+No credentials are enabled. CORS is not treated as authorization; domain authorization happens again during POST.
+
+Other methods receive `405`.
+
+## Request ID
+
+Every request gets a Collector-generated UUID in:
+
+```text
+X-Request-Id
+```
+
+The same ID is used in structured logs and response bodies. Personal data is never used to construct request IDs.
 
 ## Request limits
 
-- body hard limit: 128 KB
-- EventBatchV1 hard limit: 20 events
-- only `application/json`
-- event version: 1
-- browser event names: `page_view`, `custom_event`
-- occurred_at: max +5 minutes future / max 7 days past
-- duplicate event IDs in one batch: rejected
-- mixed Pixel keys in one batch: rejected
-- property limits reuse `@funnel/pixel/properties`
+- maximum raw body: 128 KB
+- content type: `application/json`
+- batch version: `1`
+- maximum events: `20`
+- batch must be non-empty
+- all events in a batch must share one `pixel_key`
+- duplicate `event_id` inside one batch is rejected
+- event version accepted: `1`
+- browser event names accepted: `page_view`, `custom_event`
+- future timestamp tolerance: 5 minutes
+- past timestamp tolerance: 7 days
 
-## Error codes
+The 20-event limit is centralized in `@funnel/event-contracts` and consumed by both SDK and Collector.
 
-Standard error body:
+## Server-side event validation
 
-```json
-{
-  "accepted": false,
-  "error": {
-    "code": "INVALID_BATCH"
-  },
-  "request_id": "..."
+The Collector treats the browser as untrusted.
+
+It validates IDs, Pixel key format, timestamps, HTTP page URL, attribution field bounds, click IDs, device/browser/OS shape, viewport/screen values, consent state and test mode.
+
+Custom properties re-use the SDK's shared property constraints and reject prohibited PII/reserved keys server-side.
+
+PII examples rejected:
+
+- email
+- phone / telephone / tel
+- cpf
+- document
+- password / pass
+- card / credit_card / creditcard
+- cvv
+
+Reserved keys such as `event_id`, `visitor_id`, `session_id`, `pixel_key`, `occurred_at`, `event_version` and `sdk_version` cannot appear inside custom properties.
+
+Rejected payloads are not queued.
+
+## Pixel Registry
+
+Core ingestion depends only on:
+
+```ts
+interface PixelRegistry {
+  resolvePixel(publicKey: string): Promise<PixelRecord | null>;
+  touchAccepted(...): Promise<void>;
 }
 ```
 
-Codes:
+Implementations:
+
+- `SupabasePixelRegistry` for preview/production
+- `LocalPixelRegistry` for deterministic local integration tests
+
+The Supabase implementation resolves Pixel and domains in a single REST request.
+
+The preferred server credential is `SUPABASE_SECRET_KEY` (`sb_secret_...`). Legacy `service_role` may be used only if it is the actual supported key available, but is never committed or exposed.
+
+Control Plane lookup has a 2.5 second timeout. If validation cannot be completed, the Collector returns `503`; it never accepts an unvalidated Pixel.
+
+## Pixel status
+
+Only `active` Pixels ingest events.
+
+`paused`, `archived` and unknown public keys return the generic `PIXEL_NOT_AVAILABLE` response without disclosing internal state.
+
+## Origin and domains
+
+Authorization uses the browser `Origin` header as the primary source. Missing or invalid Origin is rejected.
+
+`page_url` is not trusted for domain authorization. After Origin authorization, its hostname must also match the Origin hostname to block obvious spoofing.
+
+Authorized domains reuse `domainMatchesAuthorizedPattern()` from `@funnel/pixel/domains`.
+
+Domain states:
+
+- `pending`: accepted
+- `active`: accepted
+- `blocked`: rejected
+
+Wildcard `*.example.com` accepts subdomains such as `checkout.example.com` and rejects lookalikes such as `fakeexample.com` and `example-fake.com`.
+
+## Operational metadata
+
+After Queue acceptance, `ctx.waitUntil()` schedules non-critical Control Plane telemetry:
+
+Pixel:
+
+- `last_event_at`
+- `health_status: pending → healthy`
+
+Domain:
+
+- `last_seen_at`
+- when pending: `status → active`, `verified_at`
+
+`health_score` is not synthesized.
+
+Telemetry failure cannot turn an already queued event into a failure response.
+
+## Queue
+
+Binding:
+
+```text
+EVENTS_QUEUE
+```
+
+The Collector is a producer only.
+
+Queue message:
+
+```ts
+interface CollectorEnvelopeV1 {
+  envelope_version: 1;
+  request_id: string;
+  received_at: string;
+  collector_version: string;
+  workspace_id: string;
+  pixel_id: string;
+  origin_host: string;
+  source: 'browser';
+  events: BrowserEventV1[];
+}
+```
+
+No raw IP is put in the envelope.
+
+Cloudflare Queues have at-least-once delivery semantics; `event_id` therefore remains mandatory for downstream deduplication in EPIC 05.
+
+If Queue send fails, response is `503 QUEUE_UNAVAILABLE`, never `202`.
+
+## Rate limiting
+
+Binding:
+
+```text
+EVENTS_RATE_LIMITER
+```
+
+V1 configuration:
+
+- 120 requests
+- 60 seconds
+- per Cloudflare location and composite key
+
+The rate-limit key combines Pixel public key with an ephemeral SHA-256-derived IP token. The raw IP is neither logged nor queued.
+
+Rate limit returns `429 RATE_LIMITED` with `Retry-After: 60`.
+
+Rate limiting is abuse protection, not billing/accounting.
+
+## SDK retry alignment
+
+`HttpTransport` retries:
+
+- 429
+- 500
+- 502
+- 503
+- 504
+- network failure
+
+It does not retry:
+
+- 400
+- 403
+- 404
+- 413
+- 422
+
+Retries remain bounded by the SDK queue configuration.
+
+## Errors
+
+Public error codes:
 
 - `INVALID_REQUEST`
 - `PAYLOAD_TOO_LARGE`
@@ -89,191 +263,80 @@ Codes:
 - `CONTROL_PLANE_UNAVAILABLE`
 - `INTERNAL_ERROR`
 
-The Worker never returns stack traces, raw PostgREST errors or event payloads.
+Responses never expose stack traces, raw Supabase errors or prohibited property values.
 
-## Pixel Registry
+## Logging
 
-The Collector depends on a `PixelRegistry` abstraction.
+Structured logs may contain:
 
-Production implementation: `SupabasePixelRegistry`.
-
-One Data API resolution fetches the Pixel and related domains. The server-side credential is supplied only through `SUPABASE_SECRET_KEY`. New Supabase `sb_secret_...` keys are preferred; the legacy service-role credential remains compatible as a backend fallback.
-
-The key is never:
-
-- committed
-- returned to the client
-- logged
-- prefixed with `NEXT_PUBLIC_`
-- sent by pixel.js
-
-The Control Plane lookup has a 2.5 second timeout. If the Control Plane cannot validate the Pixel/domain, ingestion returns `503`.
-
-## Pixel status
-
-Only `active` Pixels ingest events.
-
-Missing, paused and archived Pixels all return the same `404 PIXEL_NOT_AVAILABLE` response to avoid resource enumeration.
-
-## Origin and domains
-
-Browser requests require a syntactically valid `Origin`.
-
-Authorization uses the Origin hostname, never `page_url` alone.
-
-The Origin is checked against `pixel_domains` using the shared EPIC 02 domain matcher.
-
-Accepted domain status:
-
-- pending
-- active
-
-Rejected:
-
-- blocked
-
-Wildcard `*.example.com` accepts `checkout.example.com` but not `fakeexample.com` or `example-fake.com`.
-
-Every event's `page_url` hostname must equal the validated Origin hostname. Suspicious disagreement is rejected.
-
-## Domain verification and operational metadata
-
-Only after Queue acceptance, `ctx.waitUntil()` schedules:
-
-- `pixels.last_event_at`
-- pending `pixels.health_status -> healthy`
-- `pixel_domains.last_seen_at`
-- pending `pixel_domains.status -> active`
-- pending `pixel_domains.verified_at`
-
-`health_score` remains untouched/null.
-
-Telemetry update failure does not undo an event already accepted by the Queue.
-
-## PII defense
-
-The Worker repeats PII and reserved-property checks server-side. Browser validation is not trusted.
-
-Rejected property keys include email/phone/telephone/CPF/document/password/card/credit-card/CVV variants.
-
-Reserved event identity/version fields cannot be overridden through custom properties.
-
-Raw event bodies, properties, visitor IDs, session IDs and click IDs are never logged.
-
-## Queue
-
-Binding: `EVENTS_QUEUE`.
-
-Envelope: `CollectorEnvelopeV1`.
-
-Fields:
-
-- envelope_version
 - request_id
-- received_at
-- collector_version
 - workspace_id
 - pixel_id
 - origin_host
-- source = browser
-- events
+- event_count
+- status_code
+- latency_ms
+- queue_latency_ms
+- error code
 
-Raw IP is not included.
-
-Cloudflare Queues is at-least-once. `event_id` is therefore preserved for downstream deduplication in EPIC 05.
-
-If Queue send fails, the Worker returns `503 QUEUE_UNAVAILABLE`, never `202`.
-
-## Rate limit
-
-Binding: `EVENTS_RATE_LIMITER`.
-
-V1 configuration: 120 requests per 60 seconds per Cloudflare location/key.
-
-The key combines:
-
-- Pixel public key
-- ephemeral SHA-256-derived IP component
-
-Raw IP is not persisted in the Queue or logs.
-
-A limited request returns `429` and `Retry-After: 60`.
-
-## SDK retry contract
-
-The browser `HttpTransport` retries:
-
-- 429
-- 500
-- 502
-- 503
-- 504
-- network errors
-
-It does not retry:
-
-- 400
-- 403
-- 404
-- 413
-- 422
-
-Retries remain bounded by the SDK.
+They never include event body, visitor/session IDs, click IDs, custom properties, raw IP or Supabase credentials.
 
 ## Environments
 
-Wrangler configuration separates:
+`wrangler.jsonc` defines conceptual:
 
-- local: simulated Queue + simulated Rate Limiting
-- preview: separate preview Queue/binding names
-- production: separate production Queue/binding names
+- local
+- preview
+- production
 
-No remote Cloudflare resource is created by the EPIC 04 implementation.
+Queue names and Rate Limiting namespaces are different across environments.
 
-Local development uses a deterministic `LOCAL_PIXEL_REGISTRY_JSON` only when `COLLECTOR_ENV=local`. Preview/production require the Supabase-backed registry.
+Production resources are intentionally not provisioned in this Epic.
 
-## Security
+## Local development
 
-The Collector:
-
-- does not use cookies or SaaS user sessions
-- does not use `credentials: include`
-- does not authorize via page_url
-- does not allow missing Origin in production
-- does not persist raw IP
-- does not add Cloudflare geo enrichment
-- does not use eval/new Function
-- bounds body, arrays and properties
-- never logs Supabase secrets
-- never logs full event payloads
-
-## Local/browser acceptance
-
-The CI starts Wrangler locally using workerd/Miniflare and its local Queue/Rate Limit simulations, then loads `pixel.min.js` in Chromium with the real `HttpTransport`.
-
-The acceptance test proves:
-
-```text
-fixture HTML
--> pixel.js
--> HttpTransport
--> POST /v1/events
--> local Cloudflare Worker
--> local Queue
--> 202 Accepted
+```bash
+cp apps/collector/.dev.vars.example apps/collector/.dev.vars
+pnpm collector:dev
 ```
 
-It also verifies SPA navigation produces a second accepted page_view with the original attribution.
+Wrangler/Miniflare simulate Queue and Rate Limiting locally.
+
+The local registry may be injected through `LOCAL_PIXEL_REGISTRY_JSON`; this bypass exists only when `COLLECTOR_ENV=local`.
+
+## Tests
+
+Collector test coverage includes:
+
+- valid/empty/oversized batches
+- malformed JSON
+- body size
+- event version/name
+- duplicate IDs
+- PII/reserved properties
+- Pixel status
+- exact/wildcard Origin
+- wildcard lookalikes
+- page URL spoofing
+- CORS
+- Queue failure
+- Rate Limit
+- Supabase registry/metadata adapter
+- 200-request local smoke test
+- real Chromium: `pixel.js → HttpTransport → wrangler dev → local Queue → 202`
+- SPA landing/checkout integration
 
 ## Current limitations
 
 Not implemented:
 
-- Queue consumer pipeline
+- definitive Queue consumer
 - R2 raw archive
 - ClickHouse
-- global replay/deduplication
-- final event normalization
-- session/event facts
-- Identity/Journey engines
-- remote Cloudflare Preview or Production resources
+- global deduplication/replay
+- definitive event normalization
+- session facts
+- event facts
+- production Collector URL/CDN wiring
+
+Those belong to EPIC 05 or later.

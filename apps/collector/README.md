@@ -1,49 +1,61 @@
-# Event Collector
+# @funnel/collector
 
-Cloudflare Worker responsible for public browser event ingress.
+Cloudflare Worker responsible for browser event ingress.
 
-## Architecture
+## Responsibilities
 
 ```text
 pixel.js
-  -> POST /v1/events
-  -> validate request + EventBatchV1
-  -> resolve Pixel + authorized domains
-  -> rate limit
-  -> Cloudflare Queue
-  -> 202 Accepted
+  ↓
+POST /v1/events
+  ↓
+request / EventBatchV1 validation
+  ↓
+Pixel + Origin authorization
+  ↓
+rate limit
+  ↓
+Cloudflare Queue producer
+  ↓
+202 Accepted
 ```
 
-A `202` means the Queue accepted the message. It does not mean ClickHouse persistence has happened.
+A `202` response means only that Cloudflare Queue accepted the envelope. It does not mean ClickHouse persistence.
 
-## Commands
+## Local development
 
-From the monorepo root:
+Copy the example local variables:
+
+```bash
+cp apps/collector/.dev.vars.example apps/collector/.dev.vars
+```
+
+Then run:
 
 ```bash
 pnpm collector:dev
-pnpm --filter @funnel/collector test
+```
+
+Local Wrangler execution uses locally simulated Queue and Rate Limiting bindings. `LOCAL_PIXEL_REGISTRY_JSON` may be used only in `COLLECTOR_ENV=local` so browser integration tests do not depend on production Supabase.
+
+## Commands
+
+```bash
 pnpm --filter @funnel/collector typecheck
+pnpm --filter @funnel/collector test
 pnpm --filter @funnel/collector build
 pnpm test:collector-browser
 ```
 
-Copy `apps/collector/.dev.vars.example` to `.dev.vars` for local Wrangler development.
+## Secrets
 
-## Endpoints
+Preview/production use:
 
-- `GET /health`
-- `POST /v1/events`
-- `OPTIONS /v1/events`
+- `SUPABASE_URL`
+- `SUPABASE_SECRET_KEY`
 
-## Bindings
+`SUPABASE_SECRET_KEY` must be a Cloudflare secret binding. It must never be committed, logged, exposed through `NEXT_PUBLIC_*`, or shipped to a browser.
 
-- `EVENTS_QUEUE` — Cloudflare Queue producer
-- `EVENTS_RATE_LIMITER` — Cloudflare Rate Limiting binding
-- `SUPABASE_URL` — server-side Control Plane URL
-- `SUPABASE_SECRET_KEY` — secret binding, never browser/public
-- `COLLECTOR_ENV` — local / preview / production
+## Current boundary
 
-The default Wrangler environment is local-only and includes a local Queue consumer that only acknowledges simulated messages. Preview/production configs are producer-only.
-
-See `docs/event-collector.md` for the complete contract and security model.
+EPIC 04 is producer-only. The definitive Queue consumer, raw archive, ClickHouse, global deduplication and event normalization belong to EPIC 05.
