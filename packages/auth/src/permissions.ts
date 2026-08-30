@@ -83,3 +83,21 @@ export function canInviteRole(
     (invitedRole === 'analyst' || invitedRole === 'viewer')
   );
 }
+
+export function invitableRoles(actorRole: WorkspaceRole): WorkspaceRole[] {
+  return WORKSPACE_ROLES.filter((role) => canInviteRole(actorRole, role));
+}
+
+export function canRemoveRole(
+  actorRole: WorkspaceRole,
+  targetRole: WorkspaceRole,
+): boolean {
+  if (actorRole === 'owner') {
+    return true;
+  }
+
+  return (
+    actorRole === 'admin' &&
+    (targetRole === 'analyst' || targetRole === 'viewer')
+  );
+}

@@ -4,6 +4,8 @@ import {
   can,
   canInviteRole,
   canManageRole,
+  canRemoveRole,
+  invitableRoles,
   type Permission,
 } from './permissions';
 
@@ -38,5 +40,8 @@ describe('workspace permissions', () => {
     expect(canManageRole('admin', 'viewer', 'analyst')).toBe(true);
     expect(canManageRole('admin', 'admin', 'viewer')).toBe(false);
     expect(canManageRole('admin', 'viewer', 'owner')).toBe(false);
+    expect(invitableRoles('admin')).toEqual(['analyst', 'viewer']);
+    expect(canRemoveRole('admin', 'admin')).toBe(false);
+    expect(canRemoveRole('admin', 'viewer')).toBe(true);
   });
 });

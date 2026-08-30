@@ -1,6 +1,8 @@
 import {
   can,
   canManageRole,
+  canRemoveRole,
+  invitableRoles,
   type WorkspaceRole,
   WORKSPACE_ROLES,
 } from '@funnel/auth';
@@ -73,10 +75,7 @@ export default async function MembersPage({
     invitations = (data ?? []) as InvitationRow[];
   }
 
-  const inviteRoles: WorkspaceRole[] =
-    workspace.role === 'owner'
-      ? ['admin', 'analyst', 'viewer']
-      : ['analyst', 'viewer'];
+  const inviteRoles = invitableRoles(workspace.role);
 
   return (
     <main className="mx-auto w-full max-w-6xl px-6 py-12">
@@ -156,10 +155,7 @@ export default async function MembersPage({
                           </Button>
                         </form>
                       ) : null}
-                      {canRemove &&
-                      (workspace.role === 'owner' ||
-                        member.role === 'analyst' ||
-                        member.role === 'viewer') ? (
+                      {canRemove && canRemoveRole(workspace.role, member.role) ? (
                         <form action={removeMemberAction}>
                           <input
                             name="workspace_id"
