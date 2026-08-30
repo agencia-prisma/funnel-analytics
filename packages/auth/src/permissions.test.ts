@@ -11,24 +11,30 @@ import {
 
 describe('workspace permissions', () => {
   it('maps roles to the expected default permissions', () => {
-    const cases: Array<[string, Permission, boolean]> = [
+    const cases: Array<
+      ['owner' | 'admin' | 'analyst' | 'viewer', Permission, boolean]
+    > = [
       ['owner', 'people.view_pii', true],
+      ['owner', 'pixels.delete', true],
       ['admin', 'members.invite', true],
       ['admin', 'people.view_pii', false],
+      ['admin', 'domains.manage', true],
       ['analyst', 'people.view', true],
-      ['analyst', 'members.invite', false],
+      ['analyst', 'pixels.view', true],
+      ['analyst', 'pixels.update', false],
       ['viewer', 'workspace.view', true],
-      ['viewer', 'workspace.update', false],
+      ['viewer', 'domains.view', true],
+      ['viewer', 'pixels.create', false],
     ];
 
     for (const [role, permission, expected] of cases) {
-      expect(can(role as 'owner', permission)).toBe(expected);
+      expect(can(role, permission)).toBe(expected);
     }
   });
 
   it('applies explicit permission overrides after role defaults', () => {
-    expect(can('viewer', 'people.view', { 'people.view': true })).toBe(true);
-    expect(can('owner', 'people.view_pii', { 'people.view_pii': false })).toBe(
+    expect(can('viewer', 'pixels.create', { 'pixels.create': true })).toBe(true);
+    expect(can('owner', 'pixels.update', { 'pixels.update': false })).toBe(
       false,
     );
   });
