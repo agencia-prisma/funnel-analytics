@@ -7,21 +7,12 @@ const bundle = await readFile(
   'utf8',
 );
 
-const fixture = `<!doctype html>
-<html lang="pt-BR">
-  <head>
-    <meta charset="utf-8" />
-    <title>Collector Integration</title>
-  </head>
-  <body><main>collector fixture</main></body>
-</html>`;
-
 async function injectPixel(page: import('@playwright/test').Page) {
   await page.evaluate(
     ({ source }) => {
       const script = document.createElement('script');
       script.dataset.pixelId = 'px_pub_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
-      script.dataset.endpoint = 'http://127.0.0.1:8787/v1/events';
+      script.dataset.endpoint = 'http://collector.localhost:8787/v1/events';
       script.textContent = source;
       document.head.appendChild(script);
     },
@@ -32,13 +23,12 @@ async function injectPixel(page: import('@playwright/test').Page) {
 test('pixel.js HttpTransport reaches local Worker and Queue path', async ({
   page,
 }) => {
-  await page.route('http://shop.localhost:4173/**', (route) =>
-    route.fulfill({
-      status: 200,
-      contentType: 'text/html',
-      body: fixture,
-    }),
-  );
+  const failedRequests: string[] = [];
+  page.on('requestfailed', (request) => {
+    failedRequests.push(
+      `${request.method()} ${request.url()} :: ${request.failure()?.errorText ?? 'unknown'}`,
+    );
+  });
 
   await page.goto(
     'http://shop.localhost:4173/?utm_source=meta&utm_campaign=collector&fbclid=abc',
@@ -46,7 +36,7 @@ test('pixel.js HttpTransport reaches local Worker and Queue path', async ({
 
   const firstResponse = page.waitForResponse(
     (response) =>
-      response.url() === 'http://127.0.0.1:8787/v1/events' &&
+      response.url() === 'http://collector.localhost:8787/v1/events' &&
       response.request().method() === 'POST',
   );
 
@@ -86,7 +76,7 @@ test('pixel.js HttpTransport reaches local Worker and Queue path', async ({
 
   const secondResponse = page.waitForResponse(
     (response) =>
-      response.url() === 'http://127.0.0.1:8787/v1/events' &&
+      response.url() === 'http://collector.localhost:8787/v1/events' &&
       response.request().method() === 'POST',
   );
 
