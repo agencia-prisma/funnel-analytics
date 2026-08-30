@@ -19,7 +19,8 @@
     "test": "turbo run test",
     "test:e2e": "playwright test",
     "typecheck": "turbo run typecheck",
-    "supabase": "supabase"
+    "supabase": "supabase",
+    "test:pixel-browser": "playwright test --config=playwright.pixel.config.ts"
   },
   "devDependencies": {
     "@funnel/config": "workspace:*",

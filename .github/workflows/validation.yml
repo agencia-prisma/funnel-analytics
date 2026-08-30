@@ -135,3 +135,43 @@ jobs:
       - name: Stop isolated Supabase
         if: always()
         run: pnpm supabase stop --no-backup
+
+  pixel-sdk:
+    name: Pixel SDK
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Pixel SDK
+        run: pnpm --filter @funnel/pixel build
+
+      - name: Pixel unit tests
+        run: pnpm --filter @funnel/pixel test
+
+      - name: Check Pixel bundle size
+        run: pnpm --filter @funnel/pixel check:size
+
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Pixel browser tests
+        run: pnpm test:pixel-browser
+
