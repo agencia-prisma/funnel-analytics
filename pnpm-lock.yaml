@@ -105,6 +105,9 @@ importers:
       '@funnel/observability':
         specifier: workspace:*
         version: link:../../packages/observability
+      '@funnel/pixel':
+        specifier: workspace:*
+        version: link:../../packages/pixel
       '@funnel/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -211,6 +214,18 @@ importers:
         specifier: workspace:*
         version: link:../event-contracts
     devDependencies:
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@types/node@26.4.0)(vite@8.2.2(@types/node@26.4.0)(jiti@2.7.0))
+
+  packages/pixel:
+    devDependencies:
+      '@types/node':
+        specifier: 26.4.0
+        version: 26.4.0
       typescript:
         specifier: 5.9.3
         version: 5.9.3
@@ -5334,4 +5349,3 @@ snapshots:
   zod@4.5.1: {}
 
   zod@4.5.4: {}
-

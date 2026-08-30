@@ -5,10 +5,12 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 
 import { requireUser } from '@/lib/auth/session';
+import { safeNextPath } from '@/lib/security';
 
 export async function switchWorkspaceAction(formData: FormData) {
   const user = await requireUser();
   const workspaceId = String(formData.get('workspace_id') ?? '');
+  const returnTo = safeNextPath(formData.get('return_to'));
   const supabase = await createServerSupabaseClient();
 
   const { data, error } = await supabase
@@ -31,5 +33,5 @@ export async function switchWorkspaceAction(formData: FormData) {
     secure: process.env.NODE_ENV === 'production',
   });
 
-  redirect('/app');
+  redirect(returnTo ?? '/app');
 }

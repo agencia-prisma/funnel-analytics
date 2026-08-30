@@ -5,10 +5,13 @@ import { redirect } from 'next/navigation';
 import type { ReactNode } from 'react';
 
 import { logoutAction } from '@/app/(auth)/actions';
+import { WorkspaceSwitcher } from '@/components/workspace-switcher';
 import { requireUser } from '@/lib/auth/session';
-import { getCurrentWorkspace, listUserWorkspaces } from '@/lib/workspaces';
-
-import { switchWorkspaceAction } from './actions';
+import {
+  getCurrentWorkspace,
+  hasWorkspacePermission,
+  listUserWorkspaces,
+} from '@/lib/workspaces';
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
   const user = await requireUser();
@@ -24,6 +27,11 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     redirect('/onboarding');
   }
 
+  const canViewPixels = await hasWorkspacePermission(
+    workspace.id,
+    'pixels.view',
+  );
+
   return (
     <div className="min-h-screen">
       <header className="border-b border-white/10 bg-black/20">
@@ -31,24 +39,15 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           <Link className="font-semibold text-white" href="/app">
             Funnel Analytics
           </Link>
-          <form action={switchWorkspaceAction} className="ml-auto flex gap-2">
-            <select
-              aria-label="Workspace"
-              className="h-10 rounded-lg border border-white/10 bg-[#111018] px-3 text-sm text-white"
-              defaultValue={workspace.id}
-              name="workspace_id"
-            >
-              {workspaces.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.name}
-                </option>
-              ))}
-            </select>
-            <Button type="submit" variant="secondary">
-              Trocar
-            </Button>
-          </form>
+          <WorkspaceSwitcher
+            currentWorkspaceId={workspace.id}
+            workspaces={workspaces.map((item) => ({
+              id: item.id,
+              name: item.name,
+            }))}
+          />
           <nav className="flex items-center gap-4 text-sm text-zinc-300">
+            {canViewPixels ? <Link href="/app/pixels">Pixels</Link> : null}
             {can(workspace.role, 'workspace.view') ? (
               <Link href="/app/settings/workspace">Configurações</Link>
             ) : null}
