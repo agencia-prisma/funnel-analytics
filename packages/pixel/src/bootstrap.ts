@@ -14,12 +14,11 @@ import {
   createPageViewEvent,
   type EventIdentity,
 } from './events';
-import { createUuidV7, isUuidV7 } from './ids';
+import { createUuidV7, getOrCreateVisitorId } from './ids';
 import { EventQueue } from './queue';
 import {
   BrowserStorageAdapter,
   clearTrackingStorage,
-  STORAGE_KEYS,
 } from './storage';
 import { getOrCreateSession, touchSession, type SessionState } from './session';
 import { installSpaTracking, type SpaCleanup } from './spa';
@@ -226,14 +225,7 @@ export class PixelRuntime {
     const storage = persistent ? this.storage : null;
 
     if (persistent) {
-      const storedVisitor = this.storage.get(STORAGE_KEYS.visitor);
-
-      if (storedVisitor && isUuidV7(storedVisitor)) {
-        this.visitorId = storedVisitor;
-      } else {
-        this.visitorId = createUuidV7(now);
-        this.storage.set(STORAGE_KEYS.visitor, this.visitorId);
-      }
+      this.visitorId = getOrCreateVisitorId(this.storage, now);
 
       const sessionResult = getOrCreateSession(
         storage,
