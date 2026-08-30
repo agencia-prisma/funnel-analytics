@@ -12,6 +12,12 @@ export const PERMISSIONS = [
   'billing.view',
   'people.view',
   'people.view_pii',
+  'pixels.view',
+  'pixels.create',
+  'pixels.update',
+  'pixels.delete',
+  'domains.view',
+  'domains.manage',
 ] as const;
 
 export type Permission = (typeof PERMISSIONS)[number];
@@ -28,9 +34,20 @@ const ROLE_PERMISSIONS: Record<WorkspaceRole, ReadonlySet<Permission>> = {
     'members.update_role',
     'members.remove',
     'people.view',
+    'pixels.view',
+    'pixels.create',
+    'pixels.update',
+    'pixels.delete',
+    'domains.view',
+    'domains.manage',
   ]),
-  analyst: new Set(['workspace.view', 'people.view']),
-  viewer: new Set(['workspace.view']),
+  analyst: new Set([
+    'workspace.view',
+    'people.view',
+    'pixels.view',
+    'domains.view',
+  ]),
+  viewer: new Set(['workspace.view', 'pixels.view', 'domains.view']),
 };
 
 export function can(
