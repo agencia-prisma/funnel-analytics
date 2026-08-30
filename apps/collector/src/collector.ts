@@ -168,7 +168,7 @@ export function createCollector(dependencies: CollectorDependencies) {
           .catch(() => {
             logCollector('collector.control_plane.failed', {
               request_id: requestId,
-              workspace_id: pixel.id,
+              workspace_id: pixel.workspace_id,
               pixel_id: pixel.id,
               origin_host: origin.host,
               event_count: batch.events.length,
