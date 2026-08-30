@@ -53,9 +53,6 @@ importers:
       '@funnel/observability':
         specifier: workspace:*
         version: link:../../packages/observability
-      '@funnel/pixel':
-        specifier: workspace:*
-        version: link:../../packages/pixel
       '@funnel/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -108,6 +105,9 @@ importers:
       '@funnel/observability':
         specifier: workspace:*
         version: link:../../packages/observability
+      '@funnel/pixel':
+        specifier: workspace:*
+        version: link:../../packages/pixel
       '@funnel/ui':
         specifier: workspace:*
         version: link:../../packages/ui
