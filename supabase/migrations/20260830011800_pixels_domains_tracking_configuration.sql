@@ -403,7 +403,7 @@ returns void
 language plpgsql
 security definer
 set search_path = ''
-as $
+as $$
 declare
   actor_id uuid := auth.uid();
   target_pixel public.pixels%rowtype;
@@ -509,7 +509,7 @@ returns uuid
 language plpgsql
 security definer
 set search_path = ''
-as $
+as $$
 declare
   actor_id uuid := auth.uid();
   target_pixel public.pixels%rowtype;
