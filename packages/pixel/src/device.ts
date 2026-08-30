@@ -16,7 +16,10 @@ function detectBrowser(userAgent: string): string {
   if (/OPR\//i.test(userAgent)) return 'Opera';
   if (/CriOS|Chrome\//i.test(userAgent)) return 'Chrome';
   if (/FxiOS|Firefox\//i.test(userAgent)) return 'Firefox';
-  if (/Safari\//i.test(userAgent) && !/Chrome|CriOS|Chromium/i.test(userAgent)) {
+  if (
+    /Safari\//i.test(userAgent) &&
+    !/Chrome|CriOS|Chromium/i.test(userAgent)
+  ) {
     return 'Safari';
   }
 

@@ -18,9 +18,7 @@ export type DeviceTypeV1 = 'mobile' | 'tablet' | 'desktop' | 'unknown';
 
 export type JsonPrimitive = string | number | boolean | null;
 export type JsonValue =
-  | JsonPrimitive
-  | JsonValue[]
-  | { [key: string]: JsonValue };
+  JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };
 
 export interface BrowserEventBaseV1 {
   event_id: string;

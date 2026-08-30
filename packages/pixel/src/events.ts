@@ -8,10 +8,7 @@ import type { TouchContext } from './attribution';
 import type { PageContext } from './context';
 import { detectDevice } from './device';
 import { createUuidV7 } from './ids';
-import {
-  isValidCustomEventName,
-  sanitizeCustomProperties,
-} from './properties';
+import { isValidCustomEventName, sanitizeCustomProperties } from './properties';
 
 export interface EventIdentity {
   visitorId: string;

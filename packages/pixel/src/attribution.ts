@@ -34,10 +34,7 @@ interface StoredSessionTouch {
   touch: TouchContext;
 }
 
-function boundedParameter(
-  params: URLSearchParams,
-  key: string,
-): string | null {
+function boundedParameter(params: URLSearchParams, key: string): string | null {
   const value = params.get(key)?.trim();
 
   return value ? value.slice(0, 512) : null;

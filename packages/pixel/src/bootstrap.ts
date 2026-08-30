@@ -16,10 +16,7 @@ import {
 } from './events';
 import { createUuidV7, getOrCreateVisitorId } from './ids';
 import { EventQueue } from './queue';
-import {
-  BrowserStorageAdapter,
-  clearTrackingStorage,
-} from './storage';
+import { BrowserStorageAdapter, clearTrackingStorage } from './storage';
 import { getOrCreateSession, touchSession, type SessionState } from './session';
 import { installSpaTracking, type SpaCleanup } from './spa';
 import { HttpTransport, TestTransport, type Transport } from './transport';
@@ -88,7 +85,10 @@ export class PixelRuntime {
         this.safe(() => this.track(name, properties), false),
       identify: () => this.safe(() => this.identify(), null),
       consent: (settings) =>
-        this.safe(() => this.setConsent(settings), this.consentManager.getState()),
+        this.safe(
+          () => this.setConsent(settings),
+          this.consentManager.getState(),
+        ),
       getVisitorId: () => this.visitorId,
       getSessionId: () => this.session?.session_id ?? null,
       flush: () => this.safeAsync(() => this.queue.flush(), false),
@@ -258,7 +258,11 @@ export class PixelRuntime {
         !this.session ||
         now - this.session.last_activity_at > this.config.sessionTimeoutMs
       ) {
-        const result = getOrCreateSession(null, now, this.config.sessionTimeoutMs);
+        const result = getOrCreateSession(
+          null,
+          now,
+          this.config.sessionTimeoutMs,
+        );
         this.session = result.state;
         isNewSession = true;
       } else {
@@ -333,10 +337,7 @@ export class PixelRuntime {
     return true;
   }
 
-  private debug(
-    event: string,
-    metadata?: Record<string, unknown>,
-  ): void {
+  private debug(event: string, metadata?: Record<string, unknown>): void {
     if (!this.config.debug) {
       return;
     }

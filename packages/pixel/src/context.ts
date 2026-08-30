@@ -112,10 +112,7 @@ export function collectPageContext(
     pagePath: windowRef.location.pathname.slice(0, 1_024),
     pageTitle: safeText(documentRef.title, 256),
     referrer: rawReferrer || null,
-    referrerDomain: getReferrerDomain(
-      rawReferrer,
-      windowRef.location.hostname,
-    ),
+    referrerDomain: getReferrerDomain(rawReferrer, windowRef.location.hostname),
     language: windowRef.navigator.language || null,
     timezone,
     screen: {

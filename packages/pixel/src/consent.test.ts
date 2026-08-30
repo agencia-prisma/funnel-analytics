@@ -14,9 +14,9 @@ describe('consent mode', () => {
     expect(consent.update({ analytics: true })).toBe('granted');
     expect(consent.canTrack()).toBe(true);
 
-    expect(
-      consent.update({ analytics: true, identification: false }),
-    ).toBe('granted');
+    expect(consent.update({ analytics: true, identification: false })).toBe(
+      'granted',
+    );
     expect(consent.canPersistIdentity()).toBe(false);
 
     expect(consent.update({ analytics: false })).toBe('denied');

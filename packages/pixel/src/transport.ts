@@ -83,9 +83,7 @@ export class HttpTransport implements Transport {
 export class TestTransport implements Transport {
   readonly batches: EventBatchV1[] = [];
 
-  constructor(
-    private readonly sink?: (batch: EventBatchV1) => void,
-  ) {}
+  constructor(private readonly sink?: (batch: EventBatchV1) => void) {}
 
   async send(batch: EventBatchV1): Promise<TransportResult> {
     const copy = JSON.parse(JSON.stringify(batch)) as EventBatchV1;

@@ -54,12 +54,9 @@ export class EventQueue {
     private readonly transport: Transport | null,
     options: QueueOptions = {},
   ) {
-    this.maxBatchEvents =
-      options.maxBatchEvents ?? DEFAULT_MAX_BATCH_EVENTS;
-    this.maxQueueEvents =
-      options.maxQueueEvents ?? DEFAULT_MAX_QUEUE_EVENTS;
-    this.maxPayloadBytes =
-      options.maxPayloadBytes ?? DEFAULT_MAX_PAYLOAD_BYTES;
+    this.maxBatchEvents = options.maxBatchEvents ?? DEFAULT_MAX_BATCH_EVENTS;
+    this.maxQueueEvents = options.maxQueueEvents ?? DEFAULT_MAX_QUEUE_EVENTS;
+    this.maxPayloadBytes = options.maxPayloadBytes ?? DEFAULT_MAX_PAYLOAD_BYTES;
     this.maxRetries = options.maxRetries ?? DEFAULT_MAX_RETRIES;
     this.storage = options.storage ?? null;
     this.persistenceAllowed = options.persistenceAllowed ?? (() => false);

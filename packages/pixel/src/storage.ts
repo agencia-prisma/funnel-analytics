@@ -60,8 +60,7 @@ export class BrowserStorageAdapter implements StorageAdapter {
         this.windowRef.location.protocol === 'https:' ? '; Secure' : '';
       const maxAge = this.visitorMaxAgeDays * 24 * 60 * 60;
 
-      this.documentRef.cookie =
-        `${encodeURIComponent(key)}=${encodeURIComponent(value)}; Path=/; SameSite=Lax; Max-Age=${maxAge}${secure}`;
+      this.documentRef.cookie = `${encodeURIComponent(key)}=${encodeURIComponent(value)}; Path=/; SameSite=Lax; Max-Age=${maxAge}${secure}`;
     }
 
     try {
@@ -73,8 +72,7 @@ export class BrowserStorageAdapter implements StorageAdapter {
 
   remove(key: StorageKey): void {
     if (key === STORAGE_KEYS.visitor) {
-      this.documentRef.cookie =
-        `${encodeURIComponent(key)}=; Path=/; SameSite=Lax; Max-Age=0`;
+      this.documentRef.cookie = `${encodeURIComponent(key)}=; Path=/; SameSite=Lax; Max-Age=0`;
     }
 
     try {

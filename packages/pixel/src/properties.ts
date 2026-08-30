@@ -107,7 +107,11 @@ function sanitizeValue(value: unknown, depth: number): JsonValue | undefined {
 export function sanitizeCustomProperties(
   properties: unknown,
 ): Record<string, JsonValue> {
-  if (!properties || typeof properties !== 'object' || Array.isArray(properties)) {
+  if (
+    !properties ||
+    typeof properties !== 'object' ||
+    Array.isArray(properties)
+  ) {
     return {};
   }
 

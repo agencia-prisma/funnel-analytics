@@ -41,12 +41,7 @@ describe('attribution', () => {
       'https://example.com/',
       'example.com',
     );
-    const second = resolveAttribution(
-      storage,
-      'session-a',
-      false,
-      checkout,
-    );
+    const second = resolveAttribution(storage, 'session-a', false, checkout);
 
     expect(second.firstTouch).toEqual(first.firstTouch);
     expect(second.sessionTouch.utm_source).toBe('meta');

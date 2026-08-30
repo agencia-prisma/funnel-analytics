@@ -19,8 +19,8 @@ Conceptual installation:
 <script
   async
   src="https://cdn.DOMINIO-FUTURO.com/pixel.js"
-  data-pixel-id="px_pub_xxx">
-</script>
+  data-pixel-id="px_pub_xxx"
+></script>
 ```
 
 Supported safe data attributes:
@@ -36,7 +36,7 @@ Supported safe data attributes:
 The SDK exposes only the namespaced global:
 
 ```ts
-window.funnelAnalytics
+window.funnelAnalytics;
 ```
 
 Methods:
@@ -119,7 +119,7 @@ Duplicate SDK bootstrap is guarded globally, so duplicate snippets do not genera
 ```js
 window.funnelAnalytics.track('cta_clicked', {
   product: 'shoe',
-  placement: 'hero'
+  placement: 'hero',
 });
 ```
 

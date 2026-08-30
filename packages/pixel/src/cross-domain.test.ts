@@ -16,8 +16,8 @@ describe('cross-domain preparation', () => {
   it('refuses a raw visitor UUID as linker token', () => {
     const visitorId = '018bcfe5-6800-7000-8000-000000000001';
 
-    expect(
-      decorateLink('https://checkout.example.com/', visitorId),
-    ).toBe('https://checkout.example.com/');
+    expect(decorateLink('https://checkout.example.com/', visitorId)).toBe(
+      'https://checkout.example.com/',
+    );
   });
 });
