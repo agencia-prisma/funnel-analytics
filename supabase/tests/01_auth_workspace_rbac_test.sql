@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(9);
+select plan(10);
 
 insert into auth.users (
   id,
@@ -39,6 +39,17 @@ values
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000001', true);
+
+select is(
+  public.create_workspace(
+    'Duplicate attempt',
+    'duplicate-attempt',
+    'America/Sao_Paulo',
+    'BRL'
+  ),
+  '20000000-0000-0000-0000-000000000001'::uuid,
+  'Repeated onboarding creation returns the existing active Workspace'
+);
 
 select is(
   (select count(*) from public.workspaces where id = '20000000-0000-0000-0000-000000000002'),
