@@ -12,6 +12,7 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   transpilePackages: [
+    '@funnel/auth',
     '@funnel/config',
     '@funnel/db',
     '@funnel/event-contracts',

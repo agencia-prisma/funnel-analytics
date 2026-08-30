@@ -5,6 +5,7 @@
   "type": "module",
   "exports": {
     "./supabase/browser": "./src/supabase/browser.ts",
+    "./supabase/proxy": "./src/supabase/proxy.ts",
     "./supabase/server": "./src/supabase/server.ts"
   },
   "scripts": {

@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@funnel/auth": "workspace:*",
     "@funnel/config": "workspace:*",
     "@funnel/db": "workspace:*",
     "@funnel/observability": "workspace:*",

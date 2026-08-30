@@ -1073,3 +1073,135 @@ grant execute on function private.accept_workspace_invitation_impl(text) to auth
 grant execute on function private.change_workspace_member_role_impl(uuid, uuid, public.workspace_role) to authenticated;
 grant execute on function private.remove_workspace_member_impl(uuid, uuid) to authenticated;
 grant execute on function private.list_workspace_members_impl(uuid) to authenticated;
+
+create function private.list_workspace_invitations_impl(target_workspace_id uuid)
+returns table (
+  invitation_id uuid,
+  email_normalized text,
+  role public.workspace_role,
+  status public.workspace_invitation_status,
+  expires_at timestamptz,
+  created_at timestamptz
+)
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  actor_id uuid := auth.uid();
+begin
+  if actor_id is null then
+    raise exception 'AUTH_REQUIRED' using errcode = 'P0001';
+  end if;
+
+  if not private.permission_allowed(target_workspace_id, actor_id, 'members.invite') then
+    raise exception 'INSUFFICIENT_PERMISSION' using errcode = 'P0001';
+  end if;
+
+  return query
+  select
+    wi.id,
+    wi.email_normalized,
+    wi.role,
+    case
+      when wi.status = 'pending' and wi.expires_at <= now()
+        then 'expired'::public.workspace_invitation_status
+      else wi.status
+    end,
+    wi.expires_at,
+    wi.created_at
+  from public.workspace_invitations wi
+  where wi.workspace_id = target_workspace_id
+  order by wi.created_at desc;
+end;
+$$;
+
+create function public.list_workspace_invitations(target_workspace_id uuid)
+returns table (
+  invitation_id uuid,
+  email_normalized text,
+  role public.workspace_role,
+  status public.workspace_invitation_status,
+  expires_at timestamptz,
+  created_at timestamptz
+)
+language sql
+stable
+security invoker
+set search_path = ''
+as $$
+  select * from private.list_workspace_invitations_impl(target_workspace_id);
+$$;
+
+create function private.revoke_workspace_invitation_impl(target_invitation_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  actor_id uuid := auth.uid();
+  invitation public.workspace_invitations%rowtype;
+begin
+  if actor_id is null then
+    raise exception 'AUTH_REQUIRED' using errcode = 'P0001';
+  end if;
+
+  select *
+  into invitation
+  from public.workspace_invitations wi
+  where wi.id = target_invitation_id
+  for update;
+
+  if not found then
+    raise exception 'INVITATION_INVALID' using errcode = 'P0001';
+  end if;
+
+  if not private.permission_allowed(invitation.workspace_id, actor_id, 'members.invite') then
+    raise exception 'INSUFFICIENT_PERMISSION' using errcode = 'P0001';
+  end if;
+
+  if invitation.status <> 'pending' then
+    raise exception 'INVITATION_INVALID' using errcode = 'P0001';
+  end if;
+
+  update public.workspace_invitations
+  set status = 'revoked'
+  where id = target_invitation_id;
+
+  insert into public.audit_logs (
+    workspace_id,
+    actor_user_id,
+    action,
+    resource_type,
+    resource_id
+  )
+  values (
+    invitation.workspace_id,
+    actor_id,
+    'workspace.invitation_revoked',
+    'workspace_invitation',
+    target_invitation_id::text
+  );
+end;
+$$;
+
+create function public.revoke_workspace_invitation(target_invitation_id uuid)
+returns void
+language sql
+security invoker
+set search_path = ''
+as $$
+  select private.revoke_workspace_invitation_impl(target_invitation_id);
+$$;
+
+revoke all on function public.list_workspace_invitations(uuid) from public, anon, authenticated;
+revoke all on function public.revoke_workspace_invitation(uuid) from public, anon, authenticated;
+revoke all on function private.list_workspace_invitations_impl(uuid) from public, anon, authenticated;
+revoke all on function private.revoke_workspace_invitation_impl(uuid) from public, anon, authenticated;
+
+grant execute on function public.list_workspace_invitations(uuid) to authenticated;
+grant execute on function public.revoke_workspace_invitation(uuid) to authenticated;
+grant execute on function private.list_workspace_invitations_impl(uuid) to authenticated;
+grant execute on function private.revoke_workspace_invitation_impl(uuid) to authenticated;
