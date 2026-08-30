@@ -1,3 +1,5 @@
+import { STORAGE_KEYS, type StorageAdapter } from './storage';
+
 function hex(bytes: Uint8Array): string {
   return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join(
     '',
@@ -32,4 +34,20 @@ export function isUuidV7(value: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
     value,
   );
+}
+
+export function getOrCreateVisitorId(
+  storage: StorageAdapter | null,
+  now = Date.now(),
+): string {
+  const existing = storage?.get(STORAGE_KEYS.visitor);
+
+  if (existing && isUuidV7(existing)) {
+    return existing;
+  }
+
+  const visitorId = createUuidV7(now);
+  storage?.set(STORAGE_KEYS.visitor, visitorId);
+
+  return visitorId;
 }
