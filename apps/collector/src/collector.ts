@@ -14,10 +14,7 @@ import type { RateLimiter } from './rate-limit';
 import { readJsonBody, requireJsonContentType } from './request';
 import { acceptedResponse, errorResponse } from './responses';
 import type { ExecutionContextLike } from './types';
-import {
-  assertPageUrlsMatchOrigin,
-  validateEventBatch,
-} from './validation';
+import { assertPageUrlsMatchOrigin, validateEventBatch } from './validation';
 
 export const COLLECTOR_VERSION = '0.1.0';
 
@@ -203,11 +200,7 @@ export function createCollector(dependencies: CollectorDependencies) {
         error_code: collectorError.code,
       });
 
-      return errorResponse(
-        collectorError,
-        requestId,
-        origin?.origin,
-      );
+      return errorResponse(collectorError, requestId, origin?.origin);
     }
   };
 }

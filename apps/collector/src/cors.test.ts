@@ -19,9 +19,7 @@ describe('CORS origin parsing', () => {
   it('echoes Origin without credentials', () => {
     const headers = corsHeaders('https://example.com');
 
-    expect(headers['Access-Control-Allow-Origin']).toBe(
-      'https://example.com',
-    );
+    expect(headers['Access-Control-Allow-Origin']).toBe('https://example.com');
     expect(headers['Vary']).toBe('Origin');
     expect(headers).not.toHaveProperty('Access-Control-Allow-Credentials');
   });

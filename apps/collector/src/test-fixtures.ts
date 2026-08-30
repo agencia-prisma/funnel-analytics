@@ -1,7 +1,4 @@
-import type {
-  BrowserEventV1,
-  EventBatchV1,
-} from '@funnel/event-contracts';
+import type { BrowserEventV1, EventBatchV1 } from '@funnel/event-contracts';
 
 export const TEST_NOW = Date.parse('2026-08-30T00:00:00.000Z');
 export const TEST_PIXEL_KEY = 'px_pub_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';

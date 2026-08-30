@@ -14,12 +14,9 @@ describe('collector transport status mapping', () => {
     expect(isRetryableCollectorStatus(status)).toBe(true);
   });
 
-  it.each([400, 403, 404, 413, 422])(
-    'does not retry status %s',
-    (status) => {
-      expect(isRetryableCollectorStatus(status)).toBe(false);
-    },
-  );
+  it.each([400, 403, 404, 413, 422])('does not retry status %s', (status) => {
+    expect(isRetryableCollectorStatus(status)).toBe(false);
+  });
 
   it('classifies Collector responses through HttpTransport', async () => {
     const transport = new HttpTransport(

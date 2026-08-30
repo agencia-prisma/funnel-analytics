@@ -20,8 +20,7 @@ async function injectPixel(page: import('@playwright/test').Page) {
   await page.evaluate(
     ({ source }) => {
       const script = document.createElement('script');
-      script.dataset.pixelId =
-        'px_pub_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+      script.dataset.pixelId = 'px_pub_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
       script.dataset.endpoint = 'http://127.0.0.1:8787/v1/events';
       script.textContent = source;
       document.head.appendChild(script);
@@ -53,9 +52,11 @@ test('pixel.js HttpTransport reaches local Worker and Queue path', async ({
 
   await injectPixel(page);
   await page.evaluate(async () => {
-    await (window as typeof window & {
-      funnelAnalytics?: { flush(): Promise<boolean> };
-    }).funnelAnalytics?.flush();
+    await (
+      window as typeof window & {
+        funnelAnalytics?: { flush(): Promise<boolean> };
+      }
+    ).funnelAnalytics?.flush();
   });
 
   const accepted = await firstResponse;
@@ -65,9 +66,7 @@ test('pixel.js HttpTransport reaches local Worker and Queue path', async ({
     event_count: 1,
   });
 
-  const firstPayload = JSON.parse(
-    accepted.request().postData() ?? '{}',
-  ) as {
+  const firstPayload = JSON.parse(accepted.request().postData() ?? '{}') as {
     events?: Array<{
       event_name?: string;
       page_path?: string;
@@ -95,17 +94,17 @@ test('pixel.js HttpTransport reaches local Worker and Queue path', async ({
     history.pushState({}, '', '/checkout');
   });
   await page.evaluate(async () => {
-    await (window as typeof window & {
-      funnelAnalytics?: { flush(): Promise<boolean> };
-    }).funnelAnalytics?.flush();
+    await (
+      window as typeof window & {
+        funnelAnalytics?: { flush(): Promise<boolean> };
+      }
+    ).funnelAnalytics?.flush();
   });
 
   const spaAccepted = await secondResponse;
   expect(spaAccepted.status()).toBe(202);
 
-  const spaPayload = JSON.parse(
-    spaAccepted.request().postData() ?? '{}',
-  ) as {
+  const spaPayload = JSON.parse(spaAccepted.request().postData() ?? '{}') as {
     events?: Array<{
       event_name?: string;
       page_path?: string;

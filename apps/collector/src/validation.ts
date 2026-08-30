@@ -43,7 +43,12 @@ function isNullableBoundedString(
 }
 
 function isNonNegativeNumber(value: unknown, max = 100_000): value is number {
-  return typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= max;
+  return (
+    typeof value === 'number' &&
+    Number.isFinite(value) &&
+    value >= 0 &&
+    value <= max
+  );
 }
 
 function normalizedPropertyKey(key: string): string {
@@ -186,10 +191,7 @@ function validateClickIds(value: unknown): Record<string, string> {
   const result: Record<string, string> = {};
 
   for (const [key, item] of entries) {
-    if (
-      !/^[a-z0-9_]{1,32}$/i.test(key) ||
-      !isBoundedString(item, 512, false)
-    ) {
+    if (!/^[a-z0-9_]{1,32}$/i.test(key) || !isBoundedString(item, 512, false)) {
       throw new CollectorError(422, 'INVALID_EVENT');
     }
 
