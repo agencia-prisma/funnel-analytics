@@ -1,4 +1,4 @@
-import type { EventBatchV1, PageViewEventV1 } from '@funnel/event-contracts';
+import type { PageViewEventV1 } from '@funnel/event-contracts';
 import { describe, expect, it } from 'vitest';
 
 import { EventQueue } from './queue';
@@ -59,7 +59,7 @@ describe('event queue', () => {
     let attempts = 0;
 
     const transport: Transport = {
-      async send(_batch: EventBatchV1) {
+      async send() {
         attempts += 1;
 
         return attempts < 3
