@@ -59,6 +59,7 @@ WHERE workspace_id = {workspace_id:UUID}
   AND pixel_id = {pixel_id:UUID}
   AND session_id IN {session_ids:Array(UUID)}
 GROUP BY workspace_id, pixel_id, session_id
+SETTINGS prefer_column_name_to_alias = 1
 `;
 
 function classifyClickHouseFailure(
