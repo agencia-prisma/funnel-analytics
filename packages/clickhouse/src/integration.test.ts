@@ -111,7 +111,7 @@ describe('ClickHouse events integration', () => {
 
     const result = await rows<{
       event_name: string;
-      test_mode: number;
+      test_mode: boolean;
       properties_json: string;
     }>(
       'SELECT event_name, test_mode, toJSONString(properties) AS properties_json FROM funnel_analytics.events FINAL ORDER BY event_name',
@@ -120,8 +120,8 @@ describe('ClickHouse events integration', () => {
     expect(result).toHaveLength(2);
     expect(result.some((row) => row.event_name === 'page_view')).toBe(true);
     expect(result.some((row) => row.event_name === 'cta_clicked')).toBe(true);
-    expect(result.some((row) => row.test_mode === 1)).toBe(true);
-    expect(result.join(' ')).toContain('shoe');
+    expect(result.some((row) => row.test_mode === true)).toBe(true);
+    expect(result.some((row) => row.properties_json.includes('shoe'))).toBe(true);
   });
 
   it('supports nullable attribution and multiple workspaces/pixels', async () => {
