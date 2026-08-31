@@ -1,5 +1,5 @@
 import type { CollectorEnvelopeV1 } from '@funnel/event-contracts';
-import { ClickHouseSessionRepository } from '@funnel/session-engine';
+import { ClickHouseSessionRepository } from '../../packages/session-engine/src/index';
 
 import { createRouter } from '../../apps/collector/src/router';
 import type {
