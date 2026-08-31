@@ -126,7 +126,7 @@ export function createEventConsumer(dependencies: EventConsumerDependencies) {
           session_command_count: sessionCommands.length,
           raw_archive_ms: Math.round(rawArchiveMs),
           clickhouse_insert_ms: Math.round(clickhouseMs),
-        session_command_count: sessionCommands.length,
+          session_command_count: sessionCommands.length,
           processing_ms: Math.round(performance.now() - startedAt),
           status: 'retry',
           retry_count: Math.max(

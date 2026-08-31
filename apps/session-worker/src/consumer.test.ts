@@ -108,10 +108,7 @@ describe('Session Worker consumer', () => {
 
   it('retries without ack on a transient ClickHouse query failure', async () => {
     const deps = dependencies({
-      queryError: new SessionEngineError(
-        'TRANSIENT',
-        'SESSION_QUERY_FAILED',
-      ),
+      queryError: new SessionEngineError('TRANSIENT', 'SESSION_QUERY_FAILED'),
     });
     const item = message();
     const consume = createSessionConsumer(deps);
@@ -141,10 +138,7 @@ describe('Session Worker consumer', () => {
 
   it('retries without ack when snapshot insert fails transiently', async () => {
     const deps = dependencies({
-      insertError: new SessionEngineError(
-        'TRANSIENT',
-        'SESSION_INSERT_FAILED',
-      ),
+      insertError: new SessionEngineError('TRANSIENT', 'SESSION_INSERT_FAILED'),
     });
     const item = message();
     const consume = createSessionConsumer(deps);

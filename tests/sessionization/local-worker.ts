@@ -29,9 +29,7 @@ type TestR2Bucket = EventWorkerEnv['EVENTS_RAW_BUCKET'] & {
 };
 
 interface SessionizationEnv
-  extends CollectorEnv,
-    EventWorkerEnv,
-    SessionWorkerEnv {
+  extends CollectorEnv, EventWorkerEnv, SessionWorkerEnv {
   EVENTS_RAW_BUCKET: TestR2Bucket;
 }
 
@@ -48,11 +46,7 @@ function json(body: unknown, status = 200): Response {
 function isSessionBatch(batch: QueueBatchLike): boolean {
   const body = batch.messages[0]?.body;
 
-  return (
-    typeof body === 'object' &&
-    body !== null &&
-    'session_ids' in body
-  );
+  return typeof body === 'object' && body !== null && 'session_ids' in body;
 }
 
 export default {
@@ -89,10 +83,7 @@ export default {
     return createRouter(env)(request, ctx);
   },
 
-  async queue(
-    batch: QueueBatchLike,
-    env: SessionizationEnv,
-  ): Promise<void> {
+  async queue(batch: QueueBatchLike, env: SessionizationEnv): Promise<void> {
     if (isSessionBatch(batch)) {
       const consumeSessions = createSessionConsumer({
         repository: new ClickHouseSessionRepository({

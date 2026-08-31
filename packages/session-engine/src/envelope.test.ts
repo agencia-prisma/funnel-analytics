@@ -5,10 +5,12 @@ import { recomputeEnvelope, TEST_SESSION_ID } from './test-fixtures';
 
 describe('SessionRecomputeEnvelopeV1', () => {
   it('accepts a valid bounded envelope', () => {
-    expect(validateSessionRecomputeEnvelope(recomputeEnvelope())).toMatchObject({
-      envelope_version: 1,
-      session_ids: [TEST_SESSION_ID],
-    });
+    expect(validateSessionRecomputeEnvelope(recomputeEnvelope())).toMatchObject(
+      {
+        envelope_version: 1,
+        session_ids: [TEST_SESSION_ID],
+      },
+    );
   });
 
   it('rejects unsupported versions permanently', () => {

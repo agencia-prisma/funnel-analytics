@@ -5,8 +5,7 @@ import type {
 
 import type { SessionAggregateRow } from './types';
 
-export const TEST_SESSION_ID =
-  '018bcfe5-6800-7000-8000-000000000003';
+export const TEST_SESSION_ID = '018bcfe5-6800-7000-8000-000000000003';
 
 export function normalizedEvent(
   overrides: Partial<NormalizedEventV1> = {},

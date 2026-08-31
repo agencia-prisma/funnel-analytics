@@ -2,10 +2,7 @@ import {
   createClickHouseWebClient,
   HttpClickHouseWriter,
 } from '@funnel/clickhouse';
-import type {
-  NormalizedEventV1,
-  SessionFactV1,
-} from '@funnel/event-contracts';
+import type { NormalizedEventV1, SessionFactV1 } from '@funnel/event-contracts';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { SessionEngineError } from './errors';
@@ -39,9 +36,7 @@ const VISITOR_A = '018bcfe5-6800-7000-8000-000000000002';
 const VISITOR_B = '018bcfe5-6800-7000-8000-000000000009';
 const SESSION_A = '018bcfe5-6800-7000-8000-000000000003';
 
-function event(
-  overrides: Partial<NormalizedEventV1> = {},
-): NormalizedEventV1 {
+function event(overrides: Partial<NormalizedEventV1> = {}): NormalizedEventV1 {
   return {
     event_id: '018bcfe5-6800-7000-8000-000000000001',
     event_version: 1,

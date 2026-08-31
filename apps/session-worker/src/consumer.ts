@@ -7,16 +7,10 @@ import {
 } from '@funnel/session-engine';
 import type { SessionFactV1 } from '@funnel/event-contracts';
 
-import {
-  sessionDlqAndAck,
-  type SessionDlqProducer,
-} from './dlq';
+import { sessionDlqAndAck, type SessionDlqProducer } from './dlq';
 import { logSessionWorker } from './logging';
 import { retrySessionMessage } from './retry';
-import type {
-  SessionQueueBatchLike,
-  SessionQueueMessageLike,
-} from './types';
+import type { SessionQueueBatchLike, SessionQueueMessageLike } from './types';
 
 const MAX_SESSION_REFERENCES_PER_INVOCATION = 500;
 

@@ -8,14 +8,14 @@
     "local": {
       "name": "funnel-analytics-session-worker-local",
       "vars": {
-        "SESSION_WORKER_ENV": "local"
+        "SESSION_WORKER_ENV": "local",
       },
       "queues": {
         "producers": [
           {
             "binding": "SESSIONS_DLQ",
-            "queue": "funnel-analytics-sessions-dlq-local"
-          }
+            "queue": "funnel-analytics-sessions-dlq-local",
+          },
         ],
         "consumers": [
           {
@@ -23,22 +23,22 @@
             "max_batch_size": 5,
             "max_batch_timeout": 1,
             "max_retries": 3,
-            "dead_letter_queue": "funnel-analytics-sessions-dlq-local"
-          }
-        ]
-      }
+            "dead_letter_queue": "funnel-analytics-sessions-dlq-local",
+          },
+        ],
+      },
     },
     "preview": {
       "name": "funnel-analytics-session-worker-preview",
       "vars": {
-        "SESSION_WORKER_ENV": "preview"
+        "SESSION_WORKER_ENV": "preview",
       },
       "queues": {
         "producers": [
           {
             "binding": "SESSIONS_DLQ",
-            "queue": "funnel-analytics-sessions-dlq-preview"
-          }
+            "queue": "funnel-analytics-sessions-dlq-preview",
+          },
         ],
         "consumers": [
           {
@@ -46,22 +46,22 @@
             "max_batch_size": 5,
             "max_batch_timeout": 1,
             "max_retries": 3,
-            "dead_letter_queue": "funnel-analytics-sessions-dlq-preview"
-          }
-        ]
-      }
+            "dead_letter_queue": "funnel-analytics-sessions-dlq-preview",
+          },
+        ],
+      },
     },
     "production": {
       "name": "funnel-analytics-session-worker-production",
       "vars": {
-        "SESSION_WORKER_ENV": "production"
+        "SESSION_WORKER_ENV": "production",
       },
       "queues": {
         "producers": [
           {
             "binding": "SESSIONS_DLQ",
-            "queue": "funnel-analytics-sessions-dlq-production"
-          }
+            "queue": "funnel-analytics-sessions-dlq-production",
+          },
         ],
         "consumers": [
           {
@@ -69,10 +69,10 @@
             "max_batch_size": 5,
             "max_batch_timeout": 1,
             "max_retries": 3,
-            "dead_letter_queue": "funnel-analytics-sessions-dlq-production"
-          }
-        ]
-      }
-    }
-  }
+            "dead_letter_queue": "funnel-analytics-sessions-dlq-production",
+          },
+        ],
+      },
+    },
+  },
 }

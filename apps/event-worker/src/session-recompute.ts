@@ -6,9 +6,7 @@ export interface SessionRecomputeProducer {
   enqueue(envelope: SessionRecomputeEnvelopeV1): Promise<void>;
 }
 
-export class CloudflareSessionRecomputeProducer
-  implements SessionRecomputeProducer
-{
+export class CloudflareSessionRecomputeProducer implements SessionRecomputeProducer {
   constructor(private readonly binding: SessionQueueBinding) {}
 
   async enqueue(envelope: SessionRecomputeEnvelopeV1): Promise<void> {

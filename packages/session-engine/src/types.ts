@@ -1,7 +1,4 @@
-import type {
-  DeviceTypeV1,
-  SessionFactV1,
-} from '@funnel/event-contracts';
+import type { DeviceTypeV1, SessionFactV1 } from '@funnel/event-contracts';
 
 export interface SessionQueryGroup {
   workspace_id: string;

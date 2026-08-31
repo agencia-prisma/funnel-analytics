@@ -121,6 +121,28 @@ importers:
       '@funnel/pixel':
         specifier: workspace:*
         version: link:../../packages/pixel
+      '@funnel/session-engine':
+        specifier: workspace:*
+        version: link:../../packages/session-engine
+    devDependencies:
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@types/node@26.4.0)(vite@8.2.2(@types/node@26.4.0)(esbuild@0.28.2)(jiti@2.7.0))
+      wrangler:
+        specifier: 4.127.1
+        version: 4.127.1
+
+  apps/session-worker:
+    dependencies:
+      '@funnel/event-contracts':
+        specifier: workspace:*
+        version: link:../../packages/event-contracts
+      '@funnel/session-engine':
+        specifier: workspace:*
+        version: link:../../packages/session-engine
     devDependencies:
       typescript:
         specifier: 5.9.3
@@ -289,6 +311,22 @@ importers:
       esbuild:
         specifier: 0.28.2
         version: 0.28.2
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@types/node@26.4.0)(vite@8.2.2(@types/node@26.4.0)(esbuild@0.28.2)(jiti@2.7.0))
+
+  packages/session-engine:
+    dependencies:
+      '@funnel/clickhouse':
+        specifier: workspace:*
+        version: link:../clickhouse
+      '@funnel/event-contracts':
+        specifier: workspace:*
+        version: link:../event-contracts
+    devDependencies:
       typescript:
         specifier: 5.9.3
         version: 5.9.3

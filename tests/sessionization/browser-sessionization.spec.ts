@@ -43,8 +43,7 @@ async function injectPixel(page: Page) {
   await page.evaluate(
     ({ source, endpoint }) => {
       const script = document.createElement('script');
-      script.dataset.pixelId =
-        'px_pub_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+      script.dataset.pixelId = 'px_pub_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
       script.dataset.endpoint = endpoint;
       script.textContent = source;
       document.head.appendChild(script);
@@ -215,14 +214,11 @@ test('two SDK-style session IDs more than 30 minutes apart create two facts', as
   });
 
   for (const body of [first, second]) {
-    const response = await fetch(
-      `${sessionizationBaseUrl}/__test/enqueue`,
-      {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(body),
-      },
-    );
+    const response = await fetch(`${sessionizationBaseUrl}/__test/enqueue`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+    });
     expect(response.status).toBe(202);
   }
 

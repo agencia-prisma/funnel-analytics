@@ -2,8 +2,7 @@ import { createClient } from '@clickhouse/client-web';
 
 import type { ClickHouseConfig } from './types';
 
-const LOCAL_CLICKHOUSE_PATTERN =
-  /^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?\/?/;
+const LOCAL_CLICKHOUSE_PATTERN = /^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?\/?/;
 
 export function validateClickHouseUrl(url: string): void {
   if (

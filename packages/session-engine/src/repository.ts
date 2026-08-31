@@ -61,7 +61,10 @@ WHERE workspace_id = {workspace_id:UUID}
 GROUP BY workspace_id, pixel_id, session_id
 `;
 
-function classifyClickHouseFailure(error: unknown, code: 'SESSION_QUERY_FAILED' | 'SESSION_INSERT_FAILED') {
+function classifyClickHouseFailure(
+  error: unknown,
+  code: 'SESSION_QUERY_FAILED' | 'SESSION_INSERT_FAILED',
+) {
   const message = error instanceof Error ? error.message : String(error);
   const permanent =
     /authentication|not enough privileges|unknown database|unknown table|syntax error|type mismatch/i.test(

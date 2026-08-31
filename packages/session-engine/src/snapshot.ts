@@ -23,21 +23,14 @@ function toBoolean(value: boolean | number | string): boolean {
     return true;
   }
 
-  if (
-    value === false ||
-    value === 0 ||
-    value === '0' ||
-    value === 'false'
-  ) {
+  if (value === false || value === 0 || value === '0' || value === 'false') {
     return false;
   }
 
   throw new SessionEngineError('PERMANENT', 'SESSION_INTEGRITY_VIOLATION');
 }
 
-export function snapshotFromAggregate(
-  row: SessionAggregateRow,
-): SessionFactV1 {
+export function snapshotFromAggregate(row: SessionAggregateRow): SessionFactV1 {
   const visitorCount = toSafeNumber(row.visitor_count);
   const testModeCount = toSafeNumber(row.test_mode_count);
   const eventCount = toSafeNumber(row.event_count);

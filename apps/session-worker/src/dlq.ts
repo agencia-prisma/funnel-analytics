@@ -3,10 +3,7 @@ import type {
   SessionDeadLetterEnvelopeV1,
 } from '@funnel/event-contracts';
 
-import type {
-  SessionDlqBinding,
-  SessionQueueMessageLike,
-} from './types';
+import type { SessionDlqBinding, SessionQueueMessageLike } from './types';
 
 export interface SessionDlqProducer {
   send(input: {

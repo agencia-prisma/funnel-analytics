@@ -2,10 +2,7 @@ import { ClickHouseSessionRepository } from '@funnel/session-engine';
 
 import { createSessionConsumer } from './consumer';
 import { CloudflareSessionDlqProducer } from './dlq';
-import type {
-  SessionQueueBatchLike,
-  SessionWorkerEnv,
-} from './types';
+import type { SessionQueueBatchLike, SessionWorkerEnv } from './types';
 
 export default {
   async queue(
