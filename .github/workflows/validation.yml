@@ -336,7 +336,7 @@ jobs:
       - name: Start local Cloudflare pipeline
         shell: bash
         run: |
-          pnpm --filter @funnel/event-worker exec wrangler dev --config ../../tests/pipeline/wrangler.jsonc --local --ip 127.0.0.1 --port 8790 --env-file ../../tests/pipeline/.dev.vars > /tmp/pipeline.log 2>&1 &
+          pnpm --filter @funnel/event-worker exec wrangler dev --config "$GITHUB_WORKSPACE/tests/pipeline/wrangler.jsonc" --local --ip 127.0.0.1 --port 8790 --env-file "$GITHUB_WORKSPACE/tests/pipeline/.dev.vars" > /tmp/pipeline.log 2>&1 &
           for attempt in $(seq 1 60); do
             if curl --fail --silent http://127.0.0.1:8790/health > /dev/null; then
               exit 0
