@@ -121,9 +121,10 @@ describe('ClickHouse events integration', () => {
     expect(result.some((row) => row.event_name === 'page_view')).toBe(true);
     expect(result.some((row) => row.event_name === 'cta_clicked')).toBe(true);
     expect(result.some((row) => row.test_mode === true)).toBe(true);
-    expect(
-      result.some((row) => row.properties_json.includes('shoe')),
-    ).toBe(true);
+    const containsShoeProperty = result.some((row) =>
+      row.properties_json.includes('shoe'),
+    );
+    expect(containsShoeProperty).toBe(true);
   });
 
   it('supports nullable attribution and multiple workspaces/pixels', async () => {
