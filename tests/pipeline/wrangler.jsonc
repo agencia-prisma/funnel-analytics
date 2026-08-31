@@ -20,6 +20,10 @@
         "binding": "EVENTS_DLQ",
         "queue": "funnel-analytics-events-dlq-pipeline-local",
       },
+      {
+        "binding": "SESSIONS_QUEUE",
+        "queue": "funnel-analytics-sessions-pipeline-local",
+      },
     ],
     "consumers": [
       {

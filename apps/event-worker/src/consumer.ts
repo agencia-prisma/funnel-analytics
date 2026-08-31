@@ -3,6 +3,7 @@ import type {
   NormalizedEventV1,
 } from '@funnel/event-contracts';
 import type { ClickHouseWriter } from '@funnel/clickhouse';
+import { buildSessionRecomputeEnvelopes } from '@funnel/session-engine';
 
 import { dlqAndAck, type DlqProducer } from './dlq';
 import { validateCollectorEnvelope } from './envelope';
@@ -13,6 +14,7 @@ import { normalizeEnvelope } from './normalization';
 import type { RawArchive } from './raw-archive';
 import { retryMessage } from './retry';
 import type { QueueBatchLike, QueueMessageLike } from './types';
+import type { SessionRecomputeProducer } from './session-recompute';
 import { mapClickHouseError } from './clickhouse-writer';
 
 interface Candidate {
@@ -25,6 +27,7 @@ export interface EventConsumerDependencies {
   rawArchive: RawArchive;
   writer: ClickHouseWriter;
   dlq: DlqProducer;
+  sessions: SessionRecomputeProducer;
   now?: () => number;
 }
 
@@ -100,6 +103,42 @@ export function createEventConsumer(dependencies: EventConsumerDependencies) {
     try {
       await dependencies.writer.insertEvents(events);
       const clickhouseMs = performance.now() - clickHouseStartedAt;
+      const generatedAt = new Date(now()).toISOString();
+      const sessionCommands = buildSessionRecomputeEnvelopes(
+        events,
+        generatedAt,
+      );
+
+      try {
+        for (const command of sessionCommands) {
+          await dependencies.sessions.enqueue(command);
+        }
+      } catch {
+        for (const candidate of candidates) {
+          retryMessage(candidate.message);
+          metrics.events_retried += candidate.events.length;
+        }
+
+        logEventWorker('event_worker.session_queue.failed', {
+          queue_batch_size: batch.messages.length,
+          envelope_count: candidates.length,
+          event_count: events.length,
+          session_command_count: sessionCommands.length,
+          raw_archive_ms: Math.round(rawArchiveMs),
+          clickhouse_insert_ms: Math.round(clickhouseMs),
+        session_command_count: sessionCommands.length,
+          processing_ms: Math.round(performance.now() - startedAt),
+          status: 'retry',
+          retry_count: Math.max(
+            0,
+            ...candidates.map(
+              (candidate) => (candidate.message.attempts ?? 1) - 1,
+            ),
+          ),
+          error_code: 'SESSION_QUEUE_FAILED',
+        });
+        return;
+      }
 
       for (const candidate of candidates) {
         candidate.message.ack();

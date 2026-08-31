@@ -1,0 +1,78 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "funnel-analytics-session-worker",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-29",
+  "workers_dev": false,
+  "env": {
+    "local": {
+      "name": "funnel-analytics-session-worker-local",
+      "vars": {
+        "SESSION_WORKER_ENV": "local"
+      },
+      "queues": {
+        "producers": [
+          {
+            "binding": "SESSIONS_DLQ",
+            "queue": "funnel-analytics-sessions-dlq-local"
+          }
+        ],
+        "consumers": [
+          {
+            "queue": "funnel-analytics-sessions-local",
+            "max_batch_size": 5,
+            "max_batch_timeout": 1,
+            "max_retries": 3,
+            "dead_letter_queue": "funnel-analytics-sessions-dlq-local"
+          }
+        ]
+      }
+    },
+    "preview": {
+      "name": "funnel-analytics-session-worker-preview",
+      "vars": {
+        "SESSION_WORKER_ENV": "preview"
+      },
+      "queues": {
+        "producers": [
+          {
+            "binding": "SESSIONS_DLQ",
+            "queue": "funnel-analytics-sessions-dlq-preview"
+          }
+        ],
+        "consumers": [
+          {
+            "queue": "funnel-analytics-sessions-preview",
+            "max_batch_size": 5,
+            "max_batch_timeout": 1,
+            "max_retries": 3,
+            "dead_letter_queue": "funnel-analytics-sessions-dlq-preview"
+          }
+        ]
+      }
+    },
+    "production": {
+      "name": "funnel-analytics-session-worker-production",
+      "vars": {
+        "SESSION_WORKER_ENV": "production"
+      },
+      "queues": {
+        "producers": [
+          {
+            "binding": "SESSIONS_DLQ",
+            "queue": "funnel-analytics-sessions-dlq-production"
+          }
+        ],
+        "consumers": [
+          {
+            "queue": "funnel-analytics-sessions-production",
+            "max_batch_size": 5,
+            "max_batch_timeout": 1,
+            "max_retries": 3,
+            "dead_letter_queue": "funnel-analytics-sessions-dlq-production"
+          }
+        ]
+      }
+    }
+  }
+}

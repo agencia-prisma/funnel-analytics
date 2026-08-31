@@ -27,7 +27,10 @@
     "event-worker:dev": "pnpm --filter @funnel/event-worker dev",
     "event-worker:build": "pnpm --filter @funnel/event-worker build",
     "clickhouse:migrate": "pnpm --filter @funnel/clickhouse migrate",
-    "test:pipeline-browser": "playwright test --config=playwright.pipeline.config.ts"
+    "test:pipeline-browser": "playwright test --config=playwright.pipeline.config.ts",
+    "session-worker:dev": "pnpm --filter @funnel/session-worker dev",
+    "session-worker:build": "pnpm --filter @funnel/session-worker build",
+    "test:sessionization-browser": "playwright test --config=playwright.sessionization.config.ts"
   },
   "devDependencies": {
     "@funnel/config": "workspace:*",

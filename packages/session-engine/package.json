@@ -1,0 +1,23 @@
+{
+  "name": "@funnel/session-engine",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run src/envelope.test.ts src/queue.test.ts src/version.test.ts src/snapshot.test.ts",
+    "test:integration": "vitest run src/integration.test.ts",
+    "test:performance": "vitest run src/performance.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@funnel/clickhouse": "workspace:*",
+    "@funnel/event-contracts": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3",
+    "vitest": "4.1.11"
+  }
+}

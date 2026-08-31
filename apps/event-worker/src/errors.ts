@@ -7,6 +7,7 @@ export type PipelineErrorCode =
   | 'RAW_ARCHIVE_FAILED'
   | 'CLICKHOUSE_FAILED'
   | 'CLICKHOUSE_BATCH_TOO_LARGE'
+  | 'SESSION_QUEUE_FAILED'
   | 'DLQ_FAILED';
 
 export class PipelineError extends Error {

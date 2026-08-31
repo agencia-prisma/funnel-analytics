@@ -1,18 +1,16 @@
 {
-  "name": "@funnel/event-worker",
+  "name": "@funnel/session-worker",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "wrangler deploy --dry-run --outdir dist",
-    "dev": "wrangler dev --local",
+    "build": "wrangler deploy --dry-run --env local --outdir dist",
+    "dev": "wrangler dev --local --env local",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@funnel/clickhouse": "workspace:*",
     "@funnel/event-contracts": "workspace:*",
-    "@funnel/pixel": "workspace:*",
     "@funnel/session-engine": "workspace:*"
   },
   "devDependencies": {
