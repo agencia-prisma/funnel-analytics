@@ -93,6 +93,7 @@ jobs:
 
   e2e:
     name: Auth E2E
+    needs: database
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -457,7 +458,7 @@ jobs:
         run: |
           pnpm --filter @funnel/session-worker exec wrangler dev --config "$GITHUB_WORKSPACE/tests/sessionization/wrangler.jsonc" --local --ip 127.0.0.1 --port 8791 --env-file "$GITHUB_WORKSPACE/tests/sessionization/.dev.vars" > /tmp/sessionization.log 2>&1 &
           for attempt in $(seq 1 60); do
-            if curl --fail --silent http://127.0.0.1:8791/health > /dev/null; then
+            if curl --fail --silent --max-time 2 http://127.0.0.1:8791/health > /dev/null; then
               exit 0
             fi
             sleep 1
