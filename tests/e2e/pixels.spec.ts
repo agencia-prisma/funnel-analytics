@@ -114,7 +114,15 @@ test('Viewer can view Pixels but cannot mutate them', async ({ browser }) => {
   await viewerPage.getByRole('button', { name: 'Criar conta' }).click();
   await viewerPage.getByRole('button', { name: 'Aceitar convite' }).click();
 
+  await expect(viewerPage).toHaveURL(/\/app$/);
+  await expect(
+    viewerPage.getByText('viewer', { exact: true }).first(),
+  ).toBeVisible();
+
   await viewerPage.goto('/app/pixels');
+  await expect(
+    viewerPage.getByRole('heading', { name: 'Pixels' }),
+  ).toBeVisible();
   await expect(viewerPage.getByText(pixelName, { exact: true })).toBeVisible();
   await expect(
     viewerPage.getByRole('button', { name: 'Criar Pixel' }),

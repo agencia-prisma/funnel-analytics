@@ -1,6 +1,7 @@
 import type {
   CollectorEnvelopeV1,
   DeadLetterEnvelopeV1,
+  SessionRecomputeEnvelopeV1,
 } from '@funnel/event-contracts';
 
 export type EventWorkerEnvironment = 'local' | 'preview' | 'production';
@@ -26,6 +27,10 @@ export interface DlqBinding {
   send(message: DeadLetterEnvelopeV1): Promise<void>;
 }
 
+export interface SessionQueueBinding {
+  send(message: SessionRecomputeEnvelopeV1): Promise<void>;
+}
+
 export interface EventWorkerEnv {
   EVENT_WORKER_ENV: EventWorkerEnvironment;
   CLICKHOUSE_URL: string;
@@ -33,6 +38,7 @@ export interface EventWorkerEnv {
   CLICKHOUSE_PASSWORD: string;
   EVENTS_RAW_BUCKET: R2BucketLike;
   EVENTS_DLQ: DlqBinding;
+  SESSIONS_QUEUE: SessionQueueBinding;
 }
 
 export interface QueueMessageLike {

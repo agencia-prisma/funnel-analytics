@@ -1,6 +1,6 @@
-import { createClient } from '@clickhouse/client-web';
 import type { NormalizedEventV1 } from '@funnel/event-contracts';
 
+import { createClickHouseWebClient } from './client';
 import { createInsertDedupToken } from './dedup';
 import type {
   ClickHouseConfig,
@@ -76,22 +76,12 @@ function row(event: NormalizedEventV1) {
 
 export class HttpClickHouseWriter implements ClickHouseWriter {
   private readonly database: string;
-  private readonly client: ReturnType<typeof createClient>;
+  private readonly client: ReturnType<typeof createClickHouseWebClient>;
 
   constructor(config: ClickHouseConfig) {
-    if (
-      !config.url ||
-      (config.url.startsWith('http://') &&
-        !/^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?\/?/.test(config.url))
-    ) {
-      throw new Error('CLICKHOUSE_HTTPS_REQUIRED');
-    }
-
     this.database = config.database ?? DEFAULT_DATABASE;
-    this.client = createClient({
-      url: config.url,
-      username: config.username,
-      password: config.password,
+    this.client = createClickHouseWebClient({
+      ...config,
       database: this.database,
     });
   }

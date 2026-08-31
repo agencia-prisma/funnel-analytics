@@ -1,11 +1,12 @@
 {
   "$schema": "../../node_modules/wrangler/config-schema.json",
-  "name": "funnel-analytics-pipeline-local",
+  "name": "funnel-analytics-sessionization-local",
   "main": "local-worker.ts",
   "compatibility_date": "2026-08-29",
   "vars": {
     "COLLECTOR_ENV": "local",
     "EVENT_WORKER_ENV": "local",
+    "SESSION_WORKER_ENV": "local",
     "CLICKHOUSE_URL": "http://127.0.0.1:8123",
     "CLICKHOUSE_USERNAME": "default",
     "LOCAL_PIXEL_REGISTRY_JSON": "{\"pixels\":[{\"id\":\"31000000-0000-0000-0000-000000000001\",\"workspace_id\":\"21000000-0000-0000-0000-000000000001\",\"public_key\":\"px_pub_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"status\":\"active\",\"health_status\":\"healthy\",\"domains\":[{\"id\":\"41000000-0000-0000-0000-000000000001\",\"domain\":\"shop.localhost\",\"wildcard\":false,\"status\":\"active\"}]}]}",
@@ -14,37 +15,48 @@
     "producers": [
       {
         "binding": "EVENTS_QUEUE",
-        "queue": "funnel-analytics-events-pipeline-local",
+        "queue": "funnel-analytics-events-sessionization-local",
       },
       {
         "binding": "EVENTS_DLQ",
-        "queue": "funnel-analytics-events-dlq-pipeline-local",
+        "queue": "funnel-analytics-events-dlq-sessionization-local",
       },
       {
         "binding": "SESSIONS_QUEUE",
-        "queue": "funnel-analytics-sessions-pipeline-local",
+        "queue": "funnel-analytics-sessions-sessionization-local",
+      },
+      {
+        "binding": "SESSIONS_DLQ",
+        "queue": "funnel-analytics-sessions-dlq-sessionization-local",
       },
     ],
     "consumers": [
       {
-        "queue": "funnel-analytics-events-pipeline-local",
+        "queue": "funnel-analytics-events-sessionization-local",
         "max_batch_size": 10,
         "max_batch_timeout": 1,
         "max_retries": 3,
-        "dead_letter_queue": "funnel-analytics-events-dlq-pipeline-local",
+        "dead_letter_queue": "funnel-analytics-events-dlq-sessionization-local",
+      },
+      {
+        "queue": "funnel-analytics-sessions-sessionization-local",
+        "max_batch_size": 5,
+        "max_batch_timeout": 1,
+        "max_retries": 3,
+        "dead_letter_queue": "funnel-analytics-sessions-dlq-sessionization-local",
       },
     ],
   },
   "r2_buckets": [
     {
       "binding": "EVENTS_RAW_BUCKET",
-      "bucket_name": "funnel-analytics-events-raw-pipeline-local",
+      "bucket_name": "funnel-analytics-events-raw-sessionization-local",
     },
   ],
   "ratelimits": [
     {
       "name": "EVENTS_RATE_LIMITER",
-      "namespace_id": "5001",
+      "namespace_id": "6001",
       "simple": {
         "limit": 120,
         "period": 60,

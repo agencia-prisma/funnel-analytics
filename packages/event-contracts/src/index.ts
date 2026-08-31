@@ -178,3 +178,66 @@ export interface DeadLetterEnvelopeV1 {
   retry_count: number;
   envelope: unknown;
 }
+
+export const SESSION_RECOMPUTE_V1_MAX_SESSION_IDS = 100;
+
+export interface SessionRecomputeEnvelopeV1 {
+  envelope_version: 1;
+  request_id: string;
+  generated_at: string;
+  workspace_id: string;
+  pixel_id: string;
+  session_ids: string[];
+}
+
+export interface SessionDeadLetterEnvelopeV1 {
+  dlq_version: 1;
+  failed_at: string;
+  failure_kind: PipelineFailureKind;
+  error_code: string;
+  retry_count: number;
+  envelope: unknown;
+}
+
+export interface SessionFactV1 {
+  workspace_id: string;
+  pixel_id: string;
+  session_id: string;
+  visitor_id: string;
+  session_partition_month: number;
+  session_started_at: string;
+  last_activity_at: string;
+  duration_seconds: number;
+  event_count: number;
+  page_view_count: number;
+  custom_event_count: number;
+  landing_page_url: string | null;
+  landing_page_path: string | null;
+  landing_page_title: string | null;
+  exit_page_url: string | null;
+  exit_page_path: string | null;
+  exit_page_title: string | null;
+  session_referrer: string | null;
+  session_referrer_domain: string | null;
+  utm_source: string | null;
+  utm_medium: string | null;
+  utm_campaign: string | null;
+  utm_content: string | null;
+  utm_term: string | null;
+  fbclid: string | null;
+  ttclid: string | null;
+  gclid: string | null;
+  msclkid: string | null;
+  tblci: string | null;
+  device_type: DeviceTypeV1;
+  browser_name: string;
+  os_name: string;
+  language: string | null;
+  timezone: string | null;
+  test_mode: boolean;
+  first_event_id: string;
+  last_event_id: string;
+  max_received_at: string;
+  session_version: string;
+  updated_at: string;
+}

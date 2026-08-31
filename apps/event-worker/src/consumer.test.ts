@@ -2,16 +2,14 @@ import {
   ClickHouseWriteError,
   type ClickHouseWriter,
 } from '@funnel/clickhouse';
-import type {
-  CollectorEnvelopeV1,
-  DeadLetterEnvelopeV1,
-} from '@funnel/event-contracts';
+import type { CollectorEnvelopeV1 } from '@funnel/event-contracts';
 import { describe, expect, it } from 'vitest';
 
 import { createEventConsumer } from './consumer';
 import type { DlqProducer } from './dlq';
 import { PipelineError } from './errors';
 import type { RawArchive } from './raw-archive';
+import type { SessionRecomputeProducer } from './session-recompute';
 import { envelope } from './test-fixtures';
 import type { QueueMessageLike } from './types';
 
@@ -38,9 +36,11 @@ function message(body: unknown = envelope(), attempts = 1) {
 function dependencies(options?: {
   archiveFails?: boolean;
   writerFails?: 'transient' | 'permanent';
+  sessionQueueFails?: boolean;
 }) {
   const trace: string[] = [];
   const dlqMessages: unknown[] = [];
+  const sessionCommands: unknown[] = [];
 
   const rawArchive: RawArchive = {
     async archive(input) {
@@ -84,18 +84,39 @@ function dependencies(options?: {
     },
   };
 
-  return { rawArchive, writer, dlq, trace, dlqMessages };
+  const sessions: SessionRecomputeProducer = {
+    async enqueue(input) {
+      trace.push('sessions');
+
+      if (options?.sessionQueueFails) {
+        throw new Error('sessions queue unavailable');
+      }
+
+      sessionCommands.push(input);
+    },
+  };
+
+  return {
+    rawArchive,
+    writer,
+    dlq,
+    sessions,
+    trace,
+    dlqMessages,
+    sessionCommands,
+  };
 }
 
 describe('Event Worker consumer semantics', () => {
-  it('acks only after raw archive and ClickHouse insertion', async () => {
+  it('acks only after R2, ClickHouse and Sessions Queue succeed', async () => {
     const deps = dependencies();
     const item = message();
     const consume = createEventConsumer(deps);
 
     await consume({ messages: [item.value] });
 
-    expect(deps.trace).toEqual(['archive', 'clickhouse']);
+    expect(deps.trace).toEqual(['archive', 'clickhouse', 'sessions']);
+    expect(deps.sessionCommands).toHaveLength(1);
     expect(item.state.acked).toBe(true);
     expect(item.state.retried).toBe(false);
   });
@@ -120,6 +141,18 @@ describe('Event Worker consumer semantics', () => {
     await consume({ messages: [item.value] });
 
     expect(deps.trace).toEqual(['archive', 'clickhouse']);
+    expect(item.state.acked).toBe(false);
+    expect(item.state.retried).toBe(true);
+  });
+
+  it('does not ack when Sessions Queue fails after ClickHouse success', async () => {
+    const deps = dependencies({ sessionQueueFails: true });
+    const item = message();
+    const consume = createEventConsumer(deps);
+
+    await consume({ messages: [item.value] });
+
+    expect(deps.trace).toEqual(['archive', 'clickhouse', 'sessions']);
     expect(item.state.acked).toBe(false);
     expect(item.state.retried).toBe(true);
   });
@@ -152,7 +185,7 @@ describe('Event Worker consumer semantics', () => {
     expect(item.state.retried).toBe(false);
   });
 
-  it('batches events from multiple Queue messages into one insert', async () => {
+  it('batches events and emits grouped session recompute commands', async () => {
     const deps = dependencies();
     let inserted = 0;
 
@@ -175,6 +208,7 @@ describe('Event Worker consumer semantics', () => {
         {
           ...envelope().events[0],
           event_id: '018bcfe5-6800-7000-8000-000000000010',
+          session_id: '018bcfe5-6800-7000-8000-000000000011',
         },
       ],
     };
@@ -184,7 +218,14 @@ describe('Event Worker consumer semantics', () => {
     await consume({ messages: [first.value, second.value] });
 
     expect(inserted).toBe(2);
-    expect(deps.trace).toEqual(['archive', 'archive', 'clickhouse']);
+    expect(deps.sessionCommands).toHaveLength(2);
+    expect(deps.trace).toEqual([
+      'archive',
+      'archive',
+      'clickhouse',
+      'sessions',
+      'sessions',
+    ]);
     expect(first.state.acked).toBe(true);
     expect(second.state.acked).toBe(true);
   });

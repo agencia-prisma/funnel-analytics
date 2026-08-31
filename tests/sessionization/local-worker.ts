@@ -1,4 +1,5 @@
 import type { CollectorEnvelopeV1 } from '@funnel/event-contracts';
+import { ClickHouseSessionRepository } from '../../packages/session-engine/src/index';
 
 import { createRouter } from '../../apps/collector/src/router';
 import type {
@@ -14,6 +15,12 @@ import type {
   EventWorkerEnv,
   QueueBatchLike,
 } from '../../apps/event-worker/src/types';
+import { createSessionConsumer } from '../../apps/session-worker/src/consumer';
+import { CloudflareSessionDlqProducer } from '../../apps/session-worker/src/dlq';
+import type {
+  SessionQueueBatchLike,
+  SessionWorkerEnv,
+} from '../../apps/session-worker/src/types';
 
 type TestR2Bucket = EventWorkerEnv['EVENTS_RAW_BUCKET'] & {
   list(options?: {
@@ -21,7 +28,8 @@ type TestR2Bucket = EventWorkerEnv['EVENTS_RAW_BUCKET'] & {
   }): Promise<{ objects: Array<{ key: string }> }>;
 };
 
-interface PipelineEnv extends CollectorEnv, EventWorkerEnv {
+interface SessionizationEnv
+  extends CollectorEnv, EventWorkerEnv, SessionWorkerEnv {
   EVENTS_RAW_BUCKET: TestR2Bucket;
 }
 
@@ -35,10 +43,16 @@ function json(body: unknown, status = 200): Response {
   });
 }
 
+function isSessionBatch(batch: QueueBatchLike): boolean {
+  const body = batch.messages[0]?.body;
+
+  return typeof body === 'object' && body !== null && 'session_ids' in body;
+}
+
 export default {
   async fetch(
     request: Request,
-    env: PipelineEnv,
+    env: SessionizationEnv,
     ctx: ExecutionContextLike,
   ): Promise<Response> {
     const url = new URL(request.url);
@@ -57,21 +71,41 @@ export default {
       const envelope = (await request.json()) as CollectorEnvelopeV1;
       await env.EVENTS_QUEUE.send(envelope);
       await env.EVENTS_QUEUE.send(envelope);
-
       return json({ accepted: true, copies: 2 }, 202);
+    }
+
+    if (url.pathname === '/__test/enqueue' && request.method === 'POST') {
+      const envelope = (await request.json()) as CollectorEnvelopeV1;
+      await env.EVENTS_QUEUE.send(envelope);
+      return json({ accepted: true }, 202);
     }
 
     return createRouter(env)(request, ctx);
   },
 
-  async queue(batch: QueueBatchLike, env: PipelineEnv): Promise<void> {
-    const consume = createEventConsumer({
+  async queue(batch: QueueBatchLike, env: SessionizationEnv): Promise<void> {
+    if (isSessionBatch(batch)) {
+      const consumeSessions = createSessionConsumer({
+        repository: new ClickHouseSessionRepository({
+          url: env.CLICKHOUSE_URL,
+          username: env.CLICKHOUSE_USERNAME,
+          password: env.CLICKHOUSE_PASSWORD,
+          database: 'funnel_analytics',
+        }),
+        dlq: new CloudflareSessionDlqProducer(env.SESSIONS_DLQ),
+      });
+
+      await consumeSessions(batch as SessionQueueBatchLike);
+      return;
+    }
+
+    const consumeEvents = createEventConsumer({
       rawArchive: new R2RawArchive(env.EVENTS_RAW_BUCKET),
       writer: clickHouseWriterFromEnv(env),
       dlq: new CloudflareDlqProducer(env.EVENTS_DLQ),
       sessions: new CloudflareSessionRecomputeProducer(env.SESSIONS_QUEUE),
     });
 
-    await consume(batch);
+    await consumeEvents(batch);
   },
 };
