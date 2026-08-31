@@ -82,7 +82,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Start isolated Supabase
-        run: pnpm supabase start
+        run: bash scripts/ci/start-supabase.sh
 
       - name: Run database tests
         run: pnpm supabase test db
@@ -120,7 +120,7 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Start isolated Supabase
-        run: pnpm supabase start
+        run: bash scripts/ci/start-supabase.sh
 
       - name: Export local Supabase environment
         shell: bash
