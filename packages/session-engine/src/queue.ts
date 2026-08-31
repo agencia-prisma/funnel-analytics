@@ -13,7 +13,7 @@ interface SessionGroup {
 export function buildSessionRecomputeEnvelopes(
   events: NormalizedEventV1[],
   generatedAt: string,
-  requestIdFactory: () => string = crypto.randomUUID,
+  requestIdFactory: () => string = () => crypto.randomUUID(),
 ): SessionRecomputeEnvelopeV1[] {
   const groups = new Map<string, SessionGroup>();
 
