@@ -255,3 +255,113 @@ jobs:
       - name: Show Collector logs on failure
         if: failure()
         run: cat /tmp/collector.log || true
+
+  event-pipeline:
+    name: Event Pipeline
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      CLICKHOUSE_URL: http://127.0.0.1:8123
+      CLICKHOUSE_USERNAME: default
+      CLICKHOUSE_PASSWORD: test-password
+
+    services:
+      clickhouse:
+        image: clickhouse/clickhouse-server:26.7.5.10
+        env:
+          CLICKHOUSE_PASSWORD: test-password
+        ports:
+          - 8123:8123
+        options: >-
+          --health-cmd "clickhouse-client --password test-password --query 'SELECT 1'"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Audit production dependencies
+        run: pnpm audit --prod --audit-level high
+
+      - name: Event Worker typecheck
+        run: pnpm --filter @funnel/event-worker typecheck
+
+      - name: ClickHouse package typecheck
+        run: pnpm --filter @funnel/clickhouse typecheck
+
+      - name: Event Worker unit tests
+        run: pnpm --filter @funnel/event-worker test
+
+      - name: ClickHouse unit tests
+        run: pnpm --filter @funnel/clickhouse test
+
+      - name: Event Worker build
+        run: pnpm --filter @funnel/event-worker build
+
+      - name: Apply ClickHouse test schema
+        run: pnpm clickhouse:migrate
+
+      - name: ClickHouse integration and dedup
+        run: pnpm --filter @funnel/clickhouse test:integration
+
+      - name: Build Pixel SDK
+        run: pnpm --filter @funnel/pixel build
+
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Prepare local pipeline secrets
+        shell: bash
+        run: |
+          cp tests/pipeline/.dev.vars.example tests/pipeline/.dev.vars
+          sed -i 's/REPLACE_LOCAL_TEST_PASSWORD/test-password/' tests/pipeline/.dev.vars
+
+      - name: Start local Cloudflare pipeline
+        shell: bash
+        run: |
+          pnpm --filter @funnel/event-worker exec wrangler dev --config "$GITHUB_WORKSPACE/tests/pipeline/wrangler.jsonc" --local --ip 127.0.0.1 --port 8790 --env-file "$GITHUB_WORKSPACE/tests/pipeline/.dev.vars" > /tmp/pipeline.log 2>&1 &
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent http://127.0.0.1:8790/health > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/pipeline.log
+          exit 1
+
+      - name: Start browser fixture server
+        shell: bash
+        run: |
+          node tests/collector/fixture-server.mjs > /tmp/fixture.log 2>&1 &
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:4173/ > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/fixture.log
+          exit 1
+
+      - name: Full browser event pipeline
+        run: pnpm test:pipeline-browser
+
+      - name: Show pipeline logs on failure
+        if: failure()
+        run: cat /tmp/pipeline.log || true

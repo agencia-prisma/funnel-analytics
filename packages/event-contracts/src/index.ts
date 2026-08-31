@@ -107,3 +107,74 @@ export interface CollectorEnvelopeV1 {
   source: 'browser';
   events: BrowserEventV1[];
 }
+
+export interface NormalizedEventV1 {
+  event_id: string;
+  event_version: 1;
+  event_name: string;
+  custom_event_name: string | null;
+
+  workspace_id: string;
+  pixel_id: string;
+
+  visitor_id: string;
+  session_id: string;
+
+  occurred_at: string;
+  received_at: string;
+
+  source: string;
+
+  page_url: string;
+  page_path: string;
+  page_title: string;
+
+  origin_host: string;
+
+  referrer: string | null;
+  referrer_domain: string | null;
+
+  utm_source: string | null;
+  utm_medium: string | null;
+  utm_campaign: string | null;
+  utm_content: string | null;
+  utm_term: string | null;
+
+  fbclid: string | null;
+  ttclid: string | null;
+  gclid: string | null;
+  msclkid: string | null;
+  tblci: string | null;
+
+  device_type: DeviceTypeV1;
+  browser_name: string;
+  os_name: string;
+
+  screen_width: number;
+  screen_height: number;
+  device_pixel_ratio: number;
+
+  viewport_width: number;
+  viewport_height: number;
+
+  language: string | null;
+  timezone: string | null;
+
+  consent_state: ConsentStateV1;
+  test_mode: boolean;
+
+  sdk_version: string;
+
+  properties: Record<string, JsonValue>;
+}
+
+export type PipelineFailureKind = 'PERMANENT' | 'TRANSIENT';
+
+export interface DeadLetterEnvelopeV1 {
+  dlq_version: 1;
+  failed_at: string;
+  failure_kind: PipelineFailureKind;
+  error_code: string;
+  retry_count: number;
+  envelope: unknown;
+}
