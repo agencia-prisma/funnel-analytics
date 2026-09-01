@@ -51,7 +51,10 @@ export interface JourneyRepository {
   ): Promise<void>;
 }
 
-function classify(error: unknown): JourneyWorkerError {
+function classify(
+  error: unknown,
+  operation: string,
+): JourneyWorkerError {
   const message = error instanceof Error ? error.message : String(error);
   const permanent =
     /authentication|not enough privileges|unknown database|unknown table|syntax error|type mismatch/i.test(
@@ -59,7 +62,9 @@ function classify(error: unknown): JourneyWorkerError {
     );
   return new JourneyWorkerError(
     permanent ? 'PERMANENT' : 'TRANSIENT',
-    permanent ? 'JOURNEY_STORAGE_INVALID' : 'JOURNEY_STORAGE_UNAVAILABLE',
+    permanent
+      ? `JOURNEY_${operation}_INVALID`
+      : `JOURNEY_${operation}_UNAVAILABLE`,
   );
 }
 
@@ -100,7 +105,7 @@ WHERE workspace_id = {workspace_id:UUID}
       });
       return (await result.json()) as IdentityLinkV1[];
     } catch (error) {
-      throw classify(error);
+      throw classify(error, 'IDENTITY_QUERY');
     }
   }
 
@@ -130,7 +135,7 @@ WHERE workspace_id = {workspace_id:UUID}
       });
       return (await result.json()) as IdentityLinkV1[];
     } catch (error) {
-      throw classify(error);
+      throw classify(error, 'IDENTITY_QUERY');
     }
   }
 
@@ -193,7 +198,7 @@ ORDER BY session_started_at, last_activity_at, session_id
       });
       return (await result.json()) as SessionFactV1[];
     } catch (error) {
-      throw classify(error);
+      throw classify(error, 'SESSION_QUERY');
     }
   }
 
@@ -256,7 +261,7 @@ WHERE workspace_id = {workspace_id:UUID}
         sessionIds: [...new Set(rows.map((row) => row.session_id))],
       };
     } catch (error) {
-      throw classify(error);
+      throw classify(error, 'VERSION_QUERY');
     }
   }
 
@@ -279,7 +284,7 @@ WHERE workspace_id = {workspace_id:UUID}
         clickhouse_settings: { wait_for_async_insert: 1 },
       });
     } catch (error) {
-      throw classify(error);
+      throw classify(error, 'FACTS_INSERT');
     }
   }
 
@@ -302,7 +307,7 @@ WHERE workspace_id = {workspace_id:UUID}
         clickhouse_settings: { wait_for_async_insert: 1 },
       });
     } catch (error) {
-      throw classify(error);
+      throw classify(error, 'LINKS_INSERT');
     }
   }
 
@@ -339,7 +344,7 @@ WHERE workspace_id = {workspace_id:UUID}
         clickhouse_settings: { wait_for_async_insert: 1 },
       });
     } catch (error) {
-      throw classify(error);
+      throw classify(error, 'TOMBSTONE_INSERT');
     }
   }
 
