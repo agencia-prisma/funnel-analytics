@@ -1,18 +1,17 @@
 {
-  "name": "@funnel/collector",
+  "name": "@funnel/identity-worker",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "wrangler deploy --dry-run --outdir dist",
-    "dev": "wrangler dev --ip 127.0.0.1 --port 8787",
+    "build": "wrangler deploy --dry-run --env local --outdir dist",
+    "dev": "wrangler dev --local --env local",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@funnel/event-contracts": "workspace:*",
-    "@funnel/pixel": "workspace:*",
-    "@funnel/identity": "workspace:*"
+    "@funnel/clickhouse": "workspace:*",
+    "@funnel/event-contracts": "workspace:*"
   },
   "devDependencies": {
     "typescript": "5.9.3",

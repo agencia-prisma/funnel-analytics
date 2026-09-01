@@ -13,6 +13,10 @@
         "binding": "EVENTS_QUEUE",
         "queue": "funnel-analytics-events-local",
       },
+      {
+        "binding": "IDENTITY_QUEUE",
+        "queue": "funnel-analytics-identity-local",
+      },
     ],
     "consumers": [
       {
@@ -31,6 +35,14 @@
         "period": 60,
       },
     },
+    {
+      "name": "IDENTITY_RATE_LIMITER",
+      "namespace_id": "4011",
+      "simple": {
+        "limit": 30,
+        "period": 60,
+      },
+    },
   ],
   "env": {
     "preview": {
@@ -44,6 +56,10 @@
             "binding": "EVENTS_QUEUE",
             "queue": "funnel-analytics-events-preview",
           },
+          {
+            "binding": "IDENTITY_QUEUE",
+            "queue": "funnel-analytics-identity-preview",
+          },
         ],
       },
       "ratelimits": [
@@ -52,6 +68,14 @@
           "namespace_id": "4002",
           "simple": {
             "limit": 120,
+            "period": 60,
+          },
+        },
+        {
+          "name": "IDENTITY_RATE_LIMITER",
+          "namespace_id": "4012",
+          "simple": {
+            "limit": 30,
             "period": 60,
           },
         },
@@ -68,6 +92,10 @@
             "binding": "EVENTS_QUEUE",
             "queue": "funnel-analytics-events-production",
           },
+          {
+            "binding": "IDENTITY_QUEUE",
+            "queue": "funnel-analytics-identity-production",
+          },
         ],
       },
       "ratelimits": [
@@ -76,6 +104,14 @@
           "namespace_id": "4003",
           "simple": {
             "limit": 120,
+            "period": 60,
+          },
+        },
+        {
+          "name": "IDENTITY_RATE_LIMITER",
+          "namespace_id": "4013",
+          "simple": {
+            "limit": 30,
             "period": 60,
           },
         },

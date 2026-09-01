@@ -1,0 +1,78 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "funnel-analytics-identity-worker",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-29",
+  "workers_dev": false,
+  "env": {
+    "local": {
+      "name": "funnel-analytics-identity-worker-local",
+      "vars": {
+        "IDENTITY_WORKER_ENV": "local",
+      },
+      "queues": {
+        "producers": [
+          {
+            "binding": "IDENTITY_DLQ",
+            "queue": "funnel-analytics-identity-dlq-local",
+          },
+        ],
+        "consumers": [
+          {
+            "queue": "funnel-analytics-identity-local",
+            "max_batch_size": 10,
+            "max_batch_timeout": 1,
+            "max_retries": 3,
+            "dead_letter_queue": "funnel-analytics-identity-dlq-local",
+          },
+        ],
+      },
+    },
+    "preview": {
+      "name": "funnel-analytics-identity-worker-preview",
+      "vars": {
+        "IDENTITY_WORKER_ENV": "preview",
+      },
+      "queues": {
+        "producers": [
+          {
+            "binding": "IDENTITY_DLQ",
+            "queue": "funnel-analytics-identity-dlq-preview",
+          },
+        ],
+        "consumers": [
+          {
+            "queue": "funnel-analytics-identity-preview",
+            "max_batch_size": 10,
+            "max_batch_timeout": 1,
+            "max_retries": 3,
+            "dead_letter_queue": "funnel-analytics-identity-dlq-preview",
+          },
+        ],
+      },
+    },
+    "production": {
+      "name": "funnel-analytics-identity-worker-production",
+      "vars": {
+        "IDENTITY_WORKER_ENV": "production",
+      },
+      "queues": {
+        "producers": [
+          {
+            "binding": "IDENTITY_DLQ",
+            "queue": "funnel-analytics-identity-dlq-production",
+          },
+        ],
+        "consumers": [
+          {
+            "queue": "funnel-analytics-identity-production",
+            "max_batch_size": 10,
+            "max_batch_timeout": 1,
+            "max_retries": 3,
+            "dead_letter_queue": "funnel-analytics-identity-dlq-production",
+          },
+        ],
+      },
+    },
+  },
+}

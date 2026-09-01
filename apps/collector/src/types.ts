@@ -1,9 +1,16 @@
-import type { CollectorEnvelopeV1 } from '@funnel/event-contracts';
+import type {
+  CollectorEnvelopeV1,
+  IdentityEnvelopeV1,
+} from '@funnel/event-contracts';
 
 export type CollectorEnvironment = 'local' | 'preview' | 'production';
 
 export interface QueueBinding {
   send(message: CollectorEnvelopeV1): Promise<void>;
+}
+
+export interface IdentityQueueBinding {
+  send(message: IdentityEnvelopeV1): Promise<void>;
 }
 
 export interface RateLimitBinding {
@@ -15,8 +22,12 @@ export interface CollectorEnv {
   SUPABASE_URL?: string;
   SUPABASE_SECRET_KEY?: string;
   LOCAL_PIXEL_REGISTRY_JSON?: string;
+  IDENTITY_ENCRYPTION_KEY_V1?: string;
+  IDENTITY_HMAC_KEY_V1?: string;
   EVENTS_QUEUE: QueueBinding;
+  IDENTITY_QUEUE: IdentityQueueBinding;
   EVENTS_RATE_LIMITER: RateLimitBinding;
+  IDENTITY_RATE_LIMITER: RateLimitBinding;
 }
 
 export interface ExecutionContextLike {

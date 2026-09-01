@@ -15,6 +15,7 @@ export const DEFAULT_MAX_RETRIES = 3;
 export interface PixelConfig {
   pixelKey: string;
   endpoint: string | null;
+  identityEndpoint: string | null;
   debug: boolean;
   testMode: boolean;
   requireConsent: boolean;
@@ -53,6 +54,38 @@ function parseEndpoint(value: string | undefined): string | null {
   }
 }
 
+function deriveIdentityEndpoint(
+  explicit: string | undefined,
+  eventEndpoint: string | null,
+): string | null {
+  const explicitEndpoint = parseEndpoint(explicit);
+
+  if (explicitEndpoint) {
+    return explicitEndpoint;
+  }
+
+  if (!eventEndpoint) {
+    return null;
+  }
+
+  try {
+    const url = new URL(eventEndpoint);
+
+    if (url.pathname.endsWith('/v1/events')) {
+      url.pathname =
+        url.pathname.slice(0, -'/v1/events'.length) + '/v1/identify';
+    } else {
+      url.pathname = '/v1/identify';
+      url.search = '';
+      url.hash = '';
+    }
+
+    return url.href;
+  } catch {
+    return null;
+  }
+}
+
 export function readPixelConfig(
   script: HTMLScriptElement | null = document.currentScript as HTMLScriptElement | null,
 ): PixelConfig | null {
@@ -62,9 +95,15 @@ export function readPixelConfig(
     return null;
   }
 
+  const endpoint = parseEndpoint(script?.dataset.endpoint);
+
   return {
     pixelKey,
-    endpoint: parseEndpoint(script?.dataset.endpoint),
+    endpoint,
+    identityEndpoint: deriveIdentityEndpoint(
+      script?.dataset.identityEndpoint,
+      endpoint,
+    ),
     debug: parseBoolean(script?.dataset.debug),
     testMode: parseBoolean(script?.dataset.testMode),
     requireConsent: parseBoolean(script?.dataset.consentRequired),

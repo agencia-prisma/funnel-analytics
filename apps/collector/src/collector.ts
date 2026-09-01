@@ -1,14 +1,8 @@
-import { domainMatchesAuthorizedPattern } from '@funnel/pixel/domains';
-
 import { parseOrigin } from './cors';
 import { CollectorError } from './errors';
 import { logCollector } from './logging';
-import type {
-  PixelDomainRecord,
-  PixelRecord,
-  PixelRegistry,
-} from './pixel-registry';
-import { ControlPlaneUnavailableError } from './pixel-registry-supabase';
+import { authorizePixel } from './pixel-auth';
+import type { PixelRegistry } from './pixel-registry';
 import { createCollectorEnvelope, type QueueProducer } from './queue';
 import type { RateLimiter } from './rate-limit';
 import { readJsonBody, requireJsonContentType } from './request';
@@ -23,28 +17,6 @@ export interface CollectorDependencies {
   queue: QueueProducer;
   rateLimiter: RateLimiter;
   now?: () => number;
-}
-
-function findAuthorizedDomain(
-  pixel: PixelRecord,
-  originHost: string,
-): PixelDomainRecord | null {
-  for (const domain of pixel.domains) {
-    if (domain.status === 'blocked') {
-      continue;
-    }
-
-    if (
-      domainMatchesAuthorizedPattern(originHost, {
-        domain: domain.domain,
-        wildcard: domain.wildcard,
-      })
-    ) {
-      return domain;
-    }
-  }
-
-  return null;
 }
 
 export function createCollector(dependencies: CollectorDependencies) {
@@ -79,52 +51,36 @@ export function createCollector(dependencies: CollectorDependencies) {
         throw new CollectorError(429, 'RATE_LIMITED', 60);
       }
 
-      let pixel: PixelRecord | null;
+      let authorized;
 
       try {
-        pixel = await dependencies.registry.resolvePixel(pixelKey);
+        authorized = await authorizePixel({
+          registry: dependencies.registry,
+          pixelKey,
+          originHost,
+        });
       } catch (error) {
-        if (error instanceof ControlPlaneUnavailableError) {
-          logCollector('collector.control_plane.failed', {
+        if (error instanceof CollectorError) {
+          const event =
+            error.code === 'PIXEL_NOT_AVAILABLE'
+              ? 'collector.pixel.invalid'
+              : error.code === 'ORIGIN_NOT_ALLOWED'
+                ? 'collector.origin.rejected'
+                : 'collector.control_plane.failed';
+
+          logCollector(event, {
             request_id: requestId,
             origin_host: originHost,
             event_count: batch.events.length,
-            status_code: 503,
+            status_code: error.status,
             latency_ms: Math.round(performance.now() - startedAt),
+            error_code: error.code,
           });
-          throw new CollectorError(503, 'CONTROL_PLANE_UNAVAILABLE');
         }
-
         throw error;
       }
 
-      if (!pixel || pixel.status !== 'active') {
-        logCollector('collector.pixel.invalid', {
-          request_id: requestId,
-          workspace_id: pixel?.workspace_id,
-          pixel_id: pixel?.id,
-          origin_host: originHost,
-          event_count: batch.events.length,
-          status_code: 404,
-          latency_ms: Math.round(performance.now() - startedAt),
-        });
-        throw new CollectorError(404, 'PIXEL_NOT_AVAILABLE');
-      }
-
-      const domain = findAuthorizedDomain(pixel, originHost);
-
-      if (!domain) {
-        logCollector('collector.origin.rejected', {
-          request_id: requestId,
-          workspace_id: pixel.workspace_id,
-          pixel_id: pixel.id,
-          origin_host: originHost,
-          event_count: batch.events.length,
-          status_code: 403,
-          latency_ms: Math.round(performance.now() - startedAt),
-        });
-        throw new CollectorError(403, 'ORIGIN_NOT_ALLOWED');
-      }
+      const { pixel, domain } = authorized;
 
       assertPageUrlsMatchOrigin(batch, originHost);
 
