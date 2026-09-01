@@ -7,7 +7,7 @@ on:
       - main
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: validation-${{ github.workflow }}-${{ github.ref }}
@@ -41,21 +41,6 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-
-      - name: Apply EPIC 07 formatting
-        if: github.event_name == 'pull_request' && github.head_ref == 'feature/epic-07-identity-foundation'
-        shell: bash
-        run: |
-          git fetch origin "$GITHUB_HEAD_REF"
-          git checkout -B "$GITHUB_HEAD_REF" "origin/$GITHUB_HEAD_REF"
-          pnpm format
-          if ! git diff --quiet; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add -A
-            git commit -m "chore(identity): apply prettier formatting"
-            git push origin HEAD:"$GITHUB_HEAD_REF"
-          fi
 
       - name: Check formatting
         run: pnpm format:check
