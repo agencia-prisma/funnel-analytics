@@ -231,6 +231,18 @@ from public.resolve_identity_v1(
   false
 );
 
+-- These temporary result tables are created while running as service_role.
+-- Explicitly grant read access before SET ROLE authenticated so the RLS/permission
+-- assertions can reference fixture IDs without tripping over temp-table ownership.
+grant select on table
+  identity_resolution_1,
+  identity_resolution_2,
+  identity_email_person,
+  identity_phone_person,
+  identity_conflict,
+  identity_workspace_b
+to authenticated;
+
 reset role;
 
 set local role authenticated;
