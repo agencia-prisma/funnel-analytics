@@ -10,7 +10,8 @@
     "migrate": "node scripts/migrate.mjs",
     "test": "vitest run src/dedup.test.ts",
     "test:integration": "vitest run src/integration.test.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:identity-integration": "vitest run src/identity-links.integration.test.ts"
   },
   "dependencies": {
     "@clickhouse/client-web": "1.23.1",
