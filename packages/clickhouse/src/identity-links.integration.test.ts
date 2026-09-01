@@ -162,13 +162,15 @@ describe('ClickHouse identity links integration', () => {
 
     const result = await rows<{
       logical_count: string;
-      last_seen_at: string;
+      last_seen_at_ms: string;
     }>(
-      "SELECT toString(count()) AS logical_count, formatDateTime(max(last_seen_at), '%FT%T.%3NZ', 'UTC') AS last_seen_at FROM funnel_analytics.identity_links_current",
+      'SELECT toString(count()) AS logical_count, toString(toUnixTimestamp64Milli(max(last_seen_at))) AS last_seen_at_ms FROM funnel_analytics.identity_links_current',
     );
 
     expect(result[0]?.logical_count).toBe('1');
-    expect(result[0]?.last_seen_at).toBe('2026-08-31T23:05:00.000Z');
+    expect(result[0]?.last_seen_at_ms).toBe(
+      String(Date.parse('2026-08-31T23:05:00.000Z')),
+    );
   });
 
   it('joins historical sessions from multiple visitors to one Person', async () => {
