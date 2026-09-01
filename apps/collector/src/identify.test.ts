@@ -19,21 +19,25 @@ function key(fill: number) {
 
 function registry(status: PixelRecord['status'] = 'active'): PixelRegistry {
   return {
-    resolvePixel: vi.fn(async () => ({
-      id: '30000000-0000-4000-8000-000000000001',
-      workspace_id: '20000000-0000-4000-8000-000000000001',
-      public_key: pixelKey,
-      status,
-      health_status: 'healthy',
-      domains: [
-        {
-          id: '50000000-0000-4000-8000-000000000001',
-          domain: 'shop.example.com',
-          wildcard: false,
-          status: 'active',
-        },
-      ],
-    })),
+    resolvePixel: vi.fn(async () => {
+      const pixel: PixelRecord = {
+        id: '30000000-0000-4000-8000-000000000001',
+        workspace_id: '20000000-0000-4000-8000-000000000001',
+        public_key: pixelKey,
+        status,
+        health_status: 'healthy',
+        domains: [
+          {
+            id: '50000000-0000-4000-8000-000000000001',
+            domain: 'shop.example.com',
+            wildcard: false,
+            status: 'active',
+          },
+        ],
+      };
+
+      return pixel;
+    }),
     touchAccepted: vi.fn(async () => undefined),
   };
 }
