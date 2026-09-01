@@ -51,20 +51,23 @@ export interface JourneyRepository {
   ): Promise<void>;
 }
 
-function classify(
-  error: unknown,
-  operation: string,
-): JourneyWorkerError {
+function classify(error: unknown, operation: string): JourneyWorkerError {
   const message = error instanceof Error ? error.message : String(error);
   const permanent =
     /authentication|not enough privileges|unknown database|unknown table|syntax error|type mismatch/i.test(
       message,
     );
+  const externalCode =
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    typeof error.code === 'string'
+      ? error.code
+      : null;
+  const suffix = externalCode ?? (permanent ? 'INVALID' : 'UNAVAILABLE');
   return new JourneyWorkerError(
     permanent ? 'PERMANENT' : 'TRANSIENT',
-    permanent
-      ? `JOURNEY_${operation}_INVALID`
-      : `JOURNEY_${operation}_UNAVAILABLE`,
+    `JOURNEY_${operation}_${suffix}`,
   );
 }
 
