@@ -18,12 +18,7 @@ import type {
   EventWorkerEnv,
   QueueBatchLike,
 } from '../../apps/event-worker/src/types';
-import { SupabaseIdentityRepository } from '../../apps/identity-worker/src/control-plane';
-import { createIdentityConsumer } from '../../apps/identity-worker/src/consumer';
-import { CloudflareIdentityDlqProducer } from '../../apps/identity-worker/src/dlq';
-import { identityLinkWriterFromEnv } from '../../apps/identity-worker/src/link-writer';
 import type {
-  IdentityQueueBatchLike,
   IdentityWorkerEnv,
 } from '../../apps/identity-worker/src/types';
 import { createSessionConsumer } from '../../apps/session-worker/src/consumer';
@@ -114,16 +109,13 @@ export default {
 
   async queue(batch: QueueBatchLike, env: IdentityHarnessEnv): Promise<void> {
     if (isIdentityBatch(batch)) {
-      const consumeIdentity = createIdentityConsumer({
-        repository: new SupabaseIdentityRepository(
-          env.SUPABASE_URL,
-          env.SUPABASE_SECRET_KEY,
-        ),
-        writer: identityLinkWriterFromEnv(env),
-        dlq: new CloudflareIdentityDlqProducer(env.IDENTITY_DLQ),
-      });
-
-      await consumeIdentity(batch as IdentityQueueBatchLike);
+      // The local workerd runtime is intentionally not used to call the loopback
+      // Supabase API. Browser acceptance captures the protected queue envelope,
+      // then runs the production Identity consumer from the host test process
+      // against the same isolated Supabase and ClickHouse instances.
+      for (const message of batch.messages) {
+        message.ack();
+      }
       return;
     }
 
