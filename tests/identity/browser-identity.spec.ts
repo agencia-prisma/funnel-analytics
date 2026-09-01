@@ -1,5 +1,5 @@
-import { ClickHouseIdentityLinkWriter } from '@funnel/clickhouse';
-import type { IdentityEnvelopeV1 } from '@funnel/event-contracts';
+import { ClickHouseIdentityLinkWriter } from '../../packages/clickhouse/src/index';
+import type { IdentityEnvelopeV1 } from '../../packages/event-contracts/src/index';
 import { expect, test, type Browser, type Page } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 
