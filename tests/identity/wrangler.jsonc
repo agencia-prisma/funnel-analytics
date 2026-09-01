@@ -1,0 +1,90 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "funnel-analytics-identity-local",
+  "main": "local-worker.ts",
+  "compatibility_date": "2026-08-29",
+  "vars": {
+    "COLLECTOR_ENV": "local",
+    "EVENT_WORKER_ENV": "local",
+    "SESSION_WORKER_ENV": "local",
+    "IDENTITY_WORKER_ENV": "local",
+    "CLICKHOUSE_URL": "http://127.0.0.1:8123",
+    "CLICKHOUSE_USERNAME": "default",
+    "LOCAL_PIXEL_REGISTRY_JSON": "{"pixels":[{"id":"32000000-0000-0000-0000-000000000001","workspace_id":"22000000-0000-0000-0000-000000000001","public_key":"px_pub_dddddddddddddddddddddddddddddddddddd","status":"active","health_status":"healthy","domains":[{"id":"42000000-0000-0000-0000-000000000001","domain":"shop.localhost","wildcard":false,"status":"active"}]}]}",
+  },
+  "queues": {
+    "producers": [
+      {
+        "binding": "EVENTS_QUEUE",
+        "queue": "funnel-analytics-events-identity-local",
+      },
+      {
+        "binding": "EVENTS_DLQ",
+        "queue": "funnel-analytics-events-dlq-identity-local",
+      },
+      {
+        "binding": "SESSIONS_QUEUE",
+        "queue": "funnel-analytics-sessions-identity-local",
+      },
+      {
+        "binding": "SESSIONS_DLQ",
+        "queue": "funnel-analytics-sessions-dlq-identity-local",
+      },
+      {
+        "binding": "IDENTITY_QUEUE",
+        "queue": "funnel-analytics-identity-e2e-local",
+      },
+      {
+        "binding": "IDENTITY_DLQ",
+        "queue": "funnel-analytics-identity-dlq-e2e-local",
+      },
+    ],
+    "consumers": [
+      {
+        "queue": "funnel-analytics-events-identity-local",
+        "max_batch_size": 10,
+        "max_batch_timeout": 1,
+        "max_retries": 3,
+        "dead_letter_queue": "funnel-analytics-events-dlq-identity-local",
+      },
+      {
+        "queue": "funnel-analytics-sessions-identity-local",
+        "max_batch_size": 5,
+        "max_batch_timeout": 1,
+        "max_retries": 3,
+        "dead_letter_queue": "funnel-analytics-sessions-dlq-identity-local",
+      },
+      {
+        "queue": "funnel-analytics-identity-e2e-local",
+        "max_batch_size": 10,
+        "max_batch_timeout": 1,
+        "max_retries": 3,
+        "dead_letter_queue": "funnel-analytics-identity-dlq-e2e-local",
+      },
+    ],
+  },
+  "r2_buckets": [
+    {
+      "binding": "EVENTS_RAW_BUCKET",
+      "bucket_name": "funnel-analytics-events-raw-identity-local",
+    },
+  ],
+  "ratelimits": [
+    {
+      "name": "EVENTS_RATE_LIMITER",
+      "namespace_id": "7001",
+      "simple": {
+        "limit": 120,
+        "period": 60,
+      },
+    },
+    {
+      "name": "IDENTITY_RATE_LIMITER",
+      "namespace_id": "7011",
+      "simple": {
+        "limit": 30,
+        "period": 60,
+      },
+    },
+  ],
+}
