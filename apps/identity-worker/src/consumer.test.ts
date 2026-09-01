@@ -6,10 +6,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { createIdentityConsumer } from './consumer';
 import type { IdentityDlqProducer } from './dlq';
-import type {
-  IdentityQueueBatchLike,
-  IdentityQueueMessageLike,
-} from './types';
+import type { IdentityQueueBatchLike, IdentityQueueMessageLike } from './types';
 
 const envelope: IdentityEnvelopeV1 = {
   envelope_version: 1,
@@ -54,9 +51,7 @@ function batch(value: IdentityQueueMessageLike): IdentityQueueBatchLike {
 describe('identity worker consumer', () => {
   it('acks only after control-plane resolution and ClickHouse link write', async () => {
     const current = message();
-    const insertLinks = vi.fn(
-      async (_links: IdentityLinkV1[]) => undefined,
-    );
+    const insertLinks = vi.fn(async (_links: IdentityLinkV1[]) => undefined);
     const resolve = vi.fn(async () => ({
       resolution_status: 'RESOLVED' as const,
       person_id: '40000000-0000-4000-8000-000000000001',

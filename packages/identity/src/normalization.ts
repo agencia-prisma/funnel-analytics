@@ -18,11 +18,7 @@ const E164_PATTERN = /^\+[1-9]\d{7,14}$/;
 export function normalizeEmail(input: string): string {
   const value = input.trim().toLowerCase();
 
-  if (
-    value.length < 3 ||
-    value.length > 320 ||
-    !EMAIL_PATTERN.test(value)
-  ) {
+  if (value.length < 3 || value.length > 320 || !EMAIL_PATTERN.test(value)) {
     throw new IdentityError('IDENTITY_EMAIL_INVALID');
   }
 
@@ -60,20 +56,14 @@ function cpfDigit(base: string, factor: number): number {
 export function normalizeCpf(input: string): string {
   const value = input.replace(/\D/g, '');
 
-  if (
-    value.length !== 11 ||
-    /^(\d)\1{10}$/.test(value)
-  ) {
+  if (value.length !== 11 || /^(\d)\1{10}$/.test(value)) {
     throw new IdentityError('IDENTITY_CPF_INVALID');
   }
 
   const first = cpfDigit(value.slice(0, 9), 10);
   const second = cpfDigit(value.slice(0, 10), 11);
 
-  if (
-    first !== Number(value[9]) ||
-    second !== Number(value[10])
-  ) {
+  if (first !== Number(value[9]) || second !== Number(value[10])) {
     throw new IdentityError('IDENTITY_CPF_INVALID');
   }
 
@@ -81,10 +71,7 @@ export function normalizeCpf(input: string): string {
 }
 
 export function normalizeName(input: string): string {
-  const value = input
-    .normalize('NFKC')
-    .trim()
-    .replace(/\s+/g, ' ');
+  const value = input.normalize('NFKC').trim().replace(/\s+/g, ' ');
 
   if (value.length < 1 || value.length > 200) {
     throw new IdentityError('IDENTITY_NAME_INVALID');

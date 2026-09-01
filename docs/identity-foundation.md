@@ -152,8 +152,8 @@ Example:
 ```js
 await window.funnelAnalytics.identify({
   email: 'user@example.com',
-  phone: '+5511999998888'
-})
+  phone: '+5511999998888',
+});
 ```
 
 Identity data is not:

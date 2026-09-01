@@ -20,11 +20,7 @@ const MAX_IDENTIFIER_LENGTHS: Record<
 export function validateBrowserIdentifyIdentifiers(
   input: BrowserIdentifyIdentifiersV1,
 ): BrowserIdentifyIdentifiersV1 | null {
-  if (
-    typeof input !== 'object' ||
-    input === null ||
-    Array.isArray(input)
-  ) {
+  if (typeof input !== 'object' || input === null || Array.isArray(input)) {
     return null;
   }
 
@@ -32,10 +28,7 @@ export function validateBrowserIdentifyIdentifiers(
 
   if (
     keys.length === 0 ||
-    keys.some(
-      (key) =>
-        !['email', 'phone', 'cpf', 'name'].includes(key),
-    )
+    keys.some((key) => !['email', 'phone', 'cpf', 'name'].includes(key))
   ) {
     return null;
   }

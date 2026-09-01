@@ -10,10 +10,7 @@ const UUID_V7_PATTERN =
 const PIXEL_KEY_PATTERN = /^px_pub_[0-9a-f]{36}$/;
 const MAX_FUTURE_MS = 5 * 60 * 1000;
 const MAX_PAST_MS = 7 * 24 * 60 * 60 * 1000;
-const MAX_LENGTHS: Record<
-  keyof BrowserIdentifyIdentifiersV1,
-  number
-> = {
+const MAX_LENGTHS: Record<keyof BrowserIdentifyIdentifiersV1, number> = {
   email: 320,
   phone: 64,
   cpf: 32,
@@ -24,9 +21,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-function validateIdentifiers(
-  value: unknown,
-): BrowserIdentifyIdentifiersV1 {
+function validateIdentifiers(value: unknown): BrowserIdentifyIdentifiersV1 {
   if (!isRecord(value)) {
     throw new CollectorError(422, 'INVALID_IDENTITY');
   }
@@ -36,9 +31,7 @@ function validateIdentifiers(
   if (
     keys.length === 0 ||
     keys.length > 4 ||
-    keys.some(
-      (key) => !['email', 'phone', 'cpf', 'name'].includes(key),
-    )
+    keys.some((key) => !['email', 'phone', 'cpf', 'name'].includes(key))
   ) {
     throw new CollectorError(422, 'INVALID_IDENTITY');
   }

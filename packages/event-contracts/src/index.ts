@@ -310,4 +310,3 @@ export interface IdentityDeadLetterEnvelopeV1 {
   retry_count: number;
   envelope: unknown;
 }
-

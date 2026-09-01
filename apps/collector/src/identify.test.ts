@@ -4,10 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { createIdentityCollector } from './identify';
 import type { IdentityQueueProducer } from './identity-queue';
-import type {
-  PixelRecord,
-  PixelRegistry,
-} from './pixel-registry';
+import type { PixelRecord, PixelRegistry } from './pixel-registry';
 import type { RateLimiter } from './rate-limit';
 
 const now = Date.parse('2026-08-31T23:00:00.000Z');

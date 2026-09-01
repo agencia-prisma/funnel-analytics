@@ -4,10 +4,7 @@ import type {
 } from '@funnel/event-contracts';
 
 import { IdentityWorkerError } from './errors';
-import type {
-  IdentityDlqBinding,
-  IdentityQueueMessageLike,
-} from './types';
+import type { IdentityDlqBinding, IdentityQueueMessageLike } from './types';
 
 export interface IdentityDlqProducer {
   send(input: {
@@ -19,9 +16,7 @@ export interface IdentityDlqProducer {
   }): Promise<void>;
 }
 
-export class CloudflareIdentityDlqProducer
-  implements IdentityDlqProducer
-{
+export class CloudflareIdentityDlqProducer implements IdentityDlqProducer {
   constructor(private readonly binding: IdentityDlqBinding) {}
 
   async send(input: {
@@ -43,10 +38,7 @@ export class CloudflareIdentityDlqProducer
     try {
       await this.binding.send(payload);
     } catch {
-      throw new IdentityWorkerError(
-        'TRANSIENT',
-        'IDENTITY_DLQ_FAILED',
-      );
+      throw new IdentityWorkerError('TRANSIENT', 'IDENTITY_DLQ_FAILED');
     }
   }
 }

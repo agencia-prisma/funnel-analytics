@@ -83,10 +83,7 @@ export async function encryptIdentifier(
   encryptionSecret: string,
   keyVersion = 1,
 ): Promise<
-  Pick<
-    ProtectedIdentifierV1,
-    'encrypted_value' | 'encryption_key_version'
-  >
+  Pick<ProtectedIdentifierV1, 'encrypted_value' | 'encryption_key_version'>
 > {
   const key = await importAesKey(encryptionSecret);
   const iv = crypto.getRandomValues(new Uint8Array(12));
@@ -114,14 +111,9 @@ export async function decryptIdentifier(
   encryptedValue: string,
   encryptionSecret: string,
 ): Promise<string> {
-  const [algorithm, ivPart, ciphertextPart] =
-    encryptedValue.split('.');
+  const [algorithm, ivPart, ciphertextPart] = encryptedValue.split('.');
 
-  if (
-    algorithm !== 'aes256gcm' ||
-    !ivPart ||
-    !ciphertextPart
-  ) {
+  if (algorithm !== 'aes256gcm' || !ivPart || !ciphertextPart) {
     throw new IdentityError('IDENTITY_DECRYPT_FAILED');
   }
 

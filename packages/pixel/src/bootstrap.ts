@@ -201,18 +201,14 @@ export class PixelRuntime {
   private async identify(
     identifiers: BrowserIdentifyIdentifiersV1,
   ): Promise<boolean> {
-    if (
-      !this.consentManager.canPersistIdentity() ||
-      !this.identityTransport
-    ) {
+    if (!this.consentManager.canPersistIdentity() || !this.identityTransport) {
       this.debug('pixel.identify.rejected', {
         reason: 'consent_or_transport',
       });
       return false;
     }
 
-    const validated =
-      validateBrowserIdentifyIdentifiers(identifiers);
+    const validated = validateBrowserIdentifyIdentifiers(identifiers);
 
     if (!validated) {
       this.debug('pixel.identify.rejected', {
@@ -232,9 +228,7 @@ export class PixelRuntime {
     );
 
     this.debug(
-      result.ok
-        ? 'pixel.identify.accepted'
-        : 'pixel.identify.failed',
+      result.ok ? 'pixel.identify.accepted' : 'pixel.identify.failed',
       {
         identifier_count: Object.keys(validated).length,
         identifier_types: Object.keys(validated),

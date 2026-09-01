@@ -18,9 +18,7 @@ export function identityLinkWriterFromEnv(
   });
 }
 
-export function mapIdentityLinkWriteError(
-  error: unknown,
-): IdentityWorkerError {
+export function mapIdentityLinkWriteError(error: unknown): IdentityWorkerError {
   if (error instanceof ClickHouseWriteError) {
     return new IdentityWorkerError(
       error.retryable ? 'TRANSIENT' : 'PERMANENT',
@@ -28,8 +26,5 @@ export function mapIdentityLinkWriteError(
     );
   }
 
-  return new IdentityWorkerError(
-    'TRANSIENT',
-    'IDENTITY_LINK_WRITE_FAILED',
-  );
+  return new IdentityWorkerError('TRANSIENT', 'IDENTITY_LINK_WRITE_FAILED');
 }

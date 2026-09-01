@@ -158,9 +158,7 @@ describe('ClickHouse identity links integration', () => {
 
   it('keeps one logical current link after repeated delivery', async () => {
     await writer.insertLinks([link(visitorA)]);
-    await writer.insertLinks([
-      link(visitorA, '2026-08-31T23:05:00.000Z'),
-    ]);
+    await writer.insertLinks([link(visitorA, '2026-08-31T23:05:00.000Z')]);
 
     const result = await rows<{
       logical_count: string;

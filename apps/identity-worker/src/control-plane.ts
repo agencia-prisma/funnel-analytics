@@ -5,9 +5,7 @@ import { IdentityWorkerError } from './errors';
 const DEFAULT_TIMEOUT_MS = 5_000;
 
 export type IdentityResolutionStatus =
-  | 'RESOLVED'
-  | 'IDENTITY_CONFLICT'
-  | 'VISITOR_IDENTITY_CONFLICT';
+  'RESOLVED' | 'IDENTITY_CONFLICT' | 'VISITOR_IDENTITY_CONFLICT';
 
 export interface IdentityResolution {
   resolution_status: IdentityResolutionStatus;
@@ -35,9 +33,7 @@ export class SupabaseIdentityRepository implements IdentityRepository {
     private readonly timeoutMs = DEFAULT_TIMEOUT_MS,
   ) {}
 
-  async resolve(
-    envelope: IdentityEnvelopeV1,
-  ): Promise<IdentityResolution> {
+  async resolve(envelope: IdentityEnvelopeV1): Promise<IdentityResolution> {
     if (!this.supabaseUrl || !this.secretKey) {
       throw new IdentityWorkerError(
         'TRANSIENT',
@@ -45,15 +41,9 @@ export class SupabaseIdentityRepository implements IdentityRepository {
       );
     }
 
-    const url = new URL(
-      '/rest/v1/rpc/resolve_identity_v1',
-      this.supabaseUrl,
-    );
+    const url = new URL('/rest/v1/rpc/resolve_identity_v1', this.supabaseUrl);
     const controller = new AbortController();
-    const timeout = setTimeout(
-      () => controller.abort(),
-      this.timeoutMs,
-    );
+    const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
 
     try {
       const response = await this.fetchRef(url, {

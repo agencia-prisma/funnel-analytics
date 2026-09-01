@@ -3,10 +3,7 @@ import type {
   IdentityEnvelopeV1,
 } from '@funnel/event-contracts';
 
-export type IdentityWorkerEnvironment =
-  | 'local'
-  | 'preview'
-  | 'production';
+export type IdentityWorkerEnvironment = 'local' | 'preview' | 'production';
 
 export interface IdentityDlqBinding {
   send(message: IdentityDeadLetterEnvelopeV1): Promise<void>;

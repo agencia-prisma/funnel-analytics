@@ -6,9 +6,7 @@ export interface IdentityQueueProducer {
   enqueue(envelope: IdentityEnvelopeV1): Promise<void>;
 }
 
-export class CloudflareIdentityQueueProducer
-  implements IdentityQueueProducer
-{
+export class CloudflareIdentityQueueProducer implements IdentityQueueProducer {
   constructor(private readonly binding: IdentityQueueBinding) {}
 
   async enqueue(envelope: IdentityEnvelopeV1): Promise<void> {

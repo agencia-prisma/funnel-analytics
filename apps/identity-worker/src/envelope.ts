@@ -30,21 +30,13 @@ function validateProtectedIdentifier(
     !Number.isInteger(value.encryption_key_version) ||
     Number(value.encryption_key_version) < 1
   ) {
-    throw new IdentityWorkerError(
-      'PERMANENT',
-      'IDENTITY_ENVELOPE_INVALID',
-    );
+    throw new IdentityWorkerError('PERMANENT', 'IDENTITY_ENVELOPE_INVALID');
   }
 }
 
-export function validateIdentityEnvelope(
-  value: unknown,
-): IdentityEnvelopeV1 {
+export function validateIdentityEnvelope(value: unknown): IdentityEnvelopeV1 {
   if (!isRecord(value)) {
-    throw new IdentityWorkerError(
-      'PERMANENT',
-      'IDENTITY_ENVELOPE_INVALID',
-    );
+    throw new IdentityWorkerError('PERMANENT', 'IDENTITY_ENVELOPE_INVALID');
   }
 
   if (value.envelope_version !== 1) {
@@ -75,10 +67,7 @@ export function validateIdentityEnvelope(
     value.encrypted_identifiers.length < 1 ||
     value.encrypted_identifiers.length > 4
   ) {
-    throw new IdentityWorkerError(
-      'PERMANENT',
-      'IDENTITY_ENVELOPE_INVALID',
-    );
+    throw new IdentityWorkerError('PERMANENT', 'IDENTITY_ENVELOPE_INVALID');
   }
 
   const types = new Set<string>();
@@ -87,10 +76,7 @@ export function validateIdentityEnvelope(
     validateProtectedIdentifier(identifier);
 
     if (types.has(identifier.type)) {
-      throw new IdentityWorkerError(
-        'PERMANENT',
-        'IDENTITY_ENVELOPE_INVALID',
-      );
+      throw new IdentityWorkerError('PERMANENT', 'IDENTITY_ENVELOPE_INVALID');
     }
 
     types.add(identifier.type);

@@ -2,10 +2,7 @@ import { CloudflareIdentityDlqProducer } from './dlq';
 import { SupabaseIdentityRepository } from './control-plane';
 import { createIdentityConsumer } from './consumer';
 import { identityLinkWriterFromEnv } from './link-writer';
-import type {
-  IdentityQueueBatchLike,
-  IdentityWorkerEnv,
-} from './types';
+import type { IdentityQueueBatchLike, IdentityWorkerEnv } from './types';
 
 export default {
   async queue(

@@ -38,9 +38,7 @@ export interface IdentityLinkWriter {
   insertLinks(links: IdentityLinkV1[]): Promise<void>;
 }
 
-export class ClickHouseIdentityLinkWriter
-  implements IdentityLinkWriter
-{
+export class ClickHouseIdentityLinkWriter implements IdentityLinkWriter {
   private readonly client: ReturnType<typeof createClickHouseWebClient>;
 
   constructor(config: ClickHouseConfig) {

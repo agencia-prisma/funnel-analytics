@@ -38,16 +38,8 @@ describe('identity crypto', () => {
   });
 
   it('creates deterministic keyed blind indexes', async () => {
-    const first = await createBlindIndex(
-      'email',
-      'user@example.com',
-      hmacKey,
-    );
-    const second = await createBlindIndex(
-      'email',
-      'user@example.com',
-      hmacKey,
-    );
+    const first = await createBlindIndex('email', 'user@example.com', hmacKey);
+    const second = await createBlindIndex('email', 'user@example.com', hmacKey);
     const otherSecret = await createBlindIndex(
       'email',
       'user@example.com',

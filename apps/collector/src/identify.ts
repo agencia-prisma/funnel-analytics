@@ -49,10 +49,7 @@ export function createIdentityCollector(
       requireJsonContentType(request);
 
       const now = dependencies.now?.() ?? Date.now();
-      const rawBody = await readJsonBody(
-        request,
-        IDENTIFY_V1_MAX_BODY_BYTES,
-      );
+      const rawBody = await readJsonBody(request, IDENTIFY_V1_MAX_BODY_BYTES);
       const payload = validateIdentifyRequest(rawBody, now);
 
       const allowed = await dependencies.rateLimiter.allow(
@@ -86,8 +83,7 @@ export function createIdentityCollector(
         protectedIdentifiers = await protectIdentifiers(normalized, {
           encryptionKey: dependencies.encryptionKey,
           hmacKey: dependencies.hmacKey,
-          encryptionKeyVersion:
-            dependencies.encryptionKeyVersion ?? 1,
+          encryptionKeyVersion: dependencies.encryptionKeyVersion ?? 1,
         });
       } catch (error) {
         if (error instanceof IdentityError) {
@@ -128,9 +124,7 @@ export function createIdentityCollector(
           ),
           status_code: 503,
           latency_ms: Math.round(performance.now() - startedAt),
-          queue_latency_ms: Math.round(
-            performance.now() - queueStartedAt,
-          ),
+          queue_latency_ms: Math.round(performance.now() - queueStartedAt),
         });
         throw new CollectorError(503, 'IDENTITY_QUEUE_UNAVAILABLE');
       }
@@ -146,9 +140,7 @@ export function createIdentityCollector(
         ),
         status_code: 202,
         latency_ms: Math.round(performance.now() - startedAt),
-        queue_latency_ms: Math.round(
-          performance.now() - queueStartedAt,
-        ),
+        queue_latency_ms: Math.round(performance.now() - queueStartedAt),
       });
 
       return jsonResponse(
@@ -174,11 +166,7 @@ export function createIdentityCollector(
         error_code: collectorError.code,
       });
 
-      return errorResponse(
-        collectorError,
-        requestId,
-        origin?.origin,
-      );
+      return errorResponse(collectorError, requestId, origin?.origin);
     }
   };
 }

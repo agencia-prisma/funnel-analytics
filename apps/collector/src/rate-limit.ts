@@ -1,11 +1,7 @@
 import type { RateLimitBinding } from './types';
 
 export interface RateLimiter {
-  allow(
-    pixelKey: string,
-    request: Request,
-    scope?: string,
-  ): Promise<boolean>;
+  allow(pixelKey: string, request: Request, scope?: string): Promise<boolean>;
 }
 
 async function ephemeralIpKey(request: Request): Promise<string> {
@@ -34,9 +30,7 @@ export class CloudflareRateLimiter implements RateLimiter {
   ): Promise<boolean> {
     const ipKey = await ephemeralIpKey(request);
     const result = await this.binding.limit({
-      key: scope
-        ? `${scope}:${pixelKey}:${ipKey}`
-        : `${pixelKey}:${ipKey}`,
+      key: scope ? `${scope}:${pixelKey}:${ipKey}` : `${pixelKey}:${ipKey}`,
     });
 
     return result.success;

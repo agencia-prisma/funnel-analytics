@@ -4,26 +4,14 @@ import type {
 } from '@funnel/event-contracts';
 import type { IdentityLinkWriter } from '@funnel/clickhouse';
 
-import type {
-  IdentityRepository,
-  IdentityResolution,
-} from './control-plane';
-import {
-  identityDlqAndAck,
-  type IdentityDlqProducer,
-} from './dlq';
+import type { IdentityRepository, IdentityResolution } from './control-plane';
+import { identityDlqAndAck, type IdentityDlqProducer } from './dlq';
 import { validateIdentityEnvelope } from './envelope';
 import { IdentityWorkerError } from './errors';
-import {
-  logIdentityWorker,
-  type IdentityWorkerLogEvent,
-} from './logging';
+import { logIdentityWorker, type IdentityWorkerLogEvent } from './logging';
 import { mapIdentityLinkWriteError } from './link-writer';
 import { retryIdentityMessage } from './retry';
-import type {
-  IdentityQueueBatchLike,
-  IdentityQueueMessageLike,
-} from './types';
+import type { IdentityQueueBatchLike, IdentityQueueMessageLike } from './types';
 
 export interface IdentityConsumerDependencies {
   repository: IdentityRepository;
@@ -45,17 +33,11 @@ function resolutionError(
   result: IdentityResolution,
 ): IdentityWorkerError | null {
   if (result.resolution_status === 'IDENTITY_CONFLICT') {
-    return new IdentityWorkerError(
-      'PERMANENT',
-      'IDENTITY_CONFLICT',
-    );
+    return new IdentityWorkerError('PERMANENT', 'IDENTITY_CONFLICT');
   }
 
   if (result.resolution_status === 'VISITOR_IDENTITY_CONFLICT') {
-    return new IdentityWorkerError(
-      'PERMANENT',
-      'VISITOR_IDENTITY_CONFLICT',
-    );
+    return new IdentityWorkerError('PERMANENT', 'VISITOR_IDENTITY_CONFLICT');
   }
 
   return null;
@@ -94,12 +76,7 @@ async function permanentFailure(
   now: () => number,
 ): Promise<void> {
   try {
-    await identityDlqAndAck(
-      dependencies.dlq,
-      message,
-      error,
-      now,
-    );
+    await identityDlqAndAck(dependencies.dlq, message, error, now);
 
     logIdentityWorker('identity.worker.dlq', {
       queue_batch_size: batchSize,
@@ -120,9 +97,7 @@ export function createIdentityConsumer(
 ) {
   const now = dependencies.now ?? Date.now;
 
-  return async function consume(
-    batch: IdentityQueueBatchLike,
-  ): Promise<void> {
+  return async function consume(batch: IdentityQueueBatchLike): Promise<void> {
     for (const message of batch.messages) {
       const startedAt = performance.now();
       let envelope: IdentityEnvelopeV1 | null = null;
@@ -133,10 +108,7 @@ export function createIdentityConsumer(
         const workerError =
           error instanceof IdentityWorkerError
             ? error
-            : new IdentityWorkerError(
-                'PERMANENT',
-                'IDENTITY_ENVELOPE_INVALID',
-              );
+            : new IdentityWorkerError('PERMANENT', 'IDENTITY_ENVELOPE_INVALID');
         await permanentFailure(
           dependencies,
           message,
@@ -178,17 +150,12 @@ export function createIdentityConsumer(
             workspace_id: envelope.workspace_id,
             pixel_id: envelope.pixel_id,
             ...identifierMetadata(envelope),
-            processing_ms: Math.round(
-              performance.now() - startedAt,
-            ),
+            processing_ms: Math.round(performance.now() - startedAt),
             control_plane_ms: Math.round(
               performance.now() - controlPlaneStarted,
             ),
             status: 'retry',
-            retry_count: Math.max(
-              0,
-              (message.attempts ?? 1) - 1,
-            ),
+            retry_count: Math.max(0, (message.attempts ?? 1) - 1),
             error_code: workerError.code,
           });
         }
@@ -203,12 +170,8 @@ export function createIdentityConsumer(
           workspace_id: envelope.workspace_id,
           pixel_id: envelope.pixel_id,
           ...identifierMetadata(envelope),
-          processing_ms: Math.round(
-            performance.now() - startedAt,
-          ),
-          control_plane_ms: Math.round(
-            performance.now() - controlPlaneStarted,
-          ),
+          processing_ms: Math.round(performance.now() - startedAt),
+          control_plane_ms: Math.round(performance.now() - controlPlaneStarted),
           status: 'dlq',
           retry_count: Math.max(0, (message.attempts ?? 1) - 1),
           error_code: conflict.code,
@@ -248,20 +211,13 @@ export function createIdentityConsumer(
             workspace_id: envelope.workspace_id,
             pixel_id: envelope.pixel_id,
             ...identifierMetadata(envelope),
-            processing_ms: Math.round(
-              performance.now() - startedAt,
-            ),
+            processing_ms: Math.round(performance.now() - startedAt),
             control_plane_ms: Math.round(
               clickHouseStarted - controlPlaneStarted,
             ),
-            clickhouse_ms: Math.round(
-              performance.now() - clickHouseStarted,
-            ),
+            clickhouse_ms: Math.round(performance.now() - clickHouseStarted),
             status: 'retry',
-            retry_count: Math.max(
-              0,
-              (message.attempts ?? 1) - 1,
-            ),
+            retry_count: Math.max(0, (message.attempts ?? 1) - 1),
             error_code: workerError.code,
           });
         }
@@ -270,10 +226,9 @@ export function createIdentityConsumer(
 
       message.ack();
 
-      const event: IdentityWorkerLogEvent =
-        resolution.person_created
-          ? 'identity.worker.created_person'
-          : 'identity.worker.resolved';
+      const event: IdentityWorkerLogEvent = resolution.person_created
+        ? 'identity.worker.created_person'
+        : 'identity.worker.resolved';
 
       logIdentityWorker(event, {
         queue_batch_size: batch.messages.length,
@@ -281,12 +236,8 @@ export function createIdentityConsumer(
         pixel_id: envelope.pixel_id,
         ...identifierMetadata(envelope),
         processing_ms: Math.round(performance.now() - startedAt),
-        control_plane_ms: Math.round(
-          clickHouseStarted - controlPlaneStarted,
-        ),
-        clickhouse_ms: Math.round(
-          performance.now() - clickHouseStarted,
-        ),
+        control_plane_ms: Math.round(clickHouseStarted - controlPlaneStarted),
+        clickhouse_ms: Math.round(performance.now() - clickHouseStarted),
         status: 'success',
         retry_count: Math.max(0, (message.attempts ?? 1) - 1),
       });

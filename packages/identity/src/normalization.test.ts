@@ -10,18 +10,12 @@ import {
 
 describe('identity normalization', () => {
   it('normalizes email without provider-specific rewriting', () => {
-    expect(normalizeEmail('  USER@Example.COM ')).toBe(
-      'user@example.com',
-    );
-    expect(normalizeEmail('user+tag@example.com')).toBe(
-      'user+tag@example.com',
-    );
+    expect(normalizeEmail('  USER@Example.COM ')).toBe('user@example.com');
+    expect(normalizeEmail('user+tag@example.com')).toBe('user+tag@example.com');
   });
 
   it('normalizes deterministic E.164 phone input', () => {
-    expect(normalizePhone('+55 (11) 99999-8888')).toBe(
-      '+5511999998888',
-    );
+    expect(normalizePhone('+55 (11) 99999-8888')).toBe('+5511999998888');
     expect(() => normalizePhone('11999998888')).toThrow(
       'IDENTITY_PHONE_INVALID',
     );

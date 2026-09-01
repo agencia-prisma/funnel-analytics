@@ -31,9 +31,7 @@ export function createRouter(env: CollectorEnv) {
   const identityCollector = createIdentityCollector({
     registry,
     queue: new CloudflareIdentityQueueProducer(env.IDENTITY_QUEUE),
-    rateLimiter: new CloudflareRateLimiter(
-      env.IDENTITY_RATE_LIMITER,
-    ),
+    rateLimiter: new CloudflareRateLimiter(env.IDENTITY_RATE_LIMITER),
     encryptionKey: env.IDENTITY_ENCRYPTION_KEY_V1 ?? '',
     hmacKey: env.IDENTITY_HMAC_KEY_V1 ?? '',
   });
