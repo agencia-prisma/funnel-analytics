@@ -32,7 +32,8 @@
     "session-worker:build": "pnpm --filter @funnel/session-worker build",
     "test:sessionization-browser": "playwright test --config=playwright.sessionization.config.ts",
     "identity-worker:dev": "pnpm --filter @funnel/identity-worker dev",
-    "identity-worker:build": "pnpm --filter @funnel/identity-worker build"
+    "identity-worker:build": "pnpm --filter @funnel/identity-worker build",
+    "test:identity-browser": "playwright test --config=playwright.identity.config.ts"
   },
   "devDependencies": {
     "@funnel/config": "workspace:*",
