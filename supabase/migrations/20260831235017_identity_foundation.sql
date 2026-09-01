@@ -885,7 +885,6 @@ grant execute on function private.find_person_by_blind_index_impl(
 grant execute on function public.find_person_by_blind_index(
   uuid, text, text
 ) to authenticated;
-
   ) then
     raise exception 'IDENTITY_INVALID' using errcode = 'P0001';
   end if;
@@ -905,8 +904,11 @@ grant execute on function public.find_person_by_blind_index(
     );
   end loop;
 
-  select pvl.person_id, pvl.created_at
-  into existing_visitor_person_id, existing_link_created_at
+  select pvl.person_id, pvl.first_seen_at, pvl.last_seen_at
+  into
+    existing_visitor_person_id,
+    existing_link_first_seen_at,
+    existing_link_last_seen_at
   from public.person_visitor_links pvl
   where pvl.workspace_id = target_workspace_id
     and pvl.visitor_id = target_visitor_id
@@ -954,7 +956,15 @@ grant execute on function public.find_person_by_blind_index(
       )
     );
 
-    raise exception 'IDENTITY_CONFLICT' using errcode = 'P0001';
+    return query
+    select
+      'IDENTITY_CONFLICT'::text,
+      null::uuid,
+      false,
+      false,
+      observed_at,
+      observed_at;
+    return;
   end if;
 
   if coalesce(array_length(candidate_person_ids, 1), 0) = 1 then
@@ -978,11 +988,19 @@ grant execute on function public.find_person_by_blind_index(
       null,
       'person.identity_conflict',
       'person_visitor_link',
-      target_visitor_id::text,
+      null,
       jsonb_build_object('source', identity_source, 'kind', 'visitor')
     );
 
-    raise exception 'VISITOR_IDENTITY_CONFLICT' using errcode = 'P0001';
+    return query
+    select
+      'VISITOR_IDENTITY_CONFLICT'::text,
+      null::uuid,
+      false,
+      false,
+      observed_at,
+      observed_at;
+    return;
   end if;
 
   target_person_id := coalesce(
@@ -1182,7 +1200,8 @@ grant execute on function public.find_person_by_blind_index(
     );
 
     new_link := true;
-    existing_link_created_at := now();
+    existing_link_first_seen_at := observed_at;
+    existing_link_last_seen_at := observed_at;
 
     insert into public.audit_logs (
       workspace_id,
@@ -1215,16 +1234,23 @@ grant execute on function public.find_person_by_blind_index(
       confidence = identity_confidence
     where workspace_id = target_workspace_id
       and visitor_id = target_visitor_id
-      and person_id = target_person_id;
+      and person_id = target_person_id
+    returning
+      first_seen_at,
+      last_seen_at
+    into
+      existing_link_first_seen_at,
+      existing_link_last_seen_at;
   end if;
 
   return query
   select
+    'RESOLVED'::text,
     target_person_id,
     new_person,
     new_link,
-    coalesce(existing_link_created_at, observed_at),
-    observed_at;
+    coalesce(existing_link_first_seen_at, observed_at),
+    coalesce(existing_link_last_seen_at, observed_at);
 end;
 $$;
 
@@ -1376,7 +1402,7 @@ begin
     raise exception 'INSUFFICIENT_PERMISSION' using errcode = 'P0001';
   end if;
 
-  if target_identifier_type not in ('email', 'phone', 'cpf', 'name')
+  if target_identifier_type not in ('email', 'phone', 'cpf')
     or target_blind_index !~ '^[0-9a-f]{64}$'
   then
     raise exception 'IDENTITY_INVALID' using errcode = 'P0001';
