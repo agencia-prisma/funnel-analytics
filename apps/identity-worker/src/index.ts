@@ -2,6 +2,7 @@ import { CloudflareIdentityDlqProducer } from './dlq';
 import { SupabaseIdentityRepository } from './control-plane';
 import { createIdentityConsumer } from './consumer';
 import { identityLinkWriterFromEnv } from './link-writer';
+import { CloudflareJourneyQueueProducer } from './journey-queue';
 import type { IdentityQueueBatchLike, IdentityWorkerEnv } from './types';
 
 export default {
@@ -16,6 +17,7 @@ export default {
       ),
       writer: identityLinkWriterFromEnv(env),
       dlq: new CloudflareIdentityDlqProducer(env.IDENTITY_DLQ),
+      journeys: new CloudflareJourneyQueueProducer(env.JOURNEYS_QUEUE),
     });
 
     await consume(batch);

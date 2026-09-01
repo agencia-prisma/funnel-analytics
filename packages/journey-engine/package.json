@@ -1,0 +1,19 @@
+{
+  "name": "@funnel/journey-engine",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "scripts": {
+    "test": "vitest run src/engine.test.ts",
+    "test:performance": "vitest run src/performance.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@funnel/event-contracts": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3",
+    "vitest": "4.1.11"
+  }
+}

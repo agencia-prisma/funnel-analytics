@@ -1,9 +1,14 @@
 import type {
   IdentityDeadLetterEnvelopeV1,
   IdentityEnvelopeV1,
+  JourneyRecomputeEnvelopeV1,
 } from '@funnel/event-contracts';
 
 export type IdentityWorkerEnvironment = 'local' | 'preview' | 'production';
+
+export interface IdentityJourneyQueueBinding {
+  send(message: JourneyRecomputeEnvelopeV1): Promise<void>;
+}
 
 export interface IdentityDlqBinding {
   send(message: IdentityDeadLetterEnvelopeV1): Promise<void>;
@@ -17,6 +22,7 @@ export interface IdentityWorkerEnv {
   CLICKHOUSE_USERNAME: string;
   CLICKHOUSE_PASSWORD: string;
   IDENTITY_DLQ: IdentityDlqBinding;
+  JOURNEYS_QUEUE: IdentityJourneyQueueBinding;
 }
 
 export interface IdentityQueueMessageLike {

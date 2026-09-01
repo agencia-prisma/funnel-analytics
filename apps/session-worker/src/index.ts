@@ -2,6 +2,7 @@ import { ClickHouseSessionRepository } from '@funnel/session-engine';
 
 import { createSessionConsumer } from './consumer';
 import { CloudflareSessionDlqProducer } from './dlq';
+import { CloudflareJourneyQueueProducer } from './journey-queue';
 import type { SessionQueueBatchLike, SessionWorkerEnv } from './types';
 
 export default {
@@ -17,6 +18,7 @@ export default {
         database: 'funnel_analytics',
       }),
       dlq: new CloudflareSessionDlqProducer(env.SESSIONS_DLQ),
+      journeys: new CloudflareJourneyQueueProducer(env.JOURNEYS_QUEUE),
     });
 
     await consume(batch);

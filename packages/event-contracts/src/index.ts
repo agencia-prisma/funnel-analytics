@@ -310,3 +310,28 @@ export interface IdentityDeadLetterEnvelopeV1 {
   retry_count: number;
   envelope: unknown;
 }
+
+export const JOURNEY_RECOMPUTE_V1_MAX_REFERENCES = 100;
+
+export type JourneyRecomputeReasonV1 =
+  | 'session_updated'
+  | 'identity_linked';
+
+export interface JourneyRecomputeEnvelopeV1 {
+  envelope_version: 1;
+  request_id: string;
+  generated_at: string;
+  workspace_id: string;
+  reason: JourneyRecomputeReasonV1;
+  visitor_ids: string[];
+  person_id: string | null;
+}
+
+export interface JourneyDeadLetterEnvelopeV1 {
+  dlq_version: 1;
+  failed_at: string;
+  failure_kind: PipelineFailureKind;
+  error_code: string;
+  retry_count: number;
+  envelope: unknown;
+}

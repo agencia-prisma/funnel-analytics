@@ -8,6 +8,7 @@ import type { IdentityRepository, IdentityResolution } from './control-plane';
 import { identityDlqAndAck, type IdentityDlqProducer } from './dlq';
 import { validateIdentityEnvelope } from './envelope';
 import { IdentityWorkerError } from './errors';
+import type { JourneyQueueProducer } from './journey-queue';
 import { logIdentityWorker, type IdentityWorkerLogEvent } from './logging';
 import { mapIdentityLinkWriteError } from './link-writer';
 import { retryIdentityMessage } from './retry';
@@ -17,6 +18,7 @@ export interface IdentityConsumerDependencies {
   repository: IdentityRepository;
   writer: IdentityLinkWriter;
   dlq: IdentityDlqProducer;
+  journeys: JourneyQueueProducer;
   now?: () => number;
 }
 
@@ -221,6 +223,30 @@ export function createIdentityConsumer(
             error_code: workerError.code,
           });
         }
+        continue;
+      }
+
+      try {
+        await dependencies.journeys.sendIdentityLinked({
+          workspaceId: envelope.workspace_id,
+          visitorId: envelope.visitor_id,
+          personId: link.person_id,
+          generatedAt: new Date(now()).toISOString(),
+        });
+      } catch {
+        retryIdentityMessage(message);
+        logIdentityWorker('identity.worker.retry', {
+          queue_batch_size: batch.messages.length,
+          workspace_id: envelope.workspace_id,
+          pixel_id: envelope.pixel_id,
+          ...identifierMetadata(envelope),
+          processing_ms: Math.round(performance.now() - startedAt),
+          control_plane_ms: Math.round(clickHouseStarted - controlPlaneStarted),
+          clickhouse_ms: Math.round(performance.now() - clickHouseStarted),
+          status: 'retry',
+          retry_count: Math.max(0, (message.attempts ?? 1) - 1),
+          error_code: 'JOURNEY_ENQUEUE_FAILED',
+        });
         continue;
       }
 
