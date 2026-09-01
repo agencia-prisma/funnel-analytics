@@ -64,8 +64,7 @@ async function injectPixel(
   await page.evaluate(
     ({ source, eventUrl, identifyUrl, consentRequired }) => {
       const script = document.createElement('script');
-      script.dataset.pixelId =
-        'px_pub_dddddddddddddddddddddddddddddddddddd';
+      script.dataset.pixelId = 'px_pub_dddddddddddddddddddddddddddddddddddd';
       script.dataset.endpoint = eventUrl;
       script.dataset.identityEndpoint = identifyUrl;
 
@@ -138,9 +137,7 @@ test('two browser visitors identify to one Person and historical sessions join w
 
   expect(await identify(first.page)).toBe(true);
 
-  await expect
-    .poll(() => personIdForVisitor(first.visitorId))
-    .not.toBeNull();
+  await expect.poll(() => personIdForVisitor(first.visitorId)).not.toBeNull();
 
   const firstPersonId = await personIdForVisitor(first.visitorId);
   expect(firstPersonId).toBeTruthy();

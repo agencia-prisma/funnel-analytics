@@ -40,10 +40,7 @@ type TestR2Bucket = EventWorkerEnv['EVENTS_RAW_BUCKET'] & {
 };
 
 interface IdentityHarnessEnv
-  extends CollectorEnv,
-    EventWorkerEnv,
-    SessionWorkerEnv,
-    IdentityWorkerEnv {
+  extends CollectorEnv, EventWorkerEnv, SessionWorkerEnv, IdentityWorkerEnv {
   EVENTS_RAW_BUCKET: TestR2Bucket;
 }
 
@@ -63,9 +60,7 @@ function isIdentityBatch(batch: QueueBatchLike): boolean {
   const body = batch.messages[0]?.body;
 
   return (
-    typeof body === 'object' &&
-    body !== null &&
-    'encrypted_identifiers' in body
+    typeof body === 'object' && body !== null && 'encrypted_identifiers' in body
   );
 }
 
