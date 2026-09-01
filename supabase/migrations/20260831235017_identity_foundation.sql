@@ -426,13 +426,13 @@ begin
       jsonb_build_object('source', identity_source)
     );
   else
-    update public.persons
+    update public.persons p
     set
-      first_seen_at = least(first_seen_at, observed_at),
-      last_seen_at = greatest(last_seen_at, observed_at)
-    where id = target_person_id
-      and workspace_id = target_workspace_id
-      and status = 'active';
+      first_seen_at = least(p.first_seen_at, observed_at),
+      last_seen_at = greatest(p.last_seen_at, observed_at)
+    where p.id = target_person_id
+      and p.workspace_id = target_workspace_id
+      and p.status = 'active';
 
     if not found then
       raise exception 'IDENTITY_PERSON_NOT_ACTIVE' using errcode = 'P0001';
@@ -480,18 +480,18 @@ begin
       returning id into item_id;
 
       if item_id is null then
-        update private.person_identifiers
+        update private.person_identifiers pi
         set
           encrypted_value = item ->> 'encrypted_value',
           encryption_key_version =
             (item ->> 'encryption_key_version')::integer,
-          last_seen_at = greatest(last_seen_at, observed_at),
+          last_seen_at = greatest(pi.last_seen_at, observed_at),
           source = identity_source,
           confidence = identity_confidence
-        where workspace_id = target_workspace_id
-          and person_id = target_person_id
-          and identifier_type = item ->> 'type'
-          and blind_index = item ->> 'blind_index';
+        where pi.workspace_id = target_workspace_id
+          and pi.person_id = target_person_id
+          and pi.identifier_type = item ->> 'type'
+          and pi.blind_index = item ->> 'blind_index';
       end if;
     else
       insert into private.person_identifiers (
@@ -524,17 +524,17 @@ begin
       returning id into item_id;
 
       if item_id is null then
-        update private.person_identifiers
+        update private.person_identifiers pi
         set
           encrypted_value = item ->> 'encrypted_value',
           encryption_key_version =
             (item ->> 'encryption_key_version')::integer,
-          last_seen_at = greatest(last_seen_at, observed_at),
+          last_seen_at = greatest(pi.last_seen_at, observed_at),
           source = identity_source,
           confidence = identity_confidence
-        where person_id = target_person_id
-          and identifier_type = item ->> 'type'
-          and blind_index = item ->> 'blind_index';
+        where pi.person_id = target_person_id
+          and pi.identifier_type = item ->> 'type'
+          and pi.blind_index = item ->> 'blind_index';
       end if;
     end if;
 
@@ -611,19 +611,19 @@ begin
       )
     );
   else
-    update public.person_visitor_links
+    update public.person_visitor_links pvl
     set
       pixel_id = target_pixel_id,
-      first_seen_at = least(first_seen_at, observed_at),
-      last_seen_at = greatest(last_seen_at, observed_at),
+      first_seen_at = least(pvl.first_seen_at, observed_at),
+      last_seen_at = greatest(pvl.last_seen_at, observed_at),
       source = identity_source,
       confidence = identity_confidence
-    where workspace_id = target_workspace_id
-      and visitor_id = target_visitor_id
-      and person_id = target_person_id
+    where pvl.workspace_id = target_workspace_id
+      and pvl.visitor_id = target_visitor_id
+      and pvl.person_id = target_person_id
     returning
-      first_seen_at,
-      last_seen_at
+      pvl.first_seen_at,
+      pvl.last_seen_at
     into
       existing_link_first_seen_at,
       existing_link_last_seen_at;
