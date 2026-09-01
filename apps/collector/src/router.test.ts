@@ -29,7 +29,15 @@ const env: CollectorEnv = {
   EVENTS_QUEUE: {
     async send() {},
   },
+  IDENTITY_QUEUE: {
+    async send() {},
+  },
   EVENTS_RATE_LIMITER: {
+    async limit() {
+      return { success: true };
+    },
+  },
+  IDENTITY_RATE_LIMITER: {
     async limit() {
       return { success: true };
     },

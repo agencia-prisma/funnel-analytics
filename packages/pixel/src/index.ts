@@ -8,6 +8,8 @@ export * from './device';
 export * from './domains';
 export * from './events';
 export * from './ids';
+export * from './identify';
+export * from './identity-transport';
 export * from './properties';
 export * from './public-key';
 export * from './queue';

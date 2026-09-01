@@ -241,3 +241,72 @@ export interface SessionFactV1 {
   session_version: string;
   updated_at: string;
 }
+
+export const IDENTIFY_V1_MAX_BODY_BYTES = 16 * 1024;
+export const IDENTITY_ENVELOPE_V1_MAX_IDENTIFIERS = 4;
+
+export type IdentityIdentifierTypeV1 = 'email' | 'phone' | 'cpf' | 'name';
+export type IdentityStrongIdentifierTypeV1 = 'email' | 'phone' | 'cpf';
+export type IdentitySourceV1 = 'manual_browser_identify';
+export type IdentityConfidenceV1 = 'high';
+
+export interface BrowserIdentifyIdentifiersV1 {
+  email?: string;
+  phone?: string;
+  cpf?: string;
+  name?: string;
+}
+
+export interface BrowserIdentifyRequestV1 {
+  identify_version: 1;
+  pixel_key: string;
+  visitor_id: string;
+  session_id: string | null;
+  occurred_at: string;
+  identifiers: BrowserIdentifyIdentifiersV1;
+  consent_state: ConsentStateV1;
+  sdk_version: string;
+  test_mode: boolean;
+}
+
+export interface ProtectedIdentifierV1 {
+  type: IdentityIdentifierTypeV1;
+  blind_index: string;
+  encrypted_value: string;
+  encryption_key_version: number;
+}
+
+export interface IdentityEnvelopeV1 {
+  envelope_version: 1;
+  request_id: string;
+  received_at: string;
+  workspace_id: string;
+  pixel_id: string;
+  visitor_id: string;
+  session_id: string | null;
+  encrypted_identifiers: ProtectedIdentifierV1[];
+  source: IdentitySourceV1;
+  confidence: IdentityConfidenceV1;
+  test_mode: boolean;
+}
+
+export interface IdentityLinkV1 {
+  link_version: 1;
+  workspace_id: string;
+  person_id: string;
+  visitor_id: string;
+  pixel_id: string | null;
+  source: IdentitySourceV1;
+  confidence: IdentityConfidenceV1;
+  linked_at: string;
+  last_seen_at: string;
+}
+
+export interface IdentityDeadLetterEnvelopeV1 {
+  dlq_version: 1;
+  failed_at: string;
+  failure_kind: PipelineFailureKind;
+  error_code: string;
+  retry_count: number;
+  envelope: unknown;
+}

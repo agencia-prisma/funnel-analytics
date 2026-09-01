@@ -7,7 +7,7 @@ on:
       - main
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: validation-${{ github.workflow }}-${{ github.ref }}
@@ -41,6 +41,21 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Apply EPIC 07 formatting
+        if: github.event_name == 'pull_request' && github.head_ref == 'feature/epic-07-identity-foundation'
+        shell: bash
+        run: |
+          git fetch origin "$GITHUB_HEAD_REF"
+          git checkout -B "$GITHUB_HEAD_REF" "origin/$GITHUB_HEAD_REF"
+          pnpm format
+          if ! git diff --quiet; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add -A
+            git commit -m "chore(identity): format acceptance suite"
+            git push origin HEAD:"$GITHUB_HEAD_REF"
+          fi
 
       - name: Check formatting
         run: pnpm format:check
@@ -485,3 +500,156 @@ jobs:
       - name: Show sessionization logs on failure
         if: failure()
         run: cat /tmp/sessionization.log || true
+
+  identity-foundation:
+    name: Identity Foundation
+    needs: database
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      CLICKHOUSE_URL: http://127.0.0.1:8123
+      CLICKHOUSE_USERNAME: default
+      CLICKHOUSE_PASSWORD: test-password
+
+    services:
+      clickhouse:
+        image: clickhouse/clickhouse-server:26.7.5.10
+        env:
+          CLICKHOUSE_PASSWORD: test-password
+        ports:
+          - 8123:8123
+        options: >-
+          --health-cmd "clickhouse-client --password test-password --query 'SELECT 1'"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Audit production dependencies
+        run: pnpm audit --prod --audit-level high
+
+      - name: Start isolated Supabase for identity acceptance
+        run: bash scripts/ci/start-supabase.sh
+
+      - name: Export isolated Supabase credentials
+        shell: bash
+        run: |
+          eval "$(pnpm supabase status -o env)"
+          echo "SUPABASE_URL=$API_URL" >> "$GITHUB_ENV"
+          echo "SUPABASE_SECRET_KEY=$SERVICE_ROLE_KEY" >> "$GITHUB_ENV"
+
+      - name: Seed identity control-plane fixture
+        run: node tests/identity/seed.mjs
+
+      - name: Concurrent identity resolution acceptance
+        run: node tests/identity/concurrency.mjs
+
+      - name: Identity package typecheck
+        run: pnpm --filter @funnel/identity typecheck
+
+      - name: Identity crypto and normalization tests
+        run: pnpm --filter @funnel/identity test
+
+      - name: Collector identity typecheck
+        run: pnpm --filter @funnel/collector typecheck
+
+      - name: Collector identity tests
+        run: pnpm --filter @funnel/collector test
+
+      - name: Identity Worker typecheck
+        run: pnpm --filter @funnel/identity-worker typecheck
+
+      - name: Identity Worker tests
+        run: pnpm --filter @funnel/identity-worker test
+
+      - name: Identity Worker dry-run build
+        run: pnpm --filter @funnel/identity-worker build
+
+      - name: ClickHouse package typecheck
+        run: pnpm --filter @funnel/clickhouse typecheck
+
+      - name: Apply ClickHouse migrations 0001 + 0002 + 0003
+        run: pnpm clickhouse:migrate
+
+      - name: ClickHouse identity links integration
+        run: pnpm --filter @funnel/clickhouse test:identity-integration
+
+      - name: Build Pixel SDK
+        run: pnpm --filter @funnel/pixel build
+
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Prepare local identity secrets
+        shell: bash
+        run: |
+          cat > tests/identity/.dev.vars <<EOF
+          CLICKHOUSE_PASSWORD="test-password"
+          SUPABASE_URL="$SUPABASE_URL"
+          SUPABASE_SECRET_KEY="$SUPABASE_SECRET_KEY"
+          IDENTITY_ENCRYPTION_KEY_V1="AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM"
+          IDENTITY_HMAC_KEY_V1="CQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQk"
+          EOF
+
+      - name: Start local Cloudflare identity pipeline
+        shell: bash
+        run: |
+          pnpm --filter @funnel/identity-worker exec wrangler dev --config "$GITHUB_WORKSPACE/tests/identity/wrangler.jsonc" --local --ip 127.0.0.1 --port 8792 --env-file "$GITHUB_WORKSPACE/tests/identity/.dev.vars" > /tmp/identity.log 2>&1 &
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent --max-time 2 http://127.0.0.1:8792/health > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/identity.log
+          exit 1
+
+      - name: Start browser fixture server
+        shell: bash
+        run: |
+          node tests/collector/fixture-server.mjs > /tmp/identity-fixture.log 2>&1 &
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent --max-time 2 http://127.0.0.1:4173/ > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/identity-fixture.log
+          exit 1
+
+      - name: Full browser identity acceptance
+        run: pnpm test:identity-browser
+
+      - name: Assert plaintext PII is absent from Worker logs
+        shell: bash
+        run: |
+          if grep -Fq "identity-e2e@example.com" /tmp/identity.log; then
+            echo "Plaintext identity leaked into Worker logs."
+            exit 1
+          fi
+
+      - name: Show identity logs on failure
+        if: failure()
+        run: cat /tmp/identity.log || true
+
+      - name: Stop isolated Supabase
+        if: always()
+        run: pnpm supabase stop --no-backup

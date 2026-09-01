@@ -1,4 +1,7 @@
-import type { EventBatchV1 } from '@funnel/event-contracts';
+import type {
+  BrowserIdentifyIdentifiersV1,
+  EventBatchV1,
+} from '@funnel/event-contracts';
 
 import {
   captureTouch,
@@ -19,12 +22,17 @@ import { EventQueue } from './queue';
 import { BrowserStorageAdapter, clearTrackingStorage } from './storage';
 import { getOrCreateSession, touchSession, type SessionState } from './session';
 import { installSpaTracking, type SpaCleanup } from './spa';
+import {
+  createBrowserIdentifyRequest,
+  validateBrowserIdentifyIdentifiers,
+} from './identify';
+import { IdentityHttpTransport } from './identity-transport';
 import { HttpTransport, TestTransport, type Transport } from './transport';
 
 export interface FunnelAnalyticsApi {
   readonly sdkVersion: string;
   track(name: string, properties?: unknown): boolean;
-  identify(): EventIdentity | null;
+  identify(identifiers: BrowserIdentifyIdentifiersV1): Promise<boolean>;
   consent(settings: ConsentSettings): string;
   getVisitorId(): string | null;
   getSessionId(): string | null;
@@ -41,6 +49,7 @@ export class PixelRuntime {
   private readonly storage: BrowserStorageAdapter;
   private readonly consentManager: ConsentManager;
   private readonly queue: EventQueue;
+  private readonly identityTransport: IdentityHttpTransport | null;
 
   private visitorId: string | null = null;
   private session: SessionState | null = null;
@@ -68,6 +77,7 @@ export class PixelRuntime {
     );
 
     const transport = this.createTransport();
+    this.identityTransport = this.createIdentityTransport();
 
     this.queue = new EventQueue(transport, {
       maxBatchEvents: config.maxBatchEvents,
@@ -83,7 +93,8 @@ export class PixelRuntime {
       sdkVersion: SDK_VERSION,
       track: (name, properties) =>
         this.safe(() => this.track(name, properties), false),
-      identify: () => this.safe(() => this.identify(), null),
+      identify: (identifiers) =>
+        this.safeAsync(() => this.identify(identifiers), false),
       consent: (settings) =>
         this.safe(
           () => this.setConsent(settings),
@@ -151,6 +162,18 @@ export class PixelRuntime {
     return null;
   }
 
+  private createIdentityTransport(): IdentityHttpTransport | null {
+    if (!this.config.identityEndpoint) {
+      return null;
+    }
+
+    return new IdentityHttpTransport(
+      this.config.identityEndpoint,
+      this.config.maxRetries,
+      this.windowRef.fetch.bind(this.windowRef),
+    );
+  }
+
   private installLifecycle(): void {
     this.spaCleanup = installSpaTracking(this.windowRef, () => {
       this.safe(() => {
@@ -175,12 +198,45 @@ export class PixelRuntime {
     }, this.config.flushIntervalMs);
   }
 
-  private identify(): EventIdentity | null {
-    if (!this.consentManager.canTrack()) {
-      return null;
+  private async identify(
+    identifiers: BrowserIdentifyIdentifiersV1,
+  ): Promise<boolean> {
+    if (!this.consentManager.canPersistIdentity() || !this.identityTransport) {
+      this.debug('pixel.identify.rejected', {
+        reason: 'consent_or_transport',
+      });
+      return false;
     }
 
-    return this.refreshIdentity();
+    const validated = validateBrowserIdentifyIdentifiers(identifiers);
+
+    if (!validated) {
+      this.debug('pixel.identify.rejected', {
+        reason: 'invalid_identifiers',
+      });
+      return false;
+    }
+
+    const result = await this.identityTransport.send(
+      createBrowserIdentifyRequest({
+        pixelKey: this.config.pixelKey,
+        identity: this.refreshIdentity(),
+        identifiers: validated,
+        consentState: this.consentManager.getState(),
+        testMode: this.config.testMode,
+      }),
+    );
+
+    this.debug(
+      result.ok ? 'pixel.identify.accepted' : 'pixel.identify.failed',
+      {
+        identifier_count: Object.keys(validated).length,
+        identifier_types: Object.keys(validated),
+        status: result.status,
+      },
+    );
+
+    return result.ok;
   }
 
   private setConsent(settings: ConsentSettings): string {
