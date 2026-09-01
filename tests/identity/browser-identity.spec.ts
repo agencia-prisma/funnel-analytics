@@ -1,5 +1,10 @@
+import { ClickHouseIdentityLinkWriter } from '@funnel/clickhouse';
+import type { IdentityEnvelopeV1 } from '@funnel/event-contracts';
 import { expect, test, type Browser, type Page } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
+
+import { SupabaseIdentityRepository } from '../../apps/identity-worker/src/control-plane';
+import { createIdentityConsumer } from '../../apps/identity-worker/src/consumer';
 import path from 'node:path';
 
 const bundle = await readFile(
@@ -124,6 +129,63 @@ async function personIdForVisitor(visitorId: string) {
   return rows[0]?.person_id ?? null;
 }
 
+async function processCapturedIdentityEnvelope(): Promise<IdentityEnvelopeV1> {
+  const response = await fetch(
+    `${collectorBaseUrl}/__test/identity-envelope`,
+  );
+
+  expect(response.ok).toBe(true);
+
+  const envelope = (await response.json()) as IdentityEnvelopeV1 | null;
+  expect(envelope).not.toBeNull();
+
+  let acked = false;
+  let retried = false;
+  const writer = new ClickHouseIdentityLinkWriter({
+    url: clickHouseUrl,
+    username: 'default',
+    password: process.env.CLICKHOUSE_PASSWORD ?? '',
+    database: 'funnel_analytics',
+  });
+
+  try {
+    const consumeIdentity = createIdentityConsumer({
+      repository: new SupabaseIdentityRepository(
+        supabaseUrl!,
+        supabaseSecretKey!,
+      ),
+      writer,
+      dlq: {
+        async send() {
+          throw new Error('IDENTITY_E2E_UNEXPECTED_DLQ');
+        },
+      },
+    });
+
+    await consumeIdentity({
+      messages: [
+        {
+          body: envelope!,
+          attempts: 1,
+          ack() {
+            acked = true;
+          },
+          retry() {
+            retried = true;
+          },
+        },
+      ],
+    });
+  } finally {
+    await writer.close();
+  }
+
+  expect(acked).toBe(true);
+  expect(retried).toBe(false);
+
+  return envelope!;
+}
+
 test.beforeEach(async () => {
   await clickHouseCommand('TRUNCATE TABLE funnel_analytics.events');
   await clickHouseCommand('TRUNCATE TABLE funnel_analytics.session_facts');
@@ -136,6 +198,7 @@ test('two browser visitors identify to one Person and historical sessions join w
   const first = await openIdentityContext(browser);
 
   expect(await identify(first.page)).toBe(true);
+  await processCapturedIdentityEnvelope();
 
   await expect.poll(() => personIdForVisitor(first.visitorId)).not.toBeNull();
 
@@ -145,6 +208,7 @@ test('two browser visitors identify to one Person and historical sessions join w
   const second = await openIdentityContext(browser);
   expect(second.visitorId).not.toBe(first.visitorId);
   expect(await identify(second.page)).toBe(true);
+  await processCapturedIdentityEnvelope();
 
   await expect
     .poll(() => personIdForVisitor(second.visitorId))
