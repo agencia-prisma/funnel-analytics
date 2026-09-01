@@ -130,9 +130,7 @@ async function personIdForVisitor(visitorId: string) {
 }
 
 async function processCapturedIdentityEnvelope(): Promise<IdentityEnvelopeV1> {
-  const response = await fetch(
-    `${collectorBaseUrl}/__test/identity-envelope`,
-  );
+  const response = await fetch(`${collectorBaseUrl}/__test/identity-envelope`);
 
   expect(response.ok).toBe(true);
 

@@ -18,9 +18,7 @@ import type {
   EventWorkerEnv,
   QueueBatchLike,
 } from '../../apps/event-worker/src/types';
-import type {
-  IdentityWorkerEnv,
-} from '../../apps/identity-worker/src/types';
+import type { IdentityWorkerEnv } from '../../apps/identity-worker/src/types';
 import { createSessionConsumer } from '../../apps/session-worker/src/consumer';
 import { CloudflareSessionDlqProducer } from '../../apps/session-worker/src/dlq';
 import type {
