@@ -50,6 +50,7 @@ export class SupabaseIdentityRepository implements IdentityRepository {
         method: 'POST',
         headers: {
           apikey: this.secretKey,
+          authorization: `Bearer ${this.secretKey}`,
           'content-type': 'application/json',
           accept: 'application/json',
         },
