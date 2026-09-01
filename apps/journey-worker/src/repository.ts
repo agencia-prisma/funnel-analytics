@@ -1,8 +1,8 @@
-import { createClickHouseWebClient, type ClickHouseConfig } from '@funnel/clickhouse';
-import type {
-  IdentityLinkV1,
-  SessionFactV1,
-} from '@funnel/event-contracts';
+import {
+  createClickHouseWebClient,
+  type ClickHouseConfig,
+} from '@funnel/clickhouse';
+import type { IdentityLinkV1, SessionFactV1 } from '@funnel/event-contracts';
 import type {
   JourneyFactDraft,
   JourneySessionLinkDraft,
@@ -17,10 +17,22 @@ export interface PreviousJourneyState {
 }
 
 export interface JourneyRepository {
-  findIdentityForVisitors(workspaceId: string, visitorIds: string[]): Promise<IdentityLinkV1[]>;
-  findIdentityForPerson(workspaceId: string, personId: string): Promise<IdentityLinkV1[]>;
-  findSessions(workspaceId: string, visitorIds: string[]): Promise<SessionFactV1[]>;
-  previousState(workspaceId: string, sessionIds: string[]): Promise<PreviousJourneyState>;
+  findIdentityForVisitors(
+    workspaceId: string,
+    visitorIds: string[],
+  ): Promise<IdentityLinkV1[]>;
+  findIdentityForPerson(
+    workspaceId: string,
+    personId: string,
+  ): Promise<IdentityLinkV1[]>;
+  findSessions(
+    workspaceId: string,
+    visitorIds: string[],
+  ): Promise<SessionFactV1[]>;
+  previousState(
+    workspaceId: string,
+    sessionIds: string[],
+  ): Promise<PreviousJourneyState>;
   insertJourneyFacts(
     journeys: JourneyFactDraft[],
     version: string,
@@ -74,7 +86,7 @@ SELECT
   toString(workspace_id) AS workspace_id,
   toString(person_id) AS person_id,
   toString(visitor_id) AS visitor_id,
-  ifNull(toString(pixel_id), NULL) AS pixel_id,
+  toString(pixel_id) AS pixel_id,
   source,
   confidence,
   toString(linked_at) AS linked_at,
@@ -104,7 +116,7 @@ SELECT
   toString(workspace_id) AS workspace_id,
   toString(person_id) AS person_id,
   toString(visitor_id) AS visitor_id,
-  ifNull(toString(pixel_id), NULL) AS pixel_id,
+  toString(pixel_id) AS pixel_id,
   source,
   confidence,
   toString(linked_at) AS linked_at,
@@ -189,7 +201,8 @@ ORDER BY session_started_at, last_activity_at, session_id
     workspaceId: string,
     sessionIds: string[],
   ): Promise<PreviousJourneyState> {
-    if (!sessionIds.length) return { maxVersion: '0', journeyIds: [], sessionIds: [] };
+    if (!sessionIds.length)
+      return { maxVersion: '0', journeyIds: [], sessionIds: [] };
     try {
       const versions = await this.client.query({
         query: `
@@ -216,7 +229,9 @@ FROM
         query_params: { workspace_id: workspaceId, session_ids: sessionIds },
         format: 'JSONEachRow',
       });
-      const versionRows = (await versions.json()) as Array<{ max_version: string }>;
+      const versionRows = (await versions.json()) as Array<{
+        max_version: string;
+      }>;
 
       const previous = await this.client.query({
         query: `

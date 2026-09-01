@@ -12,7 +12,9 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-export function validateJourneyEnvelope(value: unknown): JourneyRecomputeEnvelopeV1 {
+export function validateJourneyEnvelope(
+  value: unknown,
+): JourneyRecomputeEnvelopeV1 {
   if (
     !isRecord(value) ||
     value.envelope_version !== 1 ||
@@ -30,7 +32,8 @@ export function validateJourneyEnvelope(value: unknown): JourneyRecomputeEnvelop
       (id) => typeof id !== 'string' || !UUID_PATTERN.test(id),
     ) ||
     (value.person_id !== null &&
-      (typeof value.person_id !== 'string' || !UUID_PATTERN.test(value.person_id)))
+      (typeof value.person_id !== 'string' ||
+        !UUID_PATTERN.test(value.person_id)))
   ) {
     throw new JourneyWorkerError('PERMANENT', 'JOURNEY_ENVELOPE_INVALID');
   }

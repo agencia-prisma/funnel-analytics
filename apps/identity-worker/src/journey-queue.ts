@@ -1,6 +1,4 @@
-import type {
-  JourneyRecomputeEnvelopeV1,
-} from '@funnel/event-contracts';
+import type { JourneyRecomputeEnvelopeV1 } from '@funnel/event-contracts';
 
 export interface JourneyQueueBinding {
   send(message: JourneyRecomputeEnvelopeV1): Promise<void>;

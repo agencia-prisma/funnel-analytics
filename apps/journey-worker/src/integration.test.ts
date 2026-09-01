@@ -153,10 +153,18 @@ async function run(input: JourneyQueueMessageLike) {
 }
 
 beforeEach(async () => {
-  await client.command({ query: 'TRUNCATE TABLE funnel_analytics.journey_session_links' });
-  await client.command({ query: 'TRUNCATE TABLE funnel_analytics.journey_facts' });
-  await client.command({ query: 'TRUNCATE TABLE funnel_analytics.identity_links' });
-  await client.command({ query: 'TRUNCATE TABLE funnel_analytics.session_facts' });
+  await client.command({
+    query: 'TRUNCATE TABLE funnel_analytics.journey_session_links',
+  });
+  await client.command({
+    query: 'TRUNCATE TABLE funnel_analytics.journey_facts',
+  });
+  await client.command({
+    query: 'TRUNCATE TABLE funnel_analytics.identity_links',
+  });
+  await client.command({
+    query: 'TRUNCATE TABLE funnel_analytics.session_facts',
+  });
 });
 
 describe('Journey acceptance on isolated ClickHouse', () => {
@@ -176,11 +184,18 @@ describe('Journey acceptance on isolated ClickHouse', () => {
 
     await run(message({ reason: 'session_updated', visitors: [visitorA] }));
 
-    const anonymous = await rows<{ journey_id: string; subject_kind: string; session_count: number }>(
-      "SELECT toString(journey_id) AS journey_id, subject_kind, session_count FROM funnel_analytics.journey_facts_current",
+    const anonymous = await rows<{
+      journey_id: string;
+      subject_kind: string;
+      session_count: number;
+    }>(
+      'SELECT toString(journey_id) AS journey_id, subject_kind, session_count FROM funnel_analytics.journey_facts_current',
     );
     expect(anonymous).toHaveLength(1);
-    expect(anonymous[0]).toMatchObject({ subject_kind: 'visitor', session_count: 2 });
+    expect(anonymous[0]).toMatchObject({
+      subject_kind: 'visitor',
+      session_count: 2,
+    });
     const anonymousJourneyId = anonymous[0]!.journey_id;
 
     await addIdentity(visitorA, pixelA);
@@ -198,7 +213,7 @@ describe('Journey acceptance on isolated ClickHouse', () => {
       person_id: string;
       session_count: number;
     }>(
-      "SELECT toString(journey_id) AS journey_id, subject_kind, toString(person_id) AS person_id, session_count FROM funnel_analytics.journey_facts_current",
+      'SELECT toString(journey_id) AS journey_id, subject_kind, toString(person_id) AS person_id, session_count FROM funnel_analytics.journey_facts_current',
     );
     expect(identified).toHaveLength(1);
     expect(identified[0]).toMatchObject({
@@ -237,7 +252,9 @@ describe('Journey acceptance on isolated ClickHouse', () => {
     }>(
       'SELECT session_count, visitor_count, pixel_count FROM funnel_analytics.journey_facts_current',
     );
-    expect(merged).toEqual([{ session_count: 3, visitor_count: 2, pixel_count: 2 }]);
+    expect(merged).toEqual([
+      { session_count: 3, visitor_count: 2, pixel_count: 2 },
+    ]);
 
     const links = await rows<{ mappings: string; sessions: string }>(
       'SELECT toString(count()) AS mappings, toString(uniqExact(session_id)) AS sessions FROM funnel_analytics.journey_session_links_current',
@@ -258,7 +275,10 @@ describe('Journey acceptance on isolated ClickHouse', () => {
     expect(separated[0]).toEqual({ journeys: '2', sessions: '4' });
 
     await run(message({ reason: 'session_updated', visitors: [visitorB] }));
-    const duplicate = await rows<{ current_mappings: string; sessions: string }>(
+    const duplicate = await rows<{
+      current_mappings: string;
+      sessions: string;
+    }>(
       'SELECT toString(count()) AS current_mappings, toString(uniqExact(session_id)) AS sessions FROM funnel_analytics.journey_session_links_current',
     );
     expect(duplicate[0]).toEqual({ current_mappings: '4', sessions: '4' });
@@ -269,7 +289,14 @@ describe('Journey acceptance on isolated ClickHouse', () => {
       "SELECT lower(name) AS name FROM system.columns WHERE database = 'funnel_analytics' AND table IN ('journey_facts', 'journey_session_links')",
     );
     const names = columns.map((row) => row.name);
-    for (const forbidden of ['email', 'phone', 'cpf', 'name', 'ciphertext', 'blind_index']) {
+    for (const forbidden of [
+      'email',
+      'phone',
+      'cpf',
+      'name',
+      'ciphertext',
+      'blind_index',
+    ]) {
       expect(names).not.toContain(forbidden);
     }
   });

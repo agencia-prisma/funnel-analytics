@@ -14,7 +14,7 @@
         "producers": [
           {
             "binding": "JOURNEYS_QUEUE",
-            "queue": "funnel-analytics-journeys-REPLACE_ENV"
+            "queue": "funnel-analytics-journeys-local",
           },
           {
             "binding": "IDENTITY_DLQ",
@@ -41,7 +41,7 @@
         "producers": [
           {
             "binding": "JOURNEYS_QUEUE",
-            "queue": "funnel-analytics-journeys-REPLACE_ENV"
+            "queue": "funnel-analytics-journeys-preview",
           },
           {
             "binding": "IDENTITY_DLQ",
@@ -68,7 +68,7 @@
         "producers": [
           {
             "binding": "JOURNEYS_QUEUE",
-            "queue": "funnel-analytics-journeys-REPLACE_ENV"
+            "queue": "funnel-analytics-journeys-production",
           },
           {
             "binding": "IDENTITY_DLQ",

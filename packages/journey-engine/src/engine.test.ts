@@ -34,7 +34,10 @@ function session(input: {
     session_partition_month: 202609,
     session_started_at: input.start,
     last_activity_at: end,
-    duration_seconds: Math.max(0, (Date.parse(end) - Date.parse(input.start)) / 1000),
+    duration_seconds: Math.max(
+      0,
+      (Date.parse(end) - Date.parse(input.start)) / 1000,
+    ),
     event_count: 2,
     page_view_count: 1,
     custom_event_count: 1,
@@ -86,10 +89,12 @@ function link(visitor = visitorA): IdentityLinkV1 {
 
 describe('Journey Engine', () => {
   it('creates a deterministic anonymous one-session Journey', async () => {
-    const input = [session({
-      id: '018f0000-0000-7000-8000-000000000101',
-      start: '2026-09-01T10:00:00.000Z',
-    })];
+    const input = [
+      session({
+        id: '018f0000-0000-7000-8000-000000000101',
+        start: '2026-09-01T10:00:00.000Z',
+      }),
+    ];
     const first = await reconstructJourneys({
       workspaceId,
       sessions: input,
@@ -140,7 +145,9 @@ describe('Journey Engine', () => {
     });
 
     expect(result.journeys).toHaveLength(1);
-    expect(result.sessionLinks.map((item) => item.sequence_index)).toEqual([0, 1, 2]);
+    expect(result.sessionLinks.map((item) => item.sequence_index)).toEqual([
+      0, 1, 2,
+    ]);
   });
 
   it('starts a new Journey strictly after the inactivity window', async () => {
@@ -258,7 +265,9 @@ describe('Journey Engine', () => {
 
     expect(anonymous.journeys[0]?.subject_kind).toBe('visitor');
     expect(identified.journeys[0]?.subject_kind).toBe('person');
-    expect(identified.journeys[0]?.journey_id).not.toBe(anonymous.journeys[0]?.journey_id);
+    expect(identified.journeys[0]?.journey_id).not.toBe(
+      anonymous.journeys[0]?.journey_id,
+    );
   });
 
   it('rejects invalid policy and cross-Workspace input', async () => {

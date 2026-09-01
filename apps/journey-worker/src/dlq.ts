@@ -1,10 +1,7 @@
 import type { JourneyDeadLetterEnvelopeV1 } from '@funnel/event-contracts';
 
 import type { JourneyWorkerError } from './errors';
-import type {
-  JourneyDlqBinding,
-  JourneyQueueMessageLike,
-} from './types';
+import type { JourneyDlqBinding, JourneyQueueMessageLike } from './types';
 
 export interface JourneyDlqProducer {
   send(message: JourneyDeadLetterEnvelopeV1): Promise<void>;

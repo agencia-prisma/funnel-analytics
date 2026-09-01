@@ -1,17 +1,11 @@
-import type {
-  IdentityLinkV1,
-  SessionFactV1,
-} from '@funnel/event-contracts';
+import type { IdentityLinkV1, SessionFactV1 } from '@funnel/event-contracts';
 import { JOURNEY_POLICY_V1 } from '@funnel/journey-engine';
 import { describe, expect, it, vi } from 'vitest';
 
 import { createJourneyConsumer } from './consumer';
 import type { JourneyDlqProducer } from './dlq';
 import { JourneyWorkerError } from './errors';
-import type {
-  JourneyRepository,
-  PreviousJourneyState,
-} from './repository';
+import type { JourneyRepository, PreviousJourneyState } from './repository';
 import type { JourneyQueueMessageLike } from './types';
 
 const workspaceId = '21000000-0000-0000-0000-000000000001';
@@ -102,7 +96,9 @@ function dependencies(options?: {
     },
     async previousState() {
       trace.push('previous');
-      return options?.previous ?? { maxVersion: '0', journeyIds: [], sessionIds: [] };
+      return (
+        options?.previous ?? { maxVersion: '0', journeyIds: [], sessionIds: [] }
+      );
     },
     async insertJourneyFacts() {
       trace.push('facts');
@@ -151,7 +147,10 @@ describe('Journey Worker consumer', () => {
 
   it('retries transient query/write failures without ack', async () => {
     const deps = dependencies({
-      queryError: new JourneyWorkerError('TRANSIENT', 'JOURNEY_STORAGE_UNAVAILABLE'),
+      queryError: new JourneyWorkerError(
+        'TRANSIENT',
+        'JOURNEY_STORAGE_UNAVAILABLE',
+      ),
     });
     const current = message();
     const consume = createJourneyConsumer({
@@ -198,7 +197,11 @@ describe('Journey Worker consumer', () => {
 
     await consume({ messages: [current.value] });
 
-    expect(facts).toHaveBeenCalledWith(expect.any(Array), '42', expect.any(String));
+    expect(facts).toHaveBeenCalledWith(
+      expect.any(Array),
+      '42',
+      expect.any(String),
+    );
     expect(tombstones).toHaveBeenCalledWith(
       workspaceId,
       ['61000000-0000-0000-0000-000000000001'],

@@ -313,9 +313,7 @@ export interface IdentityDeadLetterEnvelopeV1 {
 
 export const JOURNEY_RECOMPUTE_V1_MAX_REFERENCES = 100;
 
-export type JourneyRecomputeReasonV1 =
-  | 'session_updated'
-  | 'identity_linked';
+export type JourneyRecomputeReasonV1 = 'session_updated' | 'identity_linked';
 
 export interface JourneyRecomputeEnvelopeV1 {
   envelope_version: 1;

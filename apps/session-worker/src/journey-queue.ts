@@ -8,7 +8,10 @@ export interface JourneyQueueBinding {
 }
 
 export interface JourneyQueueProducer {
-  sendSessionUpdated(facts: SessionFactV1[], generatedAt: string): Promise<void>;
+  sendSessionUpdated(
+    facts: SessionFactV1[],
+    generatedAt: string,
+  ): Promise<void>;
 }
 
 export class CloudflareJourneyQueueProducer implements JourneyQueueProducer {

@@ -11,10 +11,7 @@ import { validateJourneyEnvelope } from './envelope';
 import { JourneyWorkerError, toJourneyWorkerError } from './errors';
 import { logJourneyWorker } from './logging';
 import type { JourneyRepository } from './repository';
-import type {
-  JourneyQueueBatchLike,
-  JourneyQueueMessageLike,
-} from './types';
+import type { JourneyQueueBatchLike, JourneyQueueMessageLike } from './types';
 
 export interface JourneyConsumerDependencies {
   repository: JourneyRepository;
@@ -80,7 +77,9 @@ export function createJourneyConsumer(
               );
 
         if (identityLinks.length) {
-          const personIds = [...new Set(identityLinks.map((link) => link.person_id))];
+          const personIds = [
+            ...new Set(identityLinks.map((link) => link.person_id)),
+          ];
           if (personIds.length > 1) {
             throw new JourneyWorkerError(
               'PERMANENT',
@@ -98,7 +97,10 @@ export function createJourneyConsumer(
           : [...new Set(envelope.visitor_ids)];
 
         if (visitorIds.length > JOURNEY_MAX_VISITORS_PER_RECOMPUTE) {
-          throw new JourneyWorkerError('PERMANENT', 'JOURNEY_VISITOR_LIMIT_EXCEEDED');
+          throw new JourneyWorkerError(
+            'PERMANENT',
+            'JOURNEY_VISITOR_LIMIT_EXCEEDED',
+          );
         }
 
         const sessions = await dependencies.repository.findSessions(
@@ -107,7 +109,10 @@ export function createJourneyConsumer(
         );
 
         if (sessions.length > JOURNEY_MAX_SESSIONS_PER_RECOMPUTE) {
-          throw new JourneyWorkerError('PERMANENT', 'JOURNEY_SESSION_LIMIT_EXCEEDED');
+          throw new JourneyWorkerError(
+            'PERMANENT',
+            'JOURNEY_SESSION_LIMIT_EXCEEDED',
+          );
         }
 
         const reconstructed = await reconstructJourneys({
@@ -117,7 +122,9 @@ export function createJourneyConsumer(
           policy: dependencies.policy,
         });
 
-        const sessionIds = reconstructed.sessionLinks.map((link) => link.session_id);
+        const sessionIds = reconstructed.sessionLinks.map(
+          (link) => link.session_id,
+        );
         const previous = await dependencies.repository.previousState(
           envelope.workspace_id,
           sessionIds,

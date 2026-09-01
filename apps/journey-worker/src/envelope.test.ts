@@ -27,8 +27,10 @@ describe('journey envelope', () => {
     expect(() =>
       validateJourneyEnvelope({
         ...valid,
-        visitor_ids: Array.from({ length: 101 }, (_, index) =>
-          `018f0000-0000-7000-8000-${String(index + 1).padStart(12, '0')}`,
+        visitor_ids: Array.from(
+          { length: 101 },
+          (_, index) =>
+            `018f0000-0000-7000-8000-${String(index + 1).padStart(12, '0')}`,
         ),
       }),
     ).toThrowError('JOURNEY_ENVELOPE_INVALID');

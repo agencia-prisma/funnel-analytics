@@ -111,13 +111,22 @@ function uuidBytes(uuid: string): Uint8Array {
   const hex = uuid.replaceAll('-', '');
   if (!/^[0-9a-f]{32}$/i.test(hex)) throw new Error('UUID_INVALID');
   const bytes = new Uint8Array(16);
-  for (let i = 0; i < 16; i += 1) bytes[i] = Number.parseInt(hex.slice(i * 2, i * 2 + 2), 16);
+  for (let i = 0; i < 16; i += 1)
+    bytes[i] = Number.parseInt(hex.slice(i * 2, i * 2 + 2), 16);
   return bytes;
 }
 
 function uuidFromBytes(bytes: Uint8Array): string {
-  const hex = Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
-  return [hex.slice(0, 8), hex.slice(8, 12), hex.slice(12, 16), hex.slice(16, 20), hex.slice(20)].join('-');
+  const hex = Array.from(bytes, (byte) =>
+    byte.toString(16).padStart(2, '0'),
+  ).join('');
+  return [
+    hex.slice(0, 8),
+    hex.slice(8, 12),
+    hex.slice(12, 16),
+    hex.slice(16, 20),
+    hex.slice(20),
+  ].join('-');
 }
 
 export async function uuidV5(namespace: string, name: string): Promise<string> {
@@ -190,30 +199,35 @@ export async function reconstructJourneys(
   }
 
   const links = new Map<string, IdentityLinkV1>();
-  const personVisitors = new Map<string, Set<string>>();
   for (const link of input.identityLinks) {
     if (link.workspace_id !== input.workspaceId) {
       throw new JourneyEngineError('JOURNEY_WORKSPACE_MISMATCH');
     }
     const current = links.get(link.visitor_id);
-    if (!current || Date.parse(link.last_seen_at) > Date.parse(current.last_seen_at)) {
+    if (
+      !current ||
+      Date.parse(link.last_seen_at) > Date.parse(current.last_seen_at)
+    ) {
       links.set(link.visitor_id, link);
     }
-    const visitors = personVisitors.get(link.person_id) ?? new Set<string>();
-    visitors.add(link.visitor_id);
-    personVisitors.set(link.person_id, visitors);
   }
-  if (new Set(input.sessions.map((s) => s.visitor_id)).size > JOURNEY_MAX_VISITORS_PER_RECOMPUTE) {
+  if (
+    new Set(input.sessions.map((s) => s.visitor_id)).size >
+    JOURNEY_MAX_VISITORS_PER_RECOMPUTE
+  ) {
     throw new JourneyEngineError('JOURNEY_INPUT_TOO_LARGE');
   }
 
-  const groups = new Map<string, {
-    subjectKind: JourneySubjectKind;
-    subjectId: string;
-    personId: string | null;
-    testMode: boolean;
-    sessions: SessionFactV1[];
-  }>();
+  const groups = new Map<
+    string,
+    {
+      subjectKind: JourneySubjectKind;
+      subjectId: string;
+      personId: string | null;
+      testMode: boolean;
+      sessions: SessionFactV1[];
+    }
+  >();
 
   for (const session of input.sessions) {
     if (session.workspace_id !== input.workspaceId) {
@@ -222,7 +236,9 @@ export async function reconstructJourneys(
     const link = links.get(session.visitor_id);
     const subjectKind: JourneySubjectKind = link ? 'person' : 'visitor';
     const subjectId = link?.person_id ?? session.visitor_id;
-    const key = [subjectKind, subjectId, session.test_mode ? '1' : '0'].join(':');
+    const key = [subjectKind, subjectId, session.test_mode ? '1' : '0'].join(
+      ':',
+    );
     const group = groups.get(key) ?? {
       subjectKind,
       subjectId,
@@ -247,7 +263,8 @@ export async function reconstructJourneys(
       const previous = current.at(-1);
       if (
         previous &&
-        Date.parse(session.session_started_at) > Date.parse(previous.last_activity_at) + windowMs
+        Date.parse(session.session_started_at) >
+          Date.parse(previous.last_activity_at) + windowMs
       ) {
         segments.push(current);
         current = [];
@@ -270,7 +287,9 @@ export async function reconstructJourneys(
       const relevantLinks =
         group.personId === null
           ? []
-          : input.identityLinks.filter((link) => link.person_id === group.personId);
+          : input.identityLinks.filter(
+              (link) => link.person_id === group.personId,
+            );
       const visitors = new Set(segment.map((session) => session.visitor_id));
       const pixels = new Set(segment.map((session) => session.pixel_id));
 
@@ -284,9 +303,13 @@ export async function reconstructJourneys(
         policy_version: input.policy.version,
         inactivity_window_seconds: input.policy.inactivity_window_seconds,
         journey_started_at: first.session_started_at,
-        last_activity_at: segment.reduce((max, s) =>
-          Date.parse(s.last_activity_at) > Date.parse(max) ? s.last_activity_at : max,
-        first.last_activity_at),
+        last_activity_at: segment.reduce(
+          (max, s) =>
+            Date.parse(s.last_activity_at) > Date.parse(max)
+              ? s.last_activity_at
+              : max,
+          first.last_activity_at,
+        ),
         duration_seconds: Math.max(
           0,
           Math.floor(
@@ -300,7 +323,10 @@ export async function reconstructJourneys(
         pixel_count: pixels.size,
         event_count: segment.reduce((sum, s) => sum + s.event_count, 0),
         page_view_count: segment.reduce((sum, s) => sum + s.page_view_count, 0),
-        custom_event_count: segment.reduce((sum, s) => sum + s.custom_event_count, 0),
+        custom_event_count: segment.reduce(
+          (sum, s) => sum + s.custom_event_count,
+          0,
+        ),
         first_session_id: first.session_id,
         last_session_id: last.session_id,
         first_pixel_id: first.pixel_id,
@@ -355,13 +381,15 @@ export async function reconstructJourneys(
     }
   }
 
-  journeys.sort((a, b) =>
-    a.journey_started_at.localeCompare(b.journey_started_at) ||
-    a.journey_id.localeCompare(b.journey_id),
+  journeys.sort(
+    (a, b) =>
+      a.journey_started_at.localeCompare(b.journey_started_at) ||
+      a.journey_id.localeCompare(b.journey_id),
   );
-  sessionLinks.sort((a, b) =>
-    a.session_started_at.localeCompare(b.session_started_at) ||
-    a.session_id.localeCompare(b.session_id),
+  sessionLinks.sort(
+    (a, b) =>
+      a.session_started_at.localeCompare(b.session_started_at) ||
+      a.session_id.localeCompare(b.session_id),
   );
 
   return { journeys, sessionLinks };
