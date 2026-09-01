@@ -20,6 +20,13 @@ export interface IdentityCryptoKeys {
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 
+function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
+  return bytes.buffer.slice(
+    bytes.byteOffset,
+    bytes.byteOffset + bytes.byteLength,
+  ) as ArrayBuffer;
+}
+
 async function importAesKey(secret: string): Promise<CryptoKey> {
   const bytes = decodeSecretKey(secret, 32);
 
@@ -29,7 +36,7 @@ async function importAesKey(secret: string): Promise<CryptoKey> {
 
   return crypto.subtle.importKey(
     'raw',
-    bytes,
+    toArrayBuffer(bytes),
     { name: 'AES-GCM' },
     false,
     ['encrypt', 'decrypt'],
@@ -39,7 +46,7 @@ async function importAesKey(secret: string): Promise<CryptoKey> {
 async function importHmacKey(secret: string): Promise<CryptoKey> {
   return crypto.subtle.importKey(
     'raw',
-    decodeSecretKey(secret, 32),
+    toArrayBuffer(decodeSecretKey(secret, 32)),
     {
       name: 'HMAC',
       hash: 'SHA-256',
@@ -62,7 +69,7 @@ export async function createBlindIndex(
   const signature = await crypto.subtle.sign(
     'HMAC',
     key,
-    encoder.encode(`${type}:${normalizedValue}`),
+    toArrayBuffer(encoder.encode(`${type}:${normalizedValue}`)),
   );
 
   return Array.from(new Uint8Array(signature), (byte) =>
@@ -86,12 +93,12 @@ export async function encryptIdentifier(
   const ciphertext = await crypto.subtle.encrypt(
     {
       name: 'AES-GCM',
-      iv,
-      additionalData: associatedData(type),
+      iv: toArrayBuffer(iv),
+      additionalData: toArrayBuffer(associatedData(type)),
       tagLength: 128,
     },
     key,
-    encoder.encode(normalizedValue),
+    toArrayBuffer(encoder.encode(normalizedValue)),
   );
 
   return {
@@ -123,12 +130,12 @@ export async function decryptIdentifier(
     const plaintext = await crypto.subtle.decrypt(
       {
         name: 'AES-GCM',
-        iv: base64UrlToBytes(ivPart),
-        additionalData: associatedData(type),
+        iv: toArrayBuffer(base64UrlToBytes(ivPart)),
+        additionalData: toArrayBuffer(associatedData(type)),
         tagLength: 128,
       },
       key,
-      base64UrlToBytes(ciphertextPart),
+      toArrayBuffer(base64UrlToBytes(ciphertextPart)),
     );
 
     return decoder.decode(plaintext);
