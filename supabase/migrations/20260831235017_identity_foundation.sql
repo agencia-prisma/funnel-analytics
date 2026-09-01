@@ -193,6 +193,7 @@ revoke all on private.person_identifiers from public, anon, authenticated;
 revoke all on private.person_merge_history from public, anon, authenticated;
 grant all on private.person_identifiers to service_role;
 grant all on private.person_merge_history to service_role;
+grant usage on schema private to service_role;
 
 create function private.resolve_identity_v1_impl(
   target_workspace_id uuid,
