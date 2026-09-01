@@ -598,13 +598,11 @@ jobs:
       - name: Install Chromium
         run: pnpm exec playwright install --with-deps chromium
 
-      - name: Prepare local identity secrets
+      - name: Prepare local identity Worker secrets
         shell: bash
         run: |
           cat > tests/identity/.dev.vars <<EOF
           CLICKHOUSE_PASSWORD="test-password"
-          SUPABASE_URL="$SUPABASE_URL"
-          SUPABASE_SECRET_KEY="$SUPABASE_SECRET_KEY"
           IDENTITY_ENCRYPTION_KEY_V1="AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM"
           IDENTITY_HMAC_KEY_V1="CQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQk"
           EOF
