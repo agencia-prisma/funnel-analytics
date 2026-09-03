@@ -55,15 +55,14 @@ CREATE TABLE IF NOT EXISTS funnel_analytics.journey_facts
   is_deleted Bool,
   updated_at DateTime64(3, 'UTC')
 )
-ENGINE = ReplacingMergeTree(journey_version)
+ENGINE = ReplacingMergeTree(journey_version, is_deleted)
 PARTITION BY cityHash64(journey_id) % 16
 ORDER BY (workspace_id, journey_id);
 
 CREATE VIEW IF NOT EXISTS funnel_analytics.journey_facts_current
 AS
 SELECT *
-FROM funnel_analytics.journey_facts FINAL
-WHERE is_deleted = false;
+FROM funnel_analytics.journey_facts FINAL;
 
 CREATE TABLE IF NOT EXISTS funnel_analytics.journey_session_links
 (
@@ -80,12 +79,11 @@ CREATE TABLE IF NOT EXISTS funnel_analytics.journey_session_links
   is_deleted Bool,
   updated_at DateTime64(3, 'UTC')
 )
-ENGINE = ReplacingMergeTree(journey_version)
+ENGINE = ReplacingMergeTree(journey_version, is_deleted)
 PARTITION BY cityHash64(session_id) % 16
 ORDER BY (workspace_id, session_id);
 
 CREATE VIEW IF NOT EXISTS funnel_analytics.journey_session_links_current
 AS
 SELECT *
-FROM funnel_analytics.journey_session_links FINAL
-WHERE is_deleted = false;
+FROM funnel_analytics.journey_session_links FINAL;
