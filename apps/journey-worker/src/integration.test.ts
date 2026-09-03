@@ -240,10 +240,12 @@ describe('Journey acceptance on isolated ClickHouse', () => {
 
     const tombstone = await rows<{ deleted: number }>(
       `SELECT toUInt8(is_deleted) AS deleted
-       FROM funnel_analytics.journey_facts FINAL
-       WHERE journey_id = toUUID('${anonymousJourneyId}')`,
+       FROM funnel_analytics.journey_facts
+       WHERE journey_id = toUUID('${anonymousJourneyId}')
+       ORDER BY journey_version DESC
+       LIMIT 1`,
     );
-    expect(tombstone.at(-1)?.deleted).toBe(1);
+    expect(tombstone[0]?.deleted).toBe(1);
 
     await addSession({
       sessionId: s3,
