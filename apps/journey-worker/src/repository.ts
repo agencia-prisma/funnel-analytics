@@ -101,7 +101,7 @@ SELECT
   toString(last_seen_at) AS last_seen_at
 FROM funnel_analytics.identity_links_current
 WHERE workspace_id = {workspace_id:UUID}
-  AND visitor_id IN {visitor_ids:Array(UUID)}
+  AND has({visitor_ids:Array(UUID)}, visitor_id)
 `,
         query_params: { workspace_id: workspaceId, visitor_ids: visitorIds },
         format: 'JSONEachRow',
@@ -193,7 +193,7 @@ SELECT
   toString(updated_at) AS updated_at
 FROM funnel_analytics.session_facts_current
 WHERE workspace_id = {workspace_id:UUID}
-  AND visitor_id IN {visitor_ids:Array(UUID)}
+  AND has({visitor_ids:Array(UUID)}, visitor_id)
 ORDER BY session_started_at, last_activity_at, session_id
 `,
         query_params: { workspace_id: workspaceId, visitor_ids: visitorIds },
@@ -220,7 +220,7 @@ FROM
   SELECT journey_version
   FROM funnel_analytics.journey_session_links FINAL
   WHERE workspace_id = {workspace_id:UUID}
-    AND session_id IN {session_ids:Array(UUID)}
+    AND has({session_ids:Array(UUID)}, session_id)
   UNION ALL
   SELECT journey_version
   FROM funnel_analytics.journey_facts FINAL
@@ -230,7 +230,7 @@ FROM
       SELECT journey_id
       FROM funnel_analytics.journey_session_links FINAL
       WHERE workspace_id = {workspace_id:UUID}
-        AND session_id IN {session_ids:Array(UUID)}
+        AND has({session_ids:Array(UUID)}, session_id)
     )
 )
 `,
@@ -248,7 +248,7 @@ SELECT
   toString(journey_id) AS journey_id
 FROM funnel_analytics.journey_session_links_current
 WHERE workspace_id = {workspace_id:UUID}
-  AND session_id IN {session_ids:Array(UUID)}
+  AND has({session_ids:Array(UUID)}, session_id)
 `,
         query_params: { workspace_id: workspaceId, session_ids: sessionIds },
         format: 'JSONEachRow',
@@ -327,7 +327,7 @@ WHERE workspace_id = {workspace_id:UUID}
 SELECT *
 FROM funnel_analytics.journey_facts_current
 WHERE workspace_id = {workspace_id:UUID}
-  AND journey_id IN {journey_ids:Array(UUID)}
+  AND has({journey_ids:Array(UUID)}, journey_id)
 `,
         query_params: { workspace_id: workspaceId, journey_ids: journeyIds },
         format: 'JSONEachRow',
