@@ -80,10 +80,16 @@ function dependencies(options?: {
       dlqMessages.push(input);
     },
   };
+  const journeys = {
+    async sendSessionUpdated() {
+      trace.push('journey-enqueue');
+    },
+  };
 
   return {
     repository,
     dlq,
+    journeys,
     trace,
     inserted,
     dlqMessages,
@@ -101,7 +107,7 @@ describe('Session Worker consumer', () => {
 
     await consume({ messages: [item.value] });
 
-    expect(deps.trace).toEqual(['query', 'insert']);
+    expect(deps.trace).toEqual(['query', 'insert', 'journey-enqueue']);
     expect(item.state.acked).toBe(true);
     expect(item.state.retried).toBe(false);
   });
@@ -146,6 +152,22 @@ describe('Session Worker consumer', () => {
     await consume({ messages: [item.value] });
 
     expect(deps.trace).toEqual(['query', 'insert']);
+    expect(item.state.acked).toBe(false);
+    expect(item.state.retried).toBe(true);
+  });
+
+  it('retries without ack when Journey enqueue fails after snapshot success', async () => {
+    const deps = dependencies();
+    deps.journeys.sendSessionUpdated = async () => {
+      deps.trace.push('journey-enqueue');
+      throw new Error('queue unavailable');
+    };
+    const item = message();
+    const consume = createSessionConsumer(deps);
+
+    await consume({ messages: [item.value] });
+
+    expect(deps.trace).toEqual(['query', 'insert', 'journey-enqueue']);
     expect(item.state.acked).toBe(false);
     expect(item.state.retried).toBe(true);
   });

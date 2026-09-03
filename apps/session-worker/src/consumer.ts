@@ -8,6 +8,7 @@ import {
 import type { SessionFactV1 } from '@funnel/event-contracts';
 
 import { sessionDlqAndAck, type SessionDlqProducer } from './dlq';
+import type { JourneyQueueProducer } from './journey-queue';
 import { logSessionWorker } from './logging';
 import { retrySessionMessage } from './retry';
 import type { SessionQueueBatchLike, SessionQueueMessageLike } from './types';
@@ -31,6 +32,7 @@ interface SessionGroupState {
 export interface SessionConsumerDependencies {
   repository: SessionRepository;
   dlq: SessionDlqProducer;
+  journeys: JourneyQueueProducer;
   now?: () => number;
 }
 
@@ -228,6 +230,25 @@ export function createSessionConsumer(
     try {
       await dependencies.repository.insertSnapshots(facts);
       const insertMs = performance.now() - insertStartedAt;
+
+      try {
+        await dependencies.journeys.sendSessionUpdated(
+          facts,
+          new Date(now()).toISOString(),
+        );
+      } catch {
+        successfulMessages.forEach(retrySessionMessage);
+        logSessionWorker('session_worker.recompute.failed', {
+          queue_batch_size: batch.messages.length,
+          session_count: facts.length,
+          query_ms: Math.round(queryMs),
+          insert_ms: Math.round(insertMs),
+          processing_ms: Math.round(performance.now() - startedAt),
+          status: 'retry',
+          error_code: 'JOURNEY_ENQUEUE_FAILED',
+        });
+        return;
+      }
 
       successfulMessages.forEach((message) => message.ack());
 

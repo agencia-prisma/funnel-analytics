@@ -651,3 +651,85 @@ jobs:
       - name: Stop isolated Supabase
         if: always()
         run: pnpm supabase stop --no-backup
+
+  journey-engine:
+    name: Journey Engine
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      CLICKHOUSE_URL: http://127.0.0.1:8123
+      CLICKHOUSE_USERNAME: default
+      CLICKHOUSE_PASSWORD: test-password
+
+    services:
+      clickhouse:
+        image: clickhouse/clickhouse-server:26.7.5.10
+        env:
+          CLICKHOUSE_PASSWORD: test-password
+        ports:
+          - 8123:8123
+        options: >-
+          --health-cmd "clickhouse-client --password test-password --query 'SELECT 1'"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Audit production dependencies
+        run: pnpm audit --prod --audit-level high
+
+      - name: Journey Engine typecheck
+        run: pnpm --filter @funnel/journey-engine typecheck
+
+      - name: Journey Engine unit tests
+        run: pnpm --filter @funnel/journey-engine test
+
+      - name: Journey performance smoke
+        run: pnpm --filter @funnel/journey-engine test:performance
+
+      - name: Journey Worker typecheck
+        run: pnpm --filter @funnel/journey-worker typecheck
+
+      - name: Journey Worker unit tests
+        run: pnpm --filter @funnel/journey-worker test
+
+      - name: Session trigger tests
+        run: pnpm --filter @funnel/session-worker test
+
+      - name: Identity trigger tests
+        run: pnpm --filter @funnel/identity-worker test
+
+      - name: Journey Worker dry-run build
+        run: pnpm --filter @funnel/journey-worker build
+
+      - name: Apply ClickHouse migrations 0001 through 0004
+        run: pnpm clickhouse:migrate
+
+      - name: Journey ClickHouse integration and acceptance
+        run: pnpm --filter @funnel/journey-worker test:integration
+
+      - name: PII leakage guard
+        shell: bash
+        run: |
+          if grep -RniE 'identity-e2e@example\.com|\b[0-9]{3}\.[0-9]{3}\.[0-9]{3}-[0-9]{2}\b' apps/journey-worker packages/journey-engine infra/clickhouse/migrations/0004_journey_facts.sql; then
+            echo "Plaintext PII fixture leaked into Journey artifacts."
+            exit 1
+          fi

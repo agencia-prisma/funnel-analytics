@@ -1,6 +1,13 @@
-import type { SessionDeadLetterEnvelopeV1 } from '@funnel/event-contracts';
+import type {
+  JourneyRecomputeEnvelopeV1,
+  SessionDeadLetterEnvelopeV1,
+} from '@funnel/event-contracts';
 
 export type SessionWorkerEnvironment = 'local' | 'preview' | 'production';
+
+export interface SessionJourneyQueueBinding {
+  send(message: JourneyRecomputeEnvelopeV1): Promise<void>;
+}
 
 export interface SessionDlqBinding {
   send(message: SessionDeadLetterEnvelopeV1): Promise<void>;
@@ -12,6 +19,7 @@ export interface SessionWorkerEnv {
   CLICKHOUSE_USERNAME: string;
   CLICKHOUSE_PASSWORD: string;
   SESSIONS_DLQ: SessionDlqBinding;
+  JOURNEYS_QUEUE: SessionJourneyQueueBinding;
 }
 
 export interface SessionQueueMessageLike {

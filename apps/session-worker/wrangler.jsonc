@@ -13,6 +13,10 @@
       "queues": {
         "producers": [
           {
+            "binding": "JOURNEYS_QUEUE",
+            "queue": "funnel-analytics-journeys-local",
+          },
+          {
             "binding": "SESSIONS_DLQ",
             "queue": "funnel-analytics-sessions-dlq-local",
           },
@@ -36,6 +40,10 @@
       "queues": {
         "producers": [
           {
+            "binding": "JOURNEYS_QUEUE",
+            "queue": "funnel-analytics-journeys-preview",
+          },
+          {
             "binding": "SESSIONS_DLQ",
             "queue": "funnel-analytics-sessions-dlq-preview",
           },
@@ -58,6 +66,10 @@
       },
       "queues": {
         "producers": [
+          {
+            "binding": "JOURNEYS_QUEUE",
+            "queue": "funnel-analytics-journeys-production",
+          },
           {
             "binding": "SESSIONS_DLQ",
             "queue": "funnel-analytics-sessions-dlq-production",

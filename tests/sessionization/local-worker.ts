@@ -17,6 +17,7 @@ import type {
 } from '../../apps/event-worker/src/types';
 import { createSessionConsumer } from '../../apps/session-worker/src/consumer';
 import { CloudflareSessionDlqProducer } from '../../apps/session-worker/src/dlq';
+import { CloudflareJourneyQueueProducer } from '../../apps/session-worker/src/journey-queue';
 import type {
   SessionQueueBatchLike,
   SessionWorkerEnv,
@@ -93,6 +94,12 @@ export default {
           database: 'funnel_analytics',
         }),
         dlq: new CloudflareSessionDlqProducer(env.SESSIONS_DLQ),
+        journeys: new CloudflareJourneyQueueProducer({
+          async send() {
+            // Sessionization acceptance validates session recomputation only.
+            // Journey enqueue semantics are covered by dedicated EPIC 08 tests.
+          },
+        }),
       });
 
       await consumeSessions(batch as SessionQueueBatchLike);

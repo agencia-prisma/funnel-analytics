@@ -65,6 +65,7 @@ describe('identity worker consumer', () => {
       repository: { resolve },
       writer: { insertLinks },
       dlq: { send: vi.fn() } satisfies IdentityDlqProducer,
+      journeys: { sendIdentityLinked: vi.fn(async () => undefined) },
       now: () => Date.parse('2026-08-31T23:00:01.000Z'),
     });
 
@@ -86,6 +87,35 @@ describe('identity worker consumer', () => {
       },
       writer: { insertLinks: vi.fn() },
       dlq: { send: vi.fn() },
+      journeys: { sendIdentityLinked: vi.fn(async () => undefined) },
+    });
+
+    await consume(batch(current.value));
+
+    expect(current.retry).toHaveBeenCalledTimes(1);
+    expect(current.ack).not.toHaveBeenCalled();
+  });
+
+  it('retries without ack when Journey enqueue fails after identity link write', async () => {
+    const current = message();
+    const consume = createIdentityConsumer({
+      repository: {
+        resolve: vi.fn(async () => ({
+          resolution_status: 'RESOLVED' as const,
+          person_id: '40000000-0000-4000-8000-000000000001',
+          person_created: false,
+          visitor_link_created: false,
+          linked_at: '2026-08-31T23:00:00.000Z',
+          last_seen_at: '2026-08-31T23:00:00.000Z',
+        })),
+      },
+      writer: { insertLinks: vi.fn(async () => undefined) },
+      dlq: { send: vi.fn() },
+      journeys: {
+        sendIdentityLinked: vi.fn(async () => {
+          throw new Error('queue unavailable');
+        }),
+      },
     });
 
     await consume(batch(current.value));
@@ -110,6 +140,7 @@ describe('identity worker consumer', () => {
       },
       writer: { insertLinks: vi.fn() },
       dlq: { send: dlqSend },
+      journeys: { sendIdentityLinked: vi.fn(async () => undefined) },
       now: () => Date.parse('2026-08-31T23:00:01.000Z'),
     });
 
