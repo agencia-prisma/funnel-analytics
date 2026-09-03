@@ -1,10 +1,14 @@
 import { ClickHouseIdentityLinkWriter } from '../../packages/clickhouse/src/index';
-import type { IdentityEnvelopeV1 } from '../../packages/event-contracts/src/index';
+import type {
+  IdentityEnvelopeV1,
+  JourneyRecomputeEnvelopeV1,
+} from '../../packages/event-contracts/src/index';
 import { expect, test, type Browser, type Page } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 
 import { SupabaseIdentityRepository } from '../../apps/identity-worker/src/control-plane';
 import { createIdentityConsumer } from '../../apps/identity-worker/src/consumer';
+import { CloudflareJourneyQueueProducer } from '../../apps/identity-worker/src/journey-queue';
 import path from 'node:path';
 
 const bundle = await readFile(
@@ -139,6 +143,7 @@ async function processCapturedIdentityEnvelope(): Promise<IdentityEnvelopeV1> {
 
   let acked = false;
   let retried = false;
+  const journeyEnvelopes: JourneyRecomputeEnvelopeV1[] = [];
   const writer = new ClickHouseIdentityLinkWriter({
     url: clickHouseUrl,
     username: 'default',
@@ -158,6 +163,11 @@ async function processCapturedIdentityEnvelope(): Promise<IdentityEnvelopeV1> {
           throw new Error('IDENTITY_E2E_UNEXPECTED_DLQ');
         },
       },
+      journeys: new CloudflareJourneyQueueProducer({
+        async send(message) {
+          journeyEnvelopes.push(message);
+        },
+      }),
     });
 
     await consumeIdentity({
@@ -180,6 +190,20 @@ async function processCapturedIdentityEnvelope(): Promise<IdentityEnvelopeV1> {
 
   expect(acked).toBe(true);
   expect(retried).toBe(false);
+  expect(journeyEnvelopes).toHaveLength(1);
+  expect(journeyEnvelopes[0]).toMatchObject({
+    envelope_version: 1,
+    workspace_id: envelope!.workspace_id,
+    reason: 'identity_linked',
+    visitor_ids: [envelope!.visitor_id],
+  });
+  expect(journeyEnvelopes[0]?.person_id).toBeTruthy();
+
+  const journeyEnvelopeText = JSON.stringify(journeyEnvelopes[0]);
+  expect(journeyEnvelopeText).not.toContain(email);
+  expect(journeyEnvelopeText).not.toContain('encrypted_identifiers');
+  expect(journeyEnvelopeText).not.toContain('blind_index');
+  expect(journeyEnvelopeText).not.toContain('encrypted_value');
 
   return envelope!;
 }
