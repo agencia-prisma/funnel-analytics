@@ -150,50 +150,10 @@ WHERE workspace_id = {workspace_id:UUID}
     try {
       const result = await this.client.query({
         query: `
-SELECT
-  toString(workspace_id) AS workspace_id,
-  toString(pixel_id) AS pixel_id,
-  toString(session_id) AS session_id,
-  toString(visitor_id) AS visitor_id,
-  session_partition_month,
-  toString(session_started_at) AS session_started_at,
-  toString(last_activity_at) AS last_activity_at,
-  duration_seconds,
-  event_count,
-  page_view_count,
-  custom_event_count,
-  landing_page_url,
-  landing_page_path,
-  landing_page_title,
-  exit_page_url,
-  exit_page_path,
-  exit_page_title,
-  session_referrer,
-  session_referrer_domain,
-  utm_source,
-  utm_medium,
-  utm_campaign,
-  utm_content,
-  utm_term,
-  fbclid,
-  ttclid,
-  gclid,
-  msclkid,
-  tblci,
-  device_type,
-  browser_name,
-  os_name,
-  language,
-  timezone,
-  test_mode,
-  toString(first_event_id) AS first_event_id,
-  toString(last_event_id) AS last_event_id,
-  toString(max_received_at) AS max_received_at,
-  toString(session_version) AS session_version,
-  toString(updated_at) AS updated_at
+SELECT *
 FROM funnel_analytics.session_facts_current
 WHERE workspace_id = {workspace_id:UUID}
-  AND has({visitor_ids:Array(UUID)}, visitor_id)
+  AND visitor_id IN {visitor_ids:Array(UUID)}
 ORDER BY session_started_at, last_activity_at, session_id
 `,
         query_params: { workspace_id: workspaceId, visitor_ids: visitorIds },
@@ -220,7 +180,7 @@ FROM
   SELECT journey_version
   FROM funnel_analytics.journey_session_links FINAL
   WHERE workspace_id = {workspace_id:UUID}
-    AND has({session_ids:Array(UUID)}, session_id)
+    AND session_id IN {session_ids:Array(UUID)}
   UNION ALL
   SELECT journey_version
   FROM funnel_analytics.journey_facts FINAL
@@ -230,7 +190,7 @@ FROM
       SELECT journey_id
       FROM funnel_analytics.journey_session_links FINAL
       WHERE workspace_id = {workspace_id:UUID}
-        AND has({session_ids:Array(UUID)}, session_id)
+        AND session_id IN {session_ids:Array(UUID)}
     )
 )
 `,
@@ -248,7 +208,7 @@ SELECT
   toString(journey_id) AS journey_id
 FROM funnel_analytics.journey_session_links_current
 WHERE workspace_id = {workspace_id:UUID}
-  AND has({session_ids:Array(UUID)}, session_id)
+  AND session_id IN {session_ids:Array(UUID)}
 `,
         query_params: { workspace_id: workspaceId, session_ids: sessionIds },
         format: 'JSONEachRow',
@@ -327,7 +287,7 @@ WHERE workspace_id = {workspace_id:UUID}
 SELECT *
 FROM funnel_analytics.journey_facts_current
 WHERE workspace_id = {workspace_id:UUID}
-  AND has({journey_ids:Array(UUID)}, journey_id)
+  AND journey_id IN {journey_ids:Array(UUID)}
 `,
         query_params: { workspace_id: workspaceId, journey_ids: journeyIds },
         format: 'JSONEachRow',
