@@ -198,6 +198,13 @@ describe('Journey acceptance on isolated ClickHouse', () => {
     });
     const anonymousJourneyId = anonymous[0]!.journey_id;
 
+    const linkCounts = await rows<{ raw_links: string; current_links: string }>(
+      `SELECT
+         (SELECT toString(count()) FROM funnel_analytics.journey_session_links) AS raw_links,
+         (SELECT toString(count()) FROM funnel_analytics.journey_session_links_current) AS current_links`,
+    );
+    expect(linkCounts[0]).toEqual({ raw_links: '2', current_links: '2' });
+
     const previousAnonymous = await repository.previousState(workspaceId, [
       s1,
       s2,
