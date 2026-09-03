@@ -90,18 +90,18 @@ export class ClickHouseJourneyRepository implements JourneyRepository {
       const result = await this.client.query({
         query: `
 SELECT
-  1 AS link_version,
-  toString(workspace_id) AS workspace_id,
-  toString(person_id) AS person_id,
-  toString(visitor_id) AS visitor_id,
-  toString(pixel_id) AS pixel_id,
+  link_version,
+  workspace_id,
+  person_id,
+  visitor_id,
+  pixel_id,
   source,
   confidence,
-  toString(linked_at) AS linked_at,
-  toString(last_seen_at) AS last_seen_at
+  linked_at,
+  last_seen_at
 FROM funnel_analytics.identity_links_current
 WHERE workspace_id = {workspace_id:UUID}
-  AND has({visitor_ids:Array(UUID)}, visitor_id)
+  AND visitor_id IN {visitor_ids:Array(UUID)}
 `,
         query_params: { workspace_id: workspaceId, visitor_ids: visitorIds },
         format: 'JSONEachRow',
@@ -120,15 +120,15 @@ WHERE workspace_id = {workspace_id:UUID}
       const result = await this.client.query({
         query: `
 SELECT
-  1 AS link_version,
-  toString(workspace_id) AS workspace_id,
-  toString(person_id) AS person_id,
-  toString(visitor_id) AS visitor_id,
-  toString(pixel_id) AS pixel_id,
+  link_version,
+  workspace_id,
+  person_id,
+  visitor_id,
+  pixel_id,
   source,
   confidence,
-  toString(linked_at) AS linked_at,
-  toString(last_seen_at) AS last_seen_at
+  linked_at,
+  last_seen_at
 FROM funnel_analytics.identity_links_current
 WHERE workspace_id = {workspace_id:UUID}
   AND person_id = {person_id:UUID}
