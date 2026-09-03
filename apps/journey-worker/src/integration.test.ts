@@ -198,6 +198,14 @@ describe('Journey acceptance on isolated ClickHouse', () => {
     });
     const anonymousJourneyId = anonymous[0]!.journey_id;
 
+    const previousAnonymous = await repository.previousState(workspaceId, [
+      s1,
+      s2,
+    ]);
+    expect(previousAnonymous.journeyIds).toHaveLength(1);
+    expect(previousAnonymous.sessionIds).toHaveLength(2);
+    expect(previousAnonymous.maxVersion).toBe('1');
+
     await addIdentity(visitorA, pixelA);
     await run(
       message({
