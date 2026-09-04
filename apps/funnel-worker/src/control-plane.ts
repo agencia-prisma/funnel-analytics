@@ -97,8 +97,8 @@ export class SupabaseFunnelControlPlane implements FunnelControlPlane {
         : await fetch(url.toString(), requestInit);
 
       if (!response.ok) {
-        const transient = [408, 425, 429].includes(response.status) ||
-          response.status >= 500;
+        const transient =
+          [408, 425, 429].includes(response.status) || response.status >= 500;
         throw new FunnelWorkerError(
           transient ? 'TRANSIENT' : 'PERMANENT',
           transient
@@ -167,10 +167,7 @@ export class SupabaseFunnelControlPlane implements FunnelControlPlane {
     const stepParams = new URLSearchParams();
     stepParams.set('workspace_id', `eq.${workspaceId}`);
     stepParams.set('funnel_version_id', `in.(${versionIds.join(',')})`);
-    stepParams.set(
-      'select',
-      'funnel_version_id,step_key,position,name,rule',
-    );
+    stepParams.set('select', 'funnel_version_id,step_key,position,name,rule');
     stepParams.set('order', 'position.asc');
     const steps = await this.request<FunnelStepRow[]>(
       '/rest/v1/funnel_steps',
@@ -184,7 +181,9 @@ export class SupabaseFunnelControlPlane implements FunnelControlPlane {
       );
     }
 
-    const versionById = new Map(versions.map((version) => [version.id, version]));
+    const versionById = new Map(
+      versions.map((version) => [version.id, version]),
+    );
     const stepsByVersion = new Map<string, FunnelStepRow[]>();
     for (const step of steps) {
       const list = stepsByVersion.get(step.funnel_version_id) ?? [];

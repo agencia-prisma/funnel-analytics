@@ -36,9 +36,7 @@ async function permanentFailure(
   }
 }
 
-export function createFunnelConsumer(
-  dependencies: FunnelConsumerDependencies,
-) {
+export function createFunnelConsumer(dependencies: FunnelConsumerDependencies) {
   const now = dependencies.now ?? Date.now;
 
   return async function consume(batch: FunnelQueueBatchLike): Promise<void> {

@@ -7,8 +7,7 @@ import {
   type FunnelStepDefinitionV1,
 } from '@funnel/rule-engine';
 
-export const FUNNEL_ATTEMPT_NAMESPACE =
-  '5baf7b32-90e1-5d42-8a1e-9f2f9f6ec4d2';
+export const FUNNEL_ATTEMPT_NAMESPACE = '5baf7b32-90e1-5d42-8a1e-9f2f9f6ec4d2';
 export const FUNNEL_MAX_EVENTS_PER_EVALUATION = 100_000;
 
 export interface FunnelProgressionEventV1 extends FunnelEventV1 {

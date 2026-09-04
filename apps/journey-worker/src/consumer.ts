@@ -68,10 +68,7 @@ async function publishFunnelRecomputes(input: {
     })),
   ];
 
-  for (const batch of chunks(
-    references,
-    FUNNEL_RECOMPUTE_V1_MAX_JOURNEY_IDS,
-  )) {
+  for (const batch of chunks(references, FUNNEL_RECOMPUTE_V1_MAX_JOURNEY_IDS)) {
     const envelope: FunnelRecomputeEnvelopeV1 = {
       envelope_version: 1,
       request_id: crypto.randomUUID(),

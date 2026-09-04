@@ -8,9 +8,7 @@ export interface FunnelRecomputeProducer {
   send(message: FunnelRecomputeEnvelopeV1): Promise<void>;
 }
 
-export class CloudflareFunnelRecomputeProducer
-  implements FunnelRecomputeProducer
-{
+export class CloudflareFunnelRecomputeProducer implements FunnelRecomputeProducer {
   constructor(private readonly queue: FunnelQueueBinding) {}
 
   async send(message: FunnelRecomputeEnvelopeV1): Promise<void> {

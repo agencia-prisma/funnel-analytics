@@ -138,6 +138,31 @@ importers:
         specifier: 4.127.1
         version: 4.127.1
 
+  apps/funnel-worker:
+    dependencies:
+      '@funnel/clickhouse':
+        specifier: workspace:*
+        version: link:../../packages/clickhouse
+      '@funnel/event-contracts':
+        specifier: workspace:*
+        version: link:../../packages/event-contracts
+      '@funnel/funnel-engine':
+        specifier: workspace:*
+        version: link:../../packages/funnel-engine
+      '@funnel/rule-engine':
+        specifier: workspace:*
+        version: link:../../packages/rule-engine
+    devDependencies:
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@types/node@26.4.0)(vite@8.2.2(@types/node@26.4.0)(esbuild@0.28.2)(jiti@2.7.0))
+      wrangler:
+        specifier: 4.127.1
+        version: 4.127.1
+
   apps/identity-worker:
     dependencies:
       '@funnel/clickhouse':
@@ -330,6 +355,22 @@ importers:
       typescript:
         specifier: 5.9.3
         version: 5.9.3
+
+  packages/funnel-engine:
+    dependencies:
+      '@funnel/journey-engine':
+        specifier: workspace:*
+        version: link:../journey-engine
+      '@funnel/rule-engine':
+        specifier: workspace:*
+        version: link:../rule-engine
+    devDependencies:
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@types/node@26.4.0)(vite@8.2.2(@types/node@26.4.0)(esbuild@0.28.2)(jiti@2.7.0))
 
   packages/identity:
     dependencies:

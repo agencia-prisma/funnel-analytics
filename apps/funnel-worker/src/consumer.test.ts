@@ -189,7 +189,10 @@ describe('Funnel Worker consumer', () => {
   it('retries transient storage failures without acknowledging', async () => {
     const repo = repository();
     repo.findEvents = vi.fn(async () => {
-      throw new FunnelWorkerError('TRANSIENT', 'FUNNEL_EVENT_QUERY_UNAVAILABLE');
+      throw new FunnelWorkerError(
+        'TRANSIENT',
+        'FUNNEL_EVENT_QUERY_UNAVAILABLE',
+      );
     });
     const input = message(validBody());
     const consume = createFunnelConsumer({

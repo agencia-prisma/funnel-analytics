@@ -77,9 +77,7 @@ function factVersions(sourceJourneyVersion: string): {
   };
 }
 
-export class ClickHouseFunnelFactsRepository
-  implements FunnelFactsRepository
-{
+export class ClickHouseFunnelFactsRepository implements FunnelFactsRepository {
   private readonly client: ReturnType<typeof createClickHouseWebClient>;
 
   constructor(config: ClickHouseConfig) {

@@ -8,7 +8,7 @@
     "local": {
       "name": "funnel-analytics-funnel-worker-local",
       "vars": {
-        "FUNNEL_WORKER_ENV": "local"
+        "FUNNEL_WORKER_ENV": "local",
       },
       "secrets": {
         "required": [
@@ -16,15 +16,15 @@
           "SUPABASE_SECRET_KEY",
           "CLICKHOUSE_URL",
           "CLICKHOUSE_USERNAME",
-          "CLICKHOUSE_PASSWORD"
-        ]
+          "CLICKHOUSE_PASSWORD",
+        ],
       },
       "queues": {
         "producers": [
           {
             "binding": "FUNNELS_DLQ",
-            "queue": "funnel-analytics-funnels-dlq-local"
-          }
+            "queue": "funnel-analytics-funnels-dlq-local",
+          },
         ],
         "consumers": [
           {
@@ -33,15 +33,15 @@
             "max_batch_timeout": 1,
             "max_retries": 3,
             "max_concurrency": 1,
-            "dead_letter_queue": "funnel-analytics-funnels-dlq-local"
-          }
-        ]
-      }
+            "dead_letter_queue": "funnel-analytics-funnels-dlq-local",
+          },
+        ],
+      },
     },
     "preview": {
       "name": "funnel-analytics-funnel-worker-preview",
       "vars": {
-        "FUNNEL_WORKER_ENV": "preview"
+        "FUNNEL_WORKER_ENV": "preview",
       },
       "secrets": {
         "required": [
@@ -49,15 +49,15 @@
           "SUPABASE_SECRET_KEY",
           "CLICKHOUSE_URL",
           "CLICKHOUSE_USERNAME",
-          "CLICKHOUSE_PASSWORD"
-        ]
+          "CLICKHOUSE_PASSWORD",
+        ],
       },
       "queues": {
         "producers": [
           {
             "binding": "FUNNELS_DLQ",
-            "queue": "funnel-analytics-funnels-dlq-preview"
-          }
+            "queue": "funnel-analytics-funnels-dlq-preview",
+          },
         ],
         "consumers": [
           {
@@ -66,15 +66,15 @@
             "max_batch_timeout": 1,
             "max_retries": 3,
             "max_concurrency": 1,
-            "dead_letter_queue": "funnel-analytics-funnels-dlq-preview"
-          }
-        ]
-      }
+            "dead_letter_queue": "funnel-analytics-funnels-dlq-preview",
+          },
+        ],
+      },
     },
     "production": {
       "name": "funnel-analytics-funnel-worker-production",
       "vars": {
-        "FUNNEL_WORKER_ENV": "production"
+        "FUNNEL_WORKER_ENV": "production",
       },
       "secrets": {
         "required": [
@@ -82,15 +82,15 @@
           "SUPABASE_SECRET_KEY",
           "CLICKHOUSE_URL",
           "CLICKHOUSE_USERNAME",
-          "CLICKHOUSE_PASSWORD"
-        ]
+          "CLICKHOUSE_PASSWORD",
+        ],
       },
       "queues": {
         "producers": [
           {
             "binding": "FUNNELS_DLQ",
-            "queue": "funnel-analytics-funnels-dlq-production"
-          }
+            "queue": "funnel-analytics-funnels-dlq-production",
+          },
         ],
         "consumers": [
           {
@@ -99,10 +99,10 @@
             "max_batch_timeout": 1,
             "max_retries": 3,
             "max_concurrency": 1,
-            "dead_letter_queue": "funnel-analytics-funnels-dlq-production"
-          }
-        ]
-      }
-    }
-  }
+            "dead_letter_queue": "funnel-analytics-funnels-dlq-production",
+          },
+        ],
+      },
+    },
+  },
 }

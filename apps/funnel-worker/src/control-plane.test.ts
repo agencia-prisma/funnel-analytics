@@ -84,9 +84,7 @@ describe('Supabase Funnel Control Plane', () => {
     const controlPlane = new SupabaseFunnelControlPlane('', '');
 
     await expect(
-      controlPlane.activeDefinitions(
-        '00000000-0000-4000-8000-000000000099',
-      ),
+      controlPlane.activeDefinitions('00000000-0000-4000-8000-000000000099'),
     ).rejects.toMatchObject({
       kind: 'PERMANENT',
       code: 'FUNNEL_CONTROL_PLANE_CONFIG_MISSING',
@@ -101,9 +99,7 @@ describe('Supabase Funnel Control Plane', () => {
     );
 
     await expect(
-      controlPlane.activeDefinitions(
-        '00000000-0000-4000-8000-000000000099',
-      ),
+      controlPlane.activeDefinitions('00000000-0000-4000-8000-000000000099'),
     ).rejects.toMatchObject({
       kind: 'TRANSIENT',
       code: 'FUNNEL_CONTROL_PLANE_UNAVAILABLE',
@@ -142,9 +138,7 @@ describe('Supabase Funnel Control Plane', () => {
     );
 
     await expect(
-      controlPlane.activeDefinitions(
-        '00000000-0000-4000-8000-000000000099',
-      ),
+      controlPlane.activeDefinitions('00000000-0000-4000-8000-000000000099'),
     ).rejects.toMatchObject({
       kind: 'PERMANENT',
       code: 'FUNNEL_DEFINITION_INVALID',

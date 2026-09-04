@@ -96,16 +96,28 @@ describe('Funnel Progression Engine V1', () => {
     const result = await evaluateFunnelProgression({
       ...baseInput,
       events: [
-        event('00000000-0000-0000-0000-000000000101', '2026-09-04T12:00:00.000Z', {
-          page_path: '/product',
-        }),
-        event('00000000-0000-0000-0000-000000000102', '2026-09-04T12:00:20.000Z', {
-          event_name: 'custom_event',
-          custom_event_name: 'checkout_started',
-        }),
-        event('00000000-0000-0000-0000-000000000103', '2026-09-04T12:00:50.000Z', {
-          event_name: 'purchase',
-        }),
+        event(
+          '00000000-0000-0000-0000-000000000101',
+          '2026-09-04T12:00:00.000Z',
+          {
+            page_path: '/product',
+          },
+        ),
+        event(
+          '00000000-0000-0000-0000-000000000102',
+          '2026-09-04T12:00:20.000Z',
+          {
+            event_name: 'custom_event',
+            custom_event_name: 'checkout_started',
+          },
+        ),
+        event(
+          '00000000-0000-0000-0000-000000000103',
+          '2026-09-04T12:00:50.000Z',
+          {
+            event_name: 'purchase',
+          },
+        ),
       ],
     });
 
@@ -115,8 +127,7 @@ describe('Funnel Progression Engine V1', () => {
       'purchase',
     ]);
     expect(result.transitions.map((fact) => fact.transition_ms)).toEqual([
-      20_000,
-      30_000,
+      20_000, 30_000,
     ]);
     expect(result.conversions).toHaveLength(1);
     expect(result.conversions[0]?.conversion_ms).toBe(50_000);
@@ -126,19 +137,35 @@ describe('Funnel Progression Engine V1', () => {
     const result = await evaluateFunnelProgression({
       ...baseInput,
       events: [
-        event('00000000-0000-0000-0000-000000000111', '2026-09-04T12:00:00.000Z', {
-          page_path: '/product',
-        }),
-        event('00000000-0000-0000-0000-000000000112', '2026-09-04T12:00:10.000Z', {
-          event_name: 'purchase',
-        }),
-        event('00000000-0000-0000-0000-000000000113', '2026-09-04T12:00:20.000Z', {
-          event_name: 'custom_event',
-          custom_event_name: 'checkout_started',
-        }),
-        event('00000000-0000-0000-0000-000000000114', '2026-09-04T12:00:30.000Z', {
-          event_name: 'purchase',
-        }),
+        event(
+          '00000000-0000-0000-0000-000000000111',
+          '2026-09-04T12:00:00.000Z',
+          {
+            page_path: '/product',
+          },
+        ),
+        event(
+          '00000000-0000-0000-0000-000000000112',
+          '2026-09-04T12:00:10.000Z',
+          {
+            event_name: 'purchase',
+          },
+        ),
+        event(
+          '00000000-0000-0000-0000-000000000113',
+          '2026-09-04T12:00:20.000Z',
+          {
+            event_name: 'custom_event',
+            custom_event_name: 'checkout_started',
+          },
+        ),
+        event(
+          '00000000-0000-0000-0000-000000000114',
+          '2026-09-04T12:00:30.000Z',
+          {
+            event_name: 'purchase',
+          },
+        ),
       ],
     });
 
@@ -155,23 +182,43 @@ describe('Funnel Progression Engine V1', () => {
       ...baseInput,
       definition: { ...definition, conversion_window_seconds: 60 },
       events: [
-        event('00000000-0000-0000-0000-000000000121', '2026-09-04T12:00:00.000Z', {
-          page_path: '/product',
-        }),
-        event('00000000-0000-0000-0000-000000000122', '2026-09-04T12:02:00.000Z', {
-          event_name: 'custom_event',
-          custom_event_name: 'checkout_started',
-        }),
-        event('00000000-0000-0000-0000-000000000123', '2026-09-04T12:03:00.000Z', {
-          page_path: '/product',
-        }),
-        event('00000000-0000-0000-0000-000000000124', '2026-09-04T12:03:10.000Z', {
-          event_name: 'custom_event',
-          custom_event_name: 'checkout_started',
-        }),
-        event('00000000-0000-0000-0000-000000000125', '2026-09-04T12:03:20.000Z', {
-          event_name: 'purchase',
-        }),
+        event(
+          '00000000-0000-0000-0000-000000000121',
+          '2026-09-04T12:00:00.000Z',
+          {
+            page_path: '/product',
+          },
+        ),
+        event(
+          '00000000-0000-0000-0000-000000000122',
+          '2026-09-04T12:02:00.000Z',
+          {
+            event_name: 'custom_event',
+            custom_event_name: 'checkout_started',
+          },
+        ),
+        event(
+          '00000000-0000-0000-0000-000000000123',
+          '2026-09-04T12:03:00.000Z',
+          {
+            page_path: '/product',
+          },
+        ),
+        event(
+          '00000000-0000-0000-0000-000000000124',
+          '2026-09-04T12:03:10.000Z',
+          {
+            event_name: 'custom_event',
+            custom_event_name: 'checkout_started',
+          },
+        ),
+        event(
+          '00000000-0000-0000-0000-000000000125',
+          '2026-09-04T12:03:20.000Z',
+          {
+            event_name: 'purchase',
+          },
+        ),
       ],
     });
 
@@ -184,31 +231,57 @@ describe('Funnel Progression Engine V1', () => {
     const result = await evaluateFunnelProgression({
       ...baseInput,
       events: [
-        event('00000000-0000-0000-0000-000000000131', '2026-09-04T12:00:00.000Z', {
-          page_path: '/product',
-        }),
-        event('00000000-0000-0000-0000-000000000132', '2026-09-04T12:00:10.000Z', {
-          event_name: 'custom_event',
-          custom_event_name: 'checkout_started',
-        }),
-        event('00000000-0000-0000-0000-000000000133', '2026-09-04T12:00:20.000Z', {
-          event_name: 'purchase',
-        }),
-        event('00000000-0000-0000-0000-000000000134', '2026-09-04T12:01:00.000Z', {
-          page_path: '/product',
-        }),
-        event('00000000-0000-0000-0000-000000000135', '2026-09-04T12:01:10.000Z', {
-          event_name: 'custom_event',
-          custom_event_name: 'checkout_started',
-        }),
-        event('00000000-0000-0000-0000-000000000136', '2026-09-04T12:01:20.000Z', {
-          event_name: 'purchase',
-        }),
+        event(
+          '00000000-0000-0000-0000-000000000131',
+          '2026-09-04T12:00:00.000Z',
+          {
+            page_path: '/product',
+          },
+        ),
+        event(
+          '00000000-0000-0000-0000-000000000132',
+          '2026-09-04T12:00:10.000Z',
+          {
+            event_name: 'custom_event',
+            custom_event_name: 'checkout_started',
+          },
+        ),
+        event(
+          '00000000-0000-0000-0000-000000000133',
+          '2026-09-04T12:00:20.000Z',
+          {
+            event_name: 'purchase',
+          },
+        ),
+        event(
+          '00000000-0000-0000-0000-000000000134',
+          '2026-09-04T12:01:00.000Z',
+          {
+            page_path: '/product',
+          },
+        ),
+        event(
+          '00000000-0000-0000-0000-000000000135',
+          '2026-09-04T12:01:10.000Z',
+          {
+            event_name: 'custom_event',
+            custom_event_name: 'checkout_started',
+          },
+        ),
+        event(
+          '00000000-0000-0000-0000-000000000136',
+          '2026-09-04T12:01:20.000Z',
+          {
+            event_name: 'purchase',
+          },
+        ),
       ],
     });
 
     expect(result.conversions).toHaveLength(2);
-    expect(result.conversions.map((fact) => fact.attempt_index)).toEqual([1, 2]);
+    expect(result.conversions.map((fact) => fact.attempt_index)).toEqual([
+      1, 2,
+    ]);
   });
 
   it('allows one event to advance at most one step', async () => {
@@ -241,9 +314,13 @@ describe('Funnel Progression Engine V1', () => {
       ...baseInput,
       definition: overlappingDefinition,
       events: [
-        event('00000000-0000-0000-0000-000000000141', '2026-09-04T12:00:00.000Z', {
-          event_name: 'custom_event',
-        }),
+        event(
+          '00000000-0000-0000-0000-000000000141',
+          '2026-09-04T12:00:00.000Z',
+          {
+            event_name: 'custom_event',
+          },
+        ),
       ],
     });
 
@@ -252,16 +329,28 @@ describe('Funnel Progression Engine V1', () => {
 
   it('is deterministic even when input events are unsorted', async () => {
     const events = [
-      event('00000000-0000-0000-0000-000000000151', '2026-09-04T12:00:00.000Z', {
-        page_path: '/product',
-      }),
-      event('00000000-0000-0000-0000-000000000152', '2026-09-04T12:00:10.000Z', {
-        event_name: 'custom_event',
-        custom_event_name: 'checkout_started',
-      }),
-      event('00000000-0000-0000-0000-000000000153', '2026-09-04T12:00:20.000Z', {
-        event_name: 'purchase',
-      }),
+      event(
+        '00000000-0000-0000-0000-000000000151',
+        '2026-09-04T12:00:00.000Z',
+        {
+          page_path: '/product',
+        },
+      ),
+      event(
+        '00000000-0000-0000-0000-000000000152',
+        '2026-09-04T12:00:10.000Z',
+        {
+          event_name: 'custom_event',
+          custom_event_name: 'checkout_started',
+        },
+      ),
+      event(
+        '00000000-0000-0000-0000-000000000153',
+        '2026-09-04T12:00:20.000Z',
+        {
+          event_name: 'purchase',
+        },
+      ),
     ];
 
     const first = await evaluateFunnelProgression({ ...baseInput, events });
@@ -291,13 +380,21 @@ describe('Funnel Progression Engine V1', () => {
     const result = await evaluateFunnelProgression({
       ...baseInput,
       events: [
-        event('00000000-0000-0000-0000-000000000171', '2026-09-04T12:00:00.000Z', {
-          page_path: '/product',
-        }),
-        event('00000000-0000-0000-0000-000000000172', '2026-09-04T12:00:10.000Z', {
-          event_name: 'custom_event',
-          custom_event_name: 'checkout_started',
-        }),
+        event(
+          '00000000-0000-0000-0000-000000000171',
+          '2026-09-04T12:00:00.000Z',
+          {
+            page_path: '/product',
+          },
+        ),
+        event(
+          '00000000-0000-0000-0000-000000000172',
+          '2026-09-04T12:00:10.000Z',
+          {
+            event_name: 'custom_event',
+            custom_event_name: 'checkout_started',
+          },
+        ),
       ],
     });
 
@@ -328,10 +425,14 @@ describe('Funnel Progression Engine V1', () => {
       evaluateFunnelProgression({
         ...baseInput,
         events: [
-          event('00000000-0000-0000-0000-000000000191', '2026-09-04T12:00:00.000Z', {
-            test_mode: true,
-            page_path: '/product',
-          }),
+          event(
+            '00000000-0000-0000-0000-000000000191',
+            '2026-09-04T12:00:00.000Z',
+            {
+              test_mode: true,
+              page_path: '/product',
+            },
+          ),
         ],
       }),
     ).rejects.toMatchObject<FunnelProgressionError>({
