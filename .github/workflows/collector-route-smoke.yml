@@ -10,11 +10,17 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Execute collector route probes
+      - name: Execute real collector contract probes
         shell: bash
         run: |
           set -u
           BASE='https://funnel-analytics-collector-production.prismaag.workers.dev'
+          ORIGIN='https://lp.prismaag.com.br'
+          PIXEL_KEY='px_pub_5a53e35861b97c4584f39d5c670d03b99bda'
+          VISITOR_ID='00000000-0000-7000-8000-000000000001'
+          SESSION_ID='00000000-0000-7000-8000-000000000002'
+          EVENT_ID='00000000-0000-7000-8000-000000000003'
+          NOW="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
           probe() {
             local label="$1"
@@ -35,25 +41,75 @@ jobs:
           }
 
           set -e
-          probe '1. GET beacon style' \
-            "$BASE/collect?v=1&wid=de65b2d5-8335-481a-968f-5702a0e7684c&pid=ac8b63f8-b44b-4206-8f88-f5f6e96f8a20&vid=00000000-0000-7000-8000-000000000001&src=manual_browser_identify&conf=high&tm=true"
 
-          probe '2. POST minimal na raiz' \
-            -X POST "$BASE/" \
-            -H 'Content-Type: application/json' \
-            -d '{"visitor_id":"00000000-0000-7000-8000-000000000001","test_mode":true}'
+          probe '1. GET /health' \
+            "$BASE/health"
 
-          probe '3. POST /v1/ingest' \
-            -X POST "$BASE/v1/ingest" \
-            -H 'Content-Type: application/json' \
-            -d '{"visitor_id":"00000000-0000-7000-8000-000000000001","test_mode":true}'
+          IDENTIFY_PAYLOAD=$(cat <<JSON
+          {
+            "identify_version": 1,
+            "pixel_key": "$PIXEL_KEY",
+            "visitor_id": "$VISITOR_ID",
+            "session_id": null,
+            "occurred_at": "$NOW",
+            "identifiers": {
+              "email": "collector-smoke-20260904@example.com"
+            },
+            "consent_state": "granted",
+            "sdk_version": "manual-smoke/1.0",
+            "test_mode": true
+          }
+          JSON
+          )
 
-          probe '4. POST /event com array' \
-            -X POST "$BASE/event" \
+          probe '2. POST /v1/identify valid contract' \
+            -X POST "$BASE/v1/identify" \
             -H 'Content-Type: application/json' \
-            -d '[{"visitor_id":"00000000-0000-7000-8000-000000000001","test_mode":true}]'
+            -H "Origin: $ORIGIN" \
+            --data "$IDENTIFY_PAYLOAD"
 
-          probe '5. POST /events com batch' \
-            -X POST "$BASE/events" \
+          EVENT_PAYLOAD=$(cat <<JSON
+          {
+            "batch_version": 1,
+            "sent_at": "$NOW",
+            "events": [
+              {
+                "event_id": "$EVENT_ID",
+                "event_name": "page_view",
+                "event_version": 1,
+                "sdk_version": "manual-smoke/1.0",
+                "pixel_key": "$PIXEL_KEY",
+                "visitor_id": "$VISITOR_ID",
+                "session_id": "$SESSION_ID",
+                "occurred_at": "$NOW",
+                "page_url": "https://lp.prismaag.com.br/collector-smoke",
+                "page_path": "/collector-smoke",
+                "page_title": "Collector smoke test",
+                "referrer": null,
+                "referrer_domain": null,
+                "utm_source": null,
+                "utm_medium": null,
+                "utm_campaign": null,
+                "utm_content": null,
+                "utm_term": null,
+                "click_ids": {},
+                "device": {"type": "desktop"},
+                "browser": {"name": "curl"},
+                "os": {"name": "linux"},
+                "screen": {"width": 1920, "height": 1080, "device_pixel_ratio": 1},
+                "viewport": {"width": 1280, "height": 720},
+                "language": "pt-BR",
+                "timezone": "America/Sao_Paulo",
+                "consent_state": "granted",
+                "test_mode": true
+              }
+            ]
+          }
+          JSON
+          )
+
+          probe '3. POST /v1/events valid contract' \
+            -X POST "$BASE/v1/events" \
             -H 'Content-Type: application/json' \
-            -d '{"batch":[{"visitor_id":"00000000-0000-7000-8000-000000000001","test_mode":true}]}'
+            -H "Origin: $ORIGIN" \
+            --data "$EVENT_PAYLOAD"
