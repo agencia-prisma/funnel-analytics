@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  FunnelProgressionError,
   deterministicFunnelAttemptId,
   evaluateFunnelProgression,
   type FunnelProgressionEventV1,
@@ -415,7 +414,7 @@ describe('Funnel Progression Engine V1', () => {
         ...baseInput,
         events: [duplicate, duplicate],
       }),
-    ).rejects.toMatchObject<FunnelProgressionError>({
+    ).rejects.toMatchObject({
       code: 'FUNNEL_PROGRESSION_EVENT_DUPLICATE',
     });
   });
@@ -435,7 +434,7 @@ describe('Funnel Progression Engine V1', () => {
           ),
         ],
       }),
-    ).rejects.toMatchObject<FunnelProgressionError>({
+    ).rejects.toMatchObject({
       code: 'FUNNEL_PROGRESSION_EVENT_INVALID',
     });
   });

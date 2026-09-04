@@ -111,9 +111,9 @@ SELECT
     format: 'JSONEachRow',
   });
   return (await result.json()) as Array<{
-    hits: string;
-    transitions: string;
-    conversions: string;
+    hits: number;
+    transitions: number;
+    conversions: number;
   }>;
 }
 
@@ -170,7 +170,7 @@ describe('Funnel facts on isolated ClickHouse', () => {
     });
 
     expect(await counts()).toEqual([
-      { hits: '3', transitions: '2', conversions: '1' },
+      { hits: 3, transitions: 2, conversions: 1 },
     ]);
 
     const incomplete = await evaluateFunnelProgression({
@@ -209,7 +209,7 @@ describe('Funnel facts on isolated ClickHouse', () => {
     });
 
     expect(await counts()).toEqual([
-      { hits: '2', transitions: '1', conversions: '0' },
+      { hits: 2, transitions: 1, conversions: 0 },
     ]);
 
     await repository.tombstoneJourneyFacts(
@@ -220,7 +220,7 @@ describe('Funnel facts on isolated ClickHouse', () => {
     );
 
     expect(await counts()).toEqual([
-      { hits: '0', transitions: '0', conversions: '0' },
+      { hits: 0, transitions: 0, conversions: 0 },
     ]);
   });
 
