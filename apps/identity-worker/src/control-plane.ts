@@ -5,9 +5,7 @@ import { IdentityWorkerError } from './errors';
 const DEFAULT_TIMEOUT_MS = 5_000;
 
 export type IdentityResolutionStatus =
-  | 'RESOLVED'
-  | 'IDENTITY_CONFLICT'
-  | 'VISITOR_IDENTITY_CONFLICT';
+  'RESOLVED' | 'IDENTITY_CONFLICT' | 'VISITOR_IDENTITY_CONFLICT';
 
 export interface IdentityResolution {
   resolution_status: IdentityResolutionStatus;
