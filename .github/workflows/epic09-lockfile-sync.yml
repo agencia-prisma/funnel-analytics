@@ -1,0 +1,48 @@
+name: EPIC 09 Lockfile Sync
+
+on:
+  pull_request:
+    paths:
+      - 'packages/rule-engine/package.json'
+      - '.github/workflows/epic09-lockfile-sync.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  sync-lockfile:
+    if: github.head_ref == 'feature/epic-09-funnel-definition-rule-engine'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Regenerate lockfile only
+        run: pnpm install --lockfile-only --no-frozen-lockfile
+
+      - name: Commit lockfile if changed
+        shell: bash
+        run: |
+          if git diff --quiet -- pnpm-lock.yaml; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add pnpm-lock.yaml
+          git commit -m "chore(rule-engine): sync pnpm lockfile"
+          git push origin HEAD:"$GITHUB_HEAD_REF"
