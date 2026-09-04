@@ -1,4 +1,8 @@
 import {
+  FUNNEL_RECOMPUTE_V1_MAX_JOURNEY_IDS,
+  type FunnelRecomputeEnvelopeV1,
+} from '@funnel/event-contracts/funnel';
+import {
   JOURNEY_MAX_SESSIONS_PER_RECOMPUTE,
   JOURNEY_MAX_VISITORS_PER_RECOMPUTE,
   JourneyEngineError,
@@ -9,6 +13,7 @@ import {
 import { journeyDlqAndAck, type JourneyDlqProducer } from './dlq';
 import { validateJourneyEnvelope } from './envelope';
 import { JourneyWorkerError, toJourneyWorkerError } from './errors';
+import type { FunnelRecomputeProducer } from './funnel-publisher';
 import { logJourneyWorker } from './logging';
 import type { JourneyRepository } from './repository';
 import type { JourneyQueueBatchLike, JourneyQueueMessageLike } from './types';
@@ -16,6 +21,7 @@ import type { JourneyQueueBatchLike, JourneyQueueMessageLike } from './types';
 export interface JourneyConsumerDependencies {
   repository: JourneyRepository;
   dlq: JourneyDlqProducer;
+  funnelPublisher?: FunnelRecomputeProducer;
   policy: JourneyPolicyV1;
   now?: () => number;
 }
@@ -35,6 +41,52 @@ async function permanentFailure(
     });
   } catch {
     message.retry();
+  }
+}
+
+function chunks<T>(values: T[], size: number): T[][] {
+  const result: T[][] = [];
+  for (let index = 0; index < values.length; index += size) {
+    result.push(values.slice(index, index + size));
+  }
+  return result;
+}
+
+async function publishFunnelRecomputes(input: {
+  publisher: FunnelRecomputeProducer;
+  workspaceId: string;
+  journeyIds: string[];
+  deletedJourneyIds: string[];
+  sourceJourneyVersion: string;
+  generatedAt: string;
+}): Promise<void> {
+  const references = [
+    ...input.journeyIds.map((journeyId) => ({ journeyId, deleted: false })),
+    ...input.deletedJourneyIds.map((journeyId) => ({
+      journeyId,
+      deleted: true,
+    })),
+  ];
+
+  for (const batch of chunks(
+    references,
+    FUNNEL_RECOMPUTE_V1_MAX_JOURNEY_IDS,
+  )) {
+    const envelope: FunnelRecomputeEnvelopeV1 = {
+      envelope_version: 1,
+      request_id: crypto.randomUUID(),
+      generated_at: input.generatedAt,
+      workspace_id: input.workspaceId,
+      reason: 'journey_recomputed',
+      journey_ids: batch
+        .filter((reference) => !reference.deleted)
+        .map((reference) => reference.journeyId),
+      deleted_journey_ids: batch
+        .filter((reference) => reference.deleted)
+        .map((reference) => reference.journeyId),
+      source_journey_version: input.sourceJourneyVersion,
+    };
+    await input.publisher.send(envelope);
   }
 }
 
@@ -155,6 +207,17 @@ export function createJourneyConsumer(
           version,
           updatedAt,
         );
+
+        if (dependencies.funnelPublisher) {
+          await publishFunnelRecomputes({
+            publisher: dependencies.funnelPublisher,
+            workspaceId: envelope.workspace_id,
+            journeyIds: [...currentJourneyIds],
+            deletedJourneyIds: staleJourneyIds,
+            sourceJourneyVersion: version,
+            generatedAt: updatedAt,
+          });
+        }
 
         message.ack();
 
