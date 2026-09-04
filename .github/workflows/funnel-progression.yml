@@ -1,0 +1,139 @@
+name: Funnel Progression + Conversion Facts
+
+on:
+  pull_request:
+    paths:
+      - 'packages/funnel-engine/**'
+      - 'apps/funnel-worker/**'
+      - 'apps/journey-worker/**'
+      - 'packages/event-contracts/src/funnel.ts'
+      - 'packages/event-contracts/package.json'
+      - 'infra/clickhouse/migrations/0005_funnel_facts.sql'
+      - 'docs/funnel-progression-conversion-facts.md'
+      - 'docs/decisions/0005-ordered-funnel-attempts.md'
+      - '.github/workflows/funnel-progression.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/funnel-engine/**'
+      - 'apps/funnel-worker/**'
+      - 'apps/journey-worker/**'
+      - 'packages/event-contracts/src/funnel.ts'
+      - 'packages/event-contracts/package.json'
+      - 'infra/clickhouse/migrations/0005_funnel_facts.sql'
+      - 'docs/funnel-progression-conversion-facts.md'
+      - 'docs/decisions/0005-ordered-funnel-attempts.md'
+      - '.github/workflows/funnel-progression.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: funnel-progression-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  progression-engine:
+    name: Funnel Progression Engine
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Event contracts typecheck
+        run: pnpm --filter @funnel/event-contracts typecheck
+
+      - name: Funnel Engine typecheck
+        run: pnpm --filter @funnel/funnel-engine typecheck
+
+      - name: Funnel Engine unit tests
+        run: pnpm --filter @funnel/funnel-engine test
+
+      - name: Journey Worker typecheck
+        run: pnpm --filter @funnel/journey-worker typecheck
+
+      - name: Journey → Funnel trigger tests
+        run: pnpm --filter @funnel/journey-worker test
+
+  funnel-worker:
+    name: Funnel Worker + ClickHouse Facts
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      CLICKHOUSE_URL: http://127.0.0.1:8123
+      CLICKHOUSE_USERNAME: default
+      CLICKHOUSE_PASSWORD: test-password
+
+    services:
+      clickhouse:
+        image: clickhouse/clickhouse-server:26.7.5.10
+        env:
+          CLICKHOUSE_PASSWORD: test-password
+        ports:
+          - 8123:8123
+        options: >-
+          --health-cmd "clickhouse-client --password test-password --query 'SELECT 1'"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Audit production dependencies
+        run: pnpm audit --prod --audit-level high
+
+      - name: Funnel Worker typecheck
+        run: pnpm --filter @funnel/funnel-worker typecheck
+
+      - name: Funnel Worker unit tests
+        run: pnpm --filter @funnel/funnel-worker test
+
+      - name: Funnel Worker dry-run build
+        run: |
+          cp apps/funnel-worker/.dev.vars.example apps/funnel-worker/.dev.vars
+          sed -i 's/REPLACE_LOCAL_TEST_PASSWORD/test-password/' apps/funnel-worker/.dev.vars
+          pnpm --filter @funnel/funnel-worker build
+
+      - name: Journey Worker dry-run build
+        run: pnpm --filter @funnel/journey-worker build
+
+      - name: Apply ClickHouse migrations 0001 through 0005
+        run: pnpm clickhouse:migrate
+
+      - name: Funnel facts integration and reconciliation
+        run: pnpm --filter @funnel/funnel-worker test:integration

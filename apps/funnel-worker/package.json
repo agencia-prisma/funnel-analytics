@@ -1,18 +1,19 @@
 {
-  "name": "@funnel/journey-worker",
+  "name": "@funnel/funnel-worker",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "scripts": {
     "build": "wrangler deploy --dry-run --env local --outdir dist",
-    "test": "vitest run src/consumer.test.ts src/envelope.test.ts src/funnel-trigger.test.ts",
+    "test": "vitest run src/envelope.test.ts src/control-plane.test.ts src/consumer.test.ts",
     "test:integration": "vitest run src/integration.test.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@funnel/clickhouse": "workspace:*",
     "@funnel/event-contracts": "workspace:*",
-    "@funnel/journey-engine": "workspace:*"
+    "@funnel/funnel-engine": "workspace:*",
+    "@funnel/rule-engine": "workspace:*"
   },
   "devDependencies": {
     "typescript": "5.9.3",

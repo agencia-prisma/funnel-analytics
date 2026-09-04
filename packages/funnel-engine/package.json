@@ -1,0 +1,21 @@
+{
+  "name": "@funnel/funnel-engine",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run src/index.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@funnel/journey-engine": "workspace:*",
+    "@funnel/rule-engine": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3",
+    "vitest": "4.1.11"
+  }
+}

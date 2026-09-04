@@ -17,6 +17,10 @@
             "binding": "JOURNEYS_DLQ",
             "queue": "funnel-analytics-journeys-dlq-local",
           },
+          {
+            "binding": "FUNNELS_QUEUE",
+            "queue": "funnel-analytics-funnels-local",
+          },
         ],
         "consumers": [
           {
@@ -42,6 +46,10 @@
             "binding": "JOURNEYS_DLQ",
             "queue": "funnel-analytics-journeys-dlq-preview",
           },
+          {
+            "binding": "FUNNELS_QUEUE",
+            "queue": "funnel-analytics-funnels-preview",
+          },
         ],
         "consumers": [
           {
@@ -66,6 +74,10 @@
           {
             "binding": "JOURNEYS_DLQ",
             "queue": "funnel-analytics-journeys-dlq-production",
+          },
+          {
+            "binding": "FUNNELS_QUEUE",
+            "queue": "funnel-analytics-funnels-production",
           },
         ],
         "consumers": [

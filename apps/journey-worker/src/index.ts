@@ -5,6 +5,7 @@ import {
 
 import { createJourneyConsumer } from './consumer';
 import { CloudflareJourneyDlqProducer } from './dlq';
+import { CloudflareFunnelRecomputeProducer } from './funnel-publisher';
 import { ClickHouseJourneyRepository } from './repository';
 import type { JourneyQueueBatchLike, JourneyWorkerEnv } from './types';
 
@@ -35,6 +36,7 @@ export default {
     const consume = createJourneyConsumer({
       repository,
       dlq: new CloudflareJourneyDlqProducer(env.JOURNEYS_DLQ),
+      funnelPublisher: new CloudflareFunnelRecomputeProducer(env.FUNNELS_QUEUE),
       policy: policyFromEnv(env),
     });
 
