@@ -1,0 +1,91 @@
+name: Funnel Definition + Rule Engine
+
+on:
+  pull_request:
+    paths:
+      - 'packages/rule-engine/**'
+      - 'supabase/migrations/**funnel**'
+      - 'supabase/tests/**funnel**'
+      - 'docs/funnel-definition-rule-engine.md'
+      - '.github/workflows/funnel-definition-rule-engine.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/rule-engine/**'
+      - 'supabase/migrations/**funnel**'
+      - 'supabase/tests/**funnel**'
+      - 'docs/funnel-definition-rule-engine.md'
+      - '.github/workflows/funnel-definition-rule-engine.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: funnel-definition-rule-engine-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  rule-engine:
+    name: Rule Engine V1
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Rule Engine typecheck
+        run: pnpm --filter @funnel/rule-engine typecheck
+
+      - name: Rule Engine unit tests
+        run: pnpm --filter @funnel/rule-engine test
+
+  funnel-control-plane:
+    name: Funnel Control Plane + RLS
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Start isolated Supabase
+        run: bash scripts/ci/start-supabase.sh
+
+      - name: Run funnel pgTAP suite
+        run: pnpm supabase test db supabase/tests/05_funnels_rule_engine_test.sql
+
+      - name: Stop isolated Supabase
+        if: always()
+        run: pnpm supabase stop --no-backup

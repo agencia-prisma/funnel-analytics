@@ -8,7 +8,7 @@
     "local": {
       "name": "funnel-analytics-identity-worker-local",
       "vars": {
-        "IDENTITY_WORKER_ENV": "local"
+        "IDENTITY_WORKER_ENV": "local",
       },
       "secrets": {
         "required": [
@@ -16,19 +16,19 @@
           "SUPABASE_SECRET_KEY",
           "CLICKHOUSE_URL",
           "CLICKHOUSE_USERNAME",
-          "CLICKHOUSE_PASSWORD"
-        ]
+          "CLICKHOUSE_PASSWORD",
+        ],
       },
       "queues": {
         "producers": [
           {
             "binding": "JOURNEYS_QUEUE",
-            "queue": "funnel-analytics-journeys-local"
+            "queue": "funnel-analytics-journeys-local",
           },
           {
             "binding": "IDENTITY_DLQ",
-            "queue": "funnel-analytics-identity-dlq-local"
-          }
+            "queue": "funnel-analytics-identity-dlq-local",
+          },
         ],
         "consumers": [
           {
@@ -36,15 +36,15 @@
             "max_batch_size": 10,
             "max_batch_timeout": 1,
             "max_retries": 3,
-            "dead_letter_queue": "funnel-analytics-identity-dlq-local"
-          }
-        ]
-      }
+            "dead_letter_queue": "funnel-analytics-identity-dlq-local",
+          },
+        ],
+      },
     },
     "preview": {
       "name": "funnel-analytics-identity-worker-preview",
       "vars": {
-        "IDENTITY_WORKER_ENV": "preview"
+        "IDENTITY_WORKER_ENV": "preview",
       },
       "secrets": {
         "required": [
@@ -52,19 +52,19 @@
           "SUPABASE_SECRET_KEY",
           "CLICKHOUSE_URL",
           "CLICKHOUSE_USERNAME",
-          "CLICKHOUSE_PASSWORD"
-        ]
+          "CLICKHOUSE_PASSWORD",
+        ],
       },
       "queues": {
         "producers": [
           {
             "binding": "JOURNEYS_QUEUE",
-            "queue": "funnel-analytics-journeys-preview"
+            "queue": "funnel-analytics-journeys-preview",
           },
           {
             "binding": "IDENTITY_DLQ",
-            "queue": "funnel-analytics-identity-dlq-preview"
-          }
+            "queue": "funnel-analytics-identity-dlq-preview",
+          },
         ],
         "consumers": [
           {
@@ -72,15 +72,15 @@
             "max_batch_size": 10,
             "max_batch_timeout": 1,
             "max_retries": 3,
-            "dead_letter_queue": "funnel-analytics-identity-dlq-preview"
-          }
-        ]
-      }
+            "dead_letter_queue": "funnel-analytics-identity-dlq-preview",
+          },
+        ],
+      },
     },
     "production": {
       "name": "funnel-analytics-identity-worker-production",
       "vars": {
-        "IDENTITY_WORKER_ENV": "production"
+        "IDENTITY_WORKER_ENV": "production",
       },
       "secrets": {
         "required": [
@@ -88,19 +88,19 @@
           "SUPABASE_SECRET_KEY",
           "CLICKHOUSE_URL",
           "CLICKHOUSE_USERNAME",
-          "CLICKHOUSE_PASSWORD"
-        ]
+          "CLICKHOUSE_PASSWORD",
+        ],
       },
       "queues": {
         "producers": [
           {
             "binding": "JOURNEYS_QUEUE",
-            "queue": "funnel-analytics-journeys-production"
+            "queue": "funnel-analytics-journeys-production",
           },
           {
             "binding": "IDENTITY_DLQ",
-            "queue": "funnel-analytics-identity-dlq-production"
-          }
+            "queue": "funnel-analytics-identity-dlq-production",
+          },
         ],
         "consumers": [
           {
@@ -108,10 +108,10 @@
             "max_batch_size": 10,
             "max_batch_timeout": 1,
             "max_retries": 3,
-            "dead_letter_queue": "funnel-analytics-identity-dlq-production"
-          }
-        ]
-      }
-    }
-  }
+            "dead_letter_queue": "funnel-analytics-identity-dlq-production",
+          },
+        ],
+      },
+    },
+  },
 }
