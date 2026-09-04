@@ -35,4 +35,4 @@ export interface FunnelQueueBatchLike {
   messages: FunnelQueueMessageLike[];
 }
 
-export interface ValidatedFunnelEnvelope extends FunnelRecomputeEnvelopeV1 {}
+export type ValidatedFunnelEnvelope = FunnelRecomputeEnvelopeV1;
