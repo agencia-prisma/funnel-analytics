@@ -1,0 +1,59 @@
+name: EPIC 10 Branch Sync
+
+on:
+  pull_request:
+    paths:
+      - 'apps/funnel-worker/**'
+      - 'apps/journey-worker/**'
+      - 'packages/funnel-engine/**'
+      - 'packages/event-contracts/package.json'
+      - 'packages/event-contracts/src/funnel.ts'
+      - 'infra/clickhouse/migrations/0005_funnel_facts.sql'
+      - 'docs/funnel-progression-conversion-facts.md'
+      - 'docs/decisions/0005-ordered-funnel-attempts.md'
+      - '.github/workflows/funnel-progression.yml'
+      - '.github/workflows/epic10-branch-sync.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    if: github.head_ref == 'feature/epic-10-funnel-progression-conversion-facts'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Sync lockfile and install
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Apply repository formatting
+        run: pnpm format
+
+      - name: Commit generated changes
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "chore(epic10): sync lockfile and formatting"
+          git push origin HEAD:"$GITHUB_HEAD_REF"
