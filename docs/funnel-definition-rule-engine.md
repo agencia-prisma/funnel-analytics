@@ -81,12 +81,12 @@ funnels.manage
 
 Role matrix:
 
-| Role | View | Manage |
-| --- | --- | --- |
-| Owner | yes | yes |
-| Admin | yes | yes |
-| Analyst | yes | no |
-| Viewer | yes | no |
+| Role    | View | Manage |
+| ------- | ---- | ------ |
+| Owner   | yes  | yes    |
+| Admin   | yes  | yes    |
+| Analyst | yes  | no     |
+| Viewer  | yes  | no     |
 
 Authenticated users receive SELECT-only access through RLS. Funnel mutations happen through controlled RPCs.
 

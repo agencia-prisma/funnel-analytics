@@ -64,9 +64,7 @@ export interface FunnelNotRuleV1 {
 }
 
 export type FunnelRuleV1 =
-  | FunnelConditionRuleV1
-  | FunnelGroupRuleV1
-  | FunnelNotRuleV1;
+  FunnelConditionRuleV1 | FunnelGroupRuleV1 | FunnelNotRuleV1;
 
 export interface FunnelStepDefinitionV1 {
   step_key: string;
@@ -185,7 +183,9 @@ function isRuleField(value: unknown): value is FunnelRuleField {
   );
 }
 
-function validateCondition(rule: Record<string, unknown>): FunnelConditionRuleV1 {
+function validateCondition(
+  rule: Record<string, unknown>,
+): FunnelConditionRuleV1 {
   if (!isRuleField(rule.field)) {
     throw new RuleEngineError('FUNNEL_RULE_INVALID');
   }
@@ -423,18 +423,15 @@ function evaluateCondition(
       return !compareScalar(actual, rule.value as FunnelScalar);
     case 'contains':
       return (
-        typeof actual === 'string' &&
-        actual.includes(rule.value as string)
+        typeof actual === 'string' && actual.includes(rule.value as string)
       );
     case 'starts_with':
       return (
-        typeof actual === 'string' &&
-        actual.startsWith(rule.value as string)
+        typeof actual === 'string' && actual.startsWith(rule.value as string)
       );
     case 'ends_with':
       return (
-        typeof actual === 'string' &&
-        actual.endsWith(rule.value as string)
+        typeof actual === 'string' && actual.endsWith(rule.value as string)
       );
     case 'in':
       return (rule.value as FunnelScalar[]).some((value) =>
