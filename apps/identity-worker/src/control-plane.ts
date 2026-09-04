@@ -5,7 +5,9 @@ import { IdentityWorkerError } from './errors';
 const DEFAULT_TIMEOUT_MS = 5_000;
 
 export type IdentityResolutionStatus =
-  'RESOLVED' | 'IDENTITY_CONFLICT' | 'VISITOR_IDENTITY_CONFLICT';
+  | 'RESOLVED'
+  | 'IDENTITY_CONFLICT'
+  | 'VISITOR_IDENTITY_CONFLICT';
 
 export interface IdentityResolution {
   resolution_status: IdentityResolutionStatus;
@@ -29,33 +31,47 @@ export class SupabaseIdentityRepository implements IdentityRepository {
   constructor(
     private readonly supabaseUrl: string,
     private readonly secretKey: string,
-    private readonly fetchRef: typeof fetch = fetch,
+    private readonly fetchRef?: typeof fetch,
     private readonly timeoutMs = DEFAULT_TIMEOUT_MS,
   ) {}
 
   async resolve(envelope: IdentityEnvelopeV1): Promise<IdentityResolution> {
-    if (!this.supabaseUrl || !this.secretKey) {
+    const supabaseUrl = this.supabaseUrl?.trim();
+    const secretKey = this.secretKey?.trim();
+
+    if (!supabaseUrl || !secretKey) {
       throw new IdentityWorkerError(
         'TRANSIENT',
-        'IDENTITY_CONTROL_PLANE_UNAVAILABLE',
+        'IDENTITY_CONTROL_PLANE_CONFIG_MISSING',
       );
     }
 
-    const url = new URL('/rest/v1/rpc/resolve_identity_v1', this.supabaseUrl);
+    let url: URL;
+
+    try {
+      const baseUrl = new URL(supabaseUrl);
+
+      if (!['http:', 'https:'].includes(baseUrl.protocol)) {
+        throw new TypeError('Unsupported Supabase URL protocol');
+      }
+
+      url = new URL('/rest/v1/rpc/resolve_identity_v1', baseUrl);
+    } catch {
+      throw new IdentityWorkerError(
+        'TRANSIENT',
+        'IDENTITY_CONTROL_PLANE_URL_INVALID',
+      );
+    }
+
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
 
     try {
-      // Cloudflare Workers rejects global fetch when it is invoked as an
-      // instance property (`this.fetchRef(...)`) because that supplies the
-      // repository instance as the native receiver. Detach the function first
-      // so the runtime sees the same receiver semantics as a bare `fetch(...)`.
-      const fetchRef = this.fetchRef;
-      const response = await fetchRef(url, {
+      const requestInit: RequestInit = {
         method: 'POST',
         headers: {
-          apikey: this.secretKey,
-          authorization: `Bearer ${this.secretKey}`,
+          apikey: secretKey,
+          authorization: `Bearer ${secretKey}`,
           'content-type': 'application/json',
           accept: 'application/json',
         },
@@ -71,7 +87,16 @@ export class SupabaseIdentityRepository implements IdentityRepository {
           target_test_mode: envelope.test_mode,
         }),
         signal: controller.signal,
-      });
+      };
+
+      // Production deliberately uses the Worker-global fetch directly. Keeping
+      // the native function on an arbitrary object can trigger workerd receiver
+      // errors before any outbound HTTP request is attempted. Tests may inject
+      // a fetch implementation without changing the production call path.
+      const fetchRef = this.fetchRef;
+      const response = fetchRef
+        ? await fetchRef(url.toString(), requestInit)
+        : await fetch(url.toString(), requestInit);
 
       if (!response.ok) {
         let code = '';
@@ -114,7 +139,7 @@ export class SupabaseIdentityRepository implements IdentityRepository {
       } catch {
         throw new IdentityWorkerError(
           'TRANSIENT',
-          'IDENTITY_CONTROL_PLANE_UNAVAILABLE',
+          'IDENTITY_CONTROL_PLANE_RESPONSE_INVALID',
         );
       }
 
@@ -130,7 +155,7 @@ export class SupabaseIdentityRepository implements IdentityRepository {
       ) {
         throw new IdentityWorkerError(
           'TRANSIENT',
-          'IDENTITY_CONTROL_PLANE_UNAVAILABLE',
+          'IDENTITY_CONTROL_PLANE_RESPONSE_INVALID',
         );
       }
 
@@ -140,9 +165,16 @@ export class SupabaseIdentityRepository implements IdentityRepository {
         throw error;
       }
 
+      if (controller.signal.aborted) {
+        throw new IdentityWorkerError(
+          'TRANSIENT',
+          'IDENTITY_CONTROL_PLANE_TIMEOUT',
+        );
+      }
+
       throw new IdentityWorkerError(
         'TRANSIENT',
-        'IDENTITY_CONTROL_PLANE_UNAVAILABLE',
+        'IDENTITY_CONTROL_PLANE_NETWORK_ERROR',
       );
     } finally {
       clearTimeout(timeout);

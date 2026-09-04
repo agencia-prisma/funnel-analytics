@@ -2,6 +2,7 @@ import type { IdentityEnvelopeV1 } from '@funnel/event-contracts';
 import { describe, expect, it } from 'vitest';
 
 import { SupabaseIdentityRepository } from './control-plane';
+import { IdentityWorkerError } from './errors';
 
 const envelope: IdentityEnvelopeV1 = {
   envelope_version: 1,
@@ -25,15 +26,25 @@ const envelope: IdentityEnvelopeV1 = {
   test_mode: true,
 };
 
+async function expectWorkerError(
+  promise: Promise<unknown>,
+  expectedCode: string,
+): Promise<void> {
+  try {
+    await promise;
+    throw new Error('Expected IdentityWorkerError');
+  } catch (error) {
+    expect(error).toBeInstanceOf(IdentityWorkerError);
+    expect((error as IdentityWorkerError).code).toBe(expectedCode);
+  }
+}
+
 describe('SupabaseIdentityRepository', () => {
   it('invokes injected fetch without rebinding its receiver', async () => {
     const fetchRef = function (
       this: unknown,
       input: RequestInfo | URL,
     ): Promise<Response> {
-      // workerd/Chromium reject Worker global fetch when an unrelated object
-      // is supplied as the receiver. This reproduces that production behavior
-      // while remaining deterministic in Node/Vitest.
       if (this !== undefined && this !== null && this !== globalThis) {
         throw new TypeError('Illegal invocation');
       }
@@ -66,5 +77,41 @@ describe('SupabaseIdentityRepository', () => {
 
     expect(result.resolution_status).toBe('RESOLVED');
     expect(result.person_id).toBe('40000000-0000-4000-8000-000000000001');
+  });
+
+  it('classifies missing runtime configuration before HTTP', async () => {
+    const repository = new SupabaseIdentityRepository('', '');
+
+    await expectWorkerError(
+      repository.resolve(envelope),
+      'IDENTITY_CONTROL_PLANE_CONFIG_MISSING',
+    );
+  });
+
+  it('classifies an invalid Supabase URL before HTTP', async () => {
+    const repository = new SupabaseIdentityRepository(
+      'not-a-url',
+      'service-role-test-key',
+    );
+
+    await expectWorkerError(
+      repository.resolve(envelope),
+      'IDENTITY_CONTROL_PLANE_URL_INVALID',
+    );
+  });
+
+  it('classifies network failures separately from response failures', async () => {
+    const fetchRef = (() =>
+      Promise.reject(new TypeError('network unavailable'))) as typeof fetch;
+    const repository = new SupabaseIdentityRepository(
+      'https://example.supabase.co',
+      'service-role-test-key',
+      fetchRef,
+    );
+
+    await expectWorkerError(
+      repository.resolve(envelope),
+      'IDENTITY_CONTROL_PLANE_NETWORK_ERROR',
+    );
   });
 });
