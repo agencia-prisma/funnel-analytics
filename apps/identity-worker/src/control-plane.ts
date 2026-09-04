@@ -46,7 +46,12 @@ export class SupabaseIdentityRepository implements IdentityRepository {
     const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
 
     try {
-      const response = await this.fetchRef(url, {
+      // Cloudflare Workers rejects global fetch when it is invoked as an
+      // instance property (`this.fetchRef(...)`) because that supplies the
+      // repository instance as the native receiver. Detach the function first
+      // so the runtime sees the same receiver semantics as a bare `fetch(...)`.
+      const fetchRef = this.fetchRef;
+      const response = await fetchRef(url, {
         method: 'POST',
         headers: {
           apikey: this.secretKey,
