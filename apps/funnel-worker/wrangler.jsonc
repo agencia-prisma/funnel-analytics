@@ -1,0 +1,108 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "funnel-analytics-funnel-worker",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-29",
+  "workers_dev": false,
+  "env": {
+    "local": {
+      "name": "funnel-analytics-funnel-worker-local",
+      "vars": {
+        "FUNNEL_WORKER_ENV": "local"
+      },
+      "secrets": {
+        "required": [
+          "SUPABASE_URL",
+          "SUPABASE_SECRET_KEY",
+          "CLICKHOUSE_URL",
+          "CLICKHOUSE_USERNAME",
+          "CLICKHOUSE_PASSWORD"
+        ]
+      },
+      "queues": {
+        "producers": [
+          {
+            "binding": "FUNNELS_DLQ",
+            "queue": "funnel-analytics-funnels-dlq-local"
+          }
+        ],
+        "consumers": [
+          {
+            "queue": "funnel-analytics-funnels-local",
+            "max_batch_size": 5,
+            "max_batch_timeout": 1,
+            "max_retries": 3,
+            "max_concurrency": 1,
+            "dead_letter_queue": "funnel-analytics-funnels-dlq-local"
+          }
+        ]
+      }
+    },
+    "preview": {
+      "name": "funnel-analytics-funnel-worker-preview",
+      "vars": {
+        "FUNNEL_WORKER_ENV": "preview"
+      },
+      "secrets": {
+        "required": [
+          "SUPABASE_URL",
+          "SUPABASE_SECRET_KEY",
+          "CLICKHOUSE_URL",
+          "CLICKHOUSE_USERNAME",
+          "CLICKHOUSE_PASSWORD"
+        ]
+      },
+      "queues": {
+        "producers": [
+          {
+            "binding": "FUNNELS_DLQ",
+            "queue": "funnel-analytics-funnels-dlq-preview"
+          }
+        ],
+        "consumers": [
+          {
+            "queue": "funnel-analytics-funnels-preview",
+            "max_batch_size": 5,
+            "max_batch_timeout": 1,
+            "max_retries": 3,
+            "max_concurrency": 1,
+            "dead_letter_queue": "funnel-analytics-funnels-dlq-preview"
+          }
+        ]
+      }
+    },
+    "production": {
+      "name": "funnel-analytics-funnel-worker-production",
+      "vars": {
+        "FUNNEL_WORKER_ENV": "production"
+      },
+      "secrets": {
+        "required": [
+          "SUPABASE_URL",
+          "SUPABASE_SECRET_KEY",
+          "CLICKHOUSE_URL",
+          "CLICKHOUSE_USERNAME",
+          "CLICKHOUSE_PASSWORD"
+        ]
+      },
+      "queues": {
+        "producers": [
+          {
+            "binding": "FUNNELS_DLQ",
+            "queue": "funnel-analytics-funnels-dlq-production"
+          }
+        ],
+        "consumers": [
+          {
+            "queue": "funnel-analytics-funnels-production",
+            "max_batch_size": 5,
+            "max_batch_timeout": 1,
+            "max_retries": 3,
+            "max_concurrency": 1,
+            "dead_letter_queue": "funnel-analytics-funnels-dlq-production"
+          }
+        ]
+      }
+    }
+  }
+}
