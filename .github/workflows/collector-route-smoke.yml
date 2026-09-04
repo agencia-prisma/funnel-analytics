@@ -1,0 +1,59 @@
+name: Collector route smoke
+
+on:
+  push:
+    branches:
+      - chore/collector-route-smoke-20260904
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Execute collector route probes
+        shell: bash
+        run: |
+          set -u
+          BASE='https://funnel-analytics-collector-production.prismaag.workers.dev'
+
+          probe() {
+            local label="$1"
+            shift
+            echo ""
+            echo "===== $label ====="
+            rm -f /tmp/headers /tmp/body
+            set +e
+            curl -sS -D /tmp/headers -o /tmp/body -w '\nHTTP_STATUS=%{http_code}\n' "$@"
+            rc=$?
+            set -e
+            echo "CURL_EXIT=$rc"
+            echo '--- headers ---'
+            cat /tmp/headers 2>/dev/null || true
+            echo '--- body ---'
+            cat /tmp/body 2>/dev/null || true
+            echo
+          }
+
+          set -e
+          probe '1. GET beacon style' \
+            "$BASE/collect?v=1&wid=de65b2d5-8335-481a-968f-5702a0e7684c&pid=ac8b63f8-b44b-4206-8f88-f5f6e96f8a20&vid=00000000-0000-7000-8000-000000000001&src=manual_browser_identify&conf=high&tm=true"
+
+          probe '2. POST minimal na raiz' \
+            -X POST "$BASE/" \
+            -H 'Content-Type: application/json' \
+            -d '{"visitor_id":"00000000-0000-7000-8000-000000000001","test_mode":true}'
+
+          probe '3. POST /v1/ingest' \
+            -X POST "$BASE/v1/ingest" \
+            -H 'Content-Type: application/json' \
+            -d '{"visitor_id":"00000000-0000-7000-8000-000000000001","test_mode":true}'
+
+          probe '4. POST /event com array' \
+            -X POST "$BASE/event" \
+            -H 'Content-Type: application/json' \
+            -d '[{"visitor_id":"00000000-0000-7000-8000-000000000001","test_mode":true}]'
+
+          probe '5. POST /events com batch' \
+            -X POST "$BASE/events" \
+            -H 'Content-Type: application/json' \
+            -d '{"batch":[{"visitor_id":"00000000-0000-7000-8000-000000000001","test_mode":true}]}'
