@@ -58,6 +58,48 @@ describe('SupabasePixelRegistry', () => {
     expect(fetchRef).toHaveBeenCalledTimes(1);
   });
 
+  it('invokes injected fetch without binding the registry as receiver', async () => {
+    const fetchRef = function (
+      this: unknown,
+      input: RequestInfo | URL,
+    ): Promise<Response> {
+      if (this !== undefined && this !== null && this !== globalThis) {
+        throw new TypeError('Illegal invocation');
+      }
+
+      expect(String(input)).toContain('/rest/v1/pixels?');
+
+      return Promise.resolve(
+        new Response(
+          JSON.stringify([
+            {
+              id: 'pixel-id',
+              workspace_id: 'workspace-id',
+              public_key: 'px_pub_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+              status: 'active',
+              health_status: 'healthy',
+              pixel_domains: [],
+            },
+          ]),
+          {
+            status: 200,
+            headers: { 'content-type': 'application/json' },
+          },
+        ),
+      );
+    } as typeof fetch;
+
+    const registry = new SupabasePixelRegistry(
+      'https://project.supabase.co',
+      'test-secret',
+      fetchRef,
+    );
+
+    await expect(
+      registry.resolvePixel('px_pub_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'),
+    ).resolves.toMatchObject({ id: 'pixel-id' });
+  });
+
   it('updates operational metadata after accepted ingestion', async () => {
     const requests: Array<{ url: string; body: unknown }> = [];
     const fetchRef = vi.fn(

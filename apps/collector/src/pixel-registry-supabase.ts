@@ -26,7 +26,7 @@ export class SupabasePixelRegistry implements PixelRegistry {
   constructor(
     private readonly supabaseUrl: string,
     private readonly secretKey: string,
-    private readonly fetchRef: typeof fetch = fetch,
+    private readonly fetchRef?: typeof fetch,
     private readonly timeoutMs = DEFAULT_TIMEOUT_MS,
   ) {}
 
@@ -130,11 +130,21 @@ export class SupabasePixelRegistry implements PixelRegistry {
       const headers = new Headers(init.headers);
       headers.set('apikey', this.secretKey);
 
-      const response = await this.fetchRef(url, {
+      const requestInit: RequestInit = {
         ...init,
         headers,
         signal: controller.signal,
-      });
+      };
+
+      // In Cloudflare Workers, storing the native global fetch on an instance and
+      // invoking it as `this.fetchRef(...)` may bind the repository as receiver
+      // and fail with `Illegal invocation` before any outbound HTTP request.
+      // Production therefore calls Worker-global fetch directly. Tests can inject
+      // a fetch implementation without changing the production call path.
+      const fetchRef = this.fetchRef;
+      const response = fetchRef
+        ? await fetchRef(url.toString(), requestInit)
+        : await fetch(url.toString(), requestInit);
 
       if (!response.ok) {
         throw new ControlPlaneUnavailableError();
