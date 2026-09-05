@@ -1,0 +1,196 @@
+name: Pending Cloudflare Workers Production Once
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/pending-cloudflare-workers-production-once.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cloudflare-workers-production
+  cancel-in-progress: false
+
+jobs:
+  deploy-pending-workers:
+    name: Deploy pending production Workers
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Validate Cloudflare credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "${CLOUDFLARE_API_TOKEN:-}" || { echo "::error::Missing CLOUDFLARE_API_TOKEN"; exit 1; }
+          test -n "${CLOUDFLARE_ACCOUNT_ID:-}" || { echo "::error::Missing CLOUDFLARE_ACCOUNT_ID"; exit 1; }
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate production configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fq '"SUPABASE_URL": "https://efkqeqaispyppxnjlobi.supabase.co"' apps/funnel-worker/wrangler.jsonc
+
+          for specification in \
+            'event-worker:funnel-analytics-event-worker-production' \
+            'session-worker:funnel-analytics-session-worker-production' \
+            'journey-worker:funnel-analytics-journey-worker-production' \
+            'funnel-worker:funnel-analytics-funnel-worker-production'
+          do
+            app="${specification%%:*}"
+            worker="${specification#*:}"
+            grep -Fq "\"name\": \"$worker\"" "apps/$app/wrangler.jsonc"
+          done
+
+      - name: Validate all production secret names before deploy
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          check_secrets() {
+            local app="$1"
+            shift
+            local secret_list
+            secret_list="$(cd "apps/$app" && pnpm exec wrangler secret list --env production)"
+            printf '===== %s production secrets =====\n%s\n' "$app" "$secret_list"
+
+            local missing=0
+            for name in "$@"; do
+              if ! printf '%s\n' "$secret_list" | grep -Fq "\"name\": \"$name\""; then
+                echo "::error::Missing production secret for $app: $name"
+                missing=1
+              fi
+            done
+            return "$missing"
+          }
+
+          failed=0
+          check_secrets event-worker \
+            CLICKHOUSE_URL CLICKHOUSE_USERNAME CLICKHOUSE_PASSWORD || failed=1
+          check_secrets session-worker \
+            CLICKHOUSE_URL CLICKHOUSE_USERNAME CLICKHOUSE_PASSWORD || failed=1
+          check_secrets journey-worker \
+            CLICKHOUSE_URL CLICKHOUSE_USERNAME CLICKHOUSE_PASSWORD || failed=1
+          check_secrets funnel-worker \
+            SUPABASE_SECRET_KEY CLICKHOUSE_URL CLICKHOUSE_USERNAME CLICKHOUSE_PASSWORD || failed=1
+
+          if [ "$failed" -ne 0 ]; then
+            echo "::error::Preflight failed. No Worker was deployed."
+            exit 1
+          fi
+
+      - name: Deploy Event Worker
+        working-directory: apps/event-worker
+        run: pnpm exec wrangler deploy --env production
+
+      - name: Deploy Session Worker
+        working-directory: apps/session-worker
+        run: pnpm exec wrangler deploy --env production
+
+      - name: Deploy Journey Worker
+        working-directory: apps/journey-worker
+        run: pnpm exec wrangler deploy --env production
+
+      - name: Deploy Funnel Worker
+        working-directory: apps/funnel-worker
+        run: pnpm exec wrangler deploy --env production
+
+      - name: Confirm production deployments
+        shell: bash
+        run: |
+          set -euo pipefail
+          for app in event-worker session-worker journey-worker funnel-worker; do
+            echo "===== $app production deployment ====="
+            (cd "apps/$app" && pnpm exec wrangler deployments list --env production | sed -n '1,30p')
+          done
+
+      - name: Smoke production pipeline entrypoints
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE='https://funnel-analytics-collector-production.prismaag.workers.dev'
+          ORIGIN='https://lp.prismaag.com.br'
+          PIXEL_KEY='px_pub_5a53e35861b97c4584f39d5c670d03b99bda'
+          VISITOR_ID='00000000-0000-7000-8000-000000000021'
+          SESSION_ID='00000000-0000-7000-8000-000000000022'
+          EVENT_ID='00000000-0000-7000-8000-000000000023'
+          NOW="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+          EVENT_PAYLOAD=$(cat <<JSON
+          {
+            "batch_version": 1,
+            "sent_at": "$NOW",
+            "events": [
+              {
+                "event_id": "$EVENT_ID",
+                "event_name": "page_view",
+                "event_version": 1,
+                "sdk_version": "github-actions-production-deploy/1.0",
+                "pixel_key": "$PIXEL_KEY",
+                "visitor_id": "$VISITOR_ID",
+                "session_id": "$SESSION_ID",
+                "occurred_at": "$NOW",
+                "page_url": "https://lp.prismaag.com.br/pipeline-production-smoke",
+                "page_path": "/pipeline-production-smoke",
+                "page_title": "Pipeline production smoke",
+                "referrer": null,
+                "referrer_domain": null,
+                "utm_source": null,
+                "utm_medium": null,
+                "utm_campaign": null,
+                "utm_content": null,
+                "utm_term": null,
+                "click_ids": {},
+                "device": {"type": "desktop"},
+                "browser": {"name": "curl"},
+                "os": {"name": "linux"},
+                "screen": {"width": 1920, "height": 1080, "device_pixel_ratio": 1},
+                "viewport": {"width": 1280, "height": 720},
+                "language": "pt-BR",
+                "timezone": "America/Sao_Paulo",
+                "consent_state": "granted",
+                "test_mode": true
+              }
+            ]
+          }
+          JSON
+          )
+
+          status="$(curl -sS -o /tmp/pipeline-smoke-body -w '%{http_code}' \
+            -X POST "$BASE/v1/events" \
+            -H 'Content-Type: application/json' \
+            -H "Origin: $ORIGIN" \
+            --data "$EVENT_PAYLOAD")"
+          cat /tmp/pipeline-smoke-body
+          echo
+          echo "HTTP_STATUS=$status"
+          if [ "$status" != '202' ]; then
+            echo "::error::Pipeline smoke expected HTTP 202 but received $status"
+            exit 1
+          fi

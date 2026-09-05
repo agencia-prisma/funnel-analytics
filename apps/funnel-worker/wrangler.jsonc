@@ -75,10 +75,10 @@
       "name": "funnel-analytics-funnel-worker-production",
       "vars": {
         "FUNNEL_WORKER_ENV": "production",
+        "SUPABASE_URL": "https://efkqeqaispyppxnjlobi.supabase.co",
       },
       "secrets": {
         "required": [
-          "SUPABASE_URL",
           "SUPABASE_SECRET_KEY",
           "CLICKHOUSE_URL",
           "CLICKHOUSE_USERNAME",
