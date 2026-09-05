@@ -83,6 +83,9 @@
         "IDENTITY_WORKER_ENV": "production",
         "SUPABASE_URL": "https://efkqeqaispyppxnjlobi.supabase.co",
       },
+      "observability": {
+        "enabled": true,
+      },
       "secrets": {
         "required": [
           "SUPABASE_SECRET_KEY",
