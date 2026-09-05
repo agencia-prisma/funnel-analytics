@@ -1,0 +1,112 @@
+name: EPIC 11 Production E2E
+
+on:
+  push:
+    branches:
+      - chore/epic11-production-e2e-20260905
+    paths:
+      - .github/workflows/epic11-production-e2e.yml
+
+permissions:
+  contents: read
+
+jobs:
+  purchase:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send checkout and purchase to production Collector
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const endpoint = 'https://funnel-analytics-collector-production.prismaag.workers.dev/v1/events';
+          const pixelKey = 'px_pub_5a53e35861b97c4584f39d5c670d03b99bda';
+          const visitorId = '01a07184-9619-7c61-9e03-d19141b4ba5a';
+          const sessionId = '01a07184-9619-707b-ab0f-dbcfe9fc35f8';
+          const checkoutEventId = '01a07184-9619-76c3-95d3-cc2adc1555f9';
+          const purchaseEventId = '01a07184-9619-7559-9797-cf292311d53f';
+          const orderId = 'epic11-e2e-20260905-001';
+          const now = Date.now();
+
+          const base = {
+            event_version: 1,
+            sdk_version: 'epic11-e2e/1.0.0',
+            pixel_key: pixelKey,
+            visitor_id: visitorId,
+            session_id: sessionId,
+            page_url: 'https://lp.prismaag.com.br/epic11-commerce-e2e',
+            page_path: '/epic11-commerce-e2e',
+            page_title: 'EPIC 11 Commerce E2E',
+            referrer: null,
+            referrer_domain: null,
+            utm_source: 'epic11-e2e',
+            utm_medium: 'qa',
+            utm_campaign: 'commerce-production-e2e',
+            utm_content: null,
+            utm_term: null,
+            click_ids: {},
+            device: { type: 'desktop' },
+            browser: { name: 'GitHub Actions' },
+            os: { name: 'Linux' },
+            screen: { width: 1920, height: 1080, device_pixel_ratio: 1 },
+            viewport: { width: 1280, height: 720 },
+            language: 'pt-BR',
+            timezone: 'America/Sao_Paulo',
+            consent_state: 'granted',
+            test_mode: true,
+          };
+
+          const body = {
+            batch_version: 1,
+            sent_at: new Date(now).toISOString(),
+            events: [
+              {
+                ...base,
+                event_id: checkoutEventId,
+                event_name: 'custom_event',
+                custom_event_name: 'checkout_started',
+                occurred_at: new Date(now - 1000).toISOString(),
+                properties: {
+                  provider: 'custom',
+                  checkout_id: 'epic11-e2e-checkout-001',
+                  currency: 'BRL',
+                  value_minor: 15990,
+                },
+              },
+              {
+                ...base,
+                event_id: purchaseEventId,
+                event_name: 'custom_event',
+                custom_event_name: 'purchase',
+                occurred_at: new Date(now).toISOString(),
+                properties: {
+                  provider: 'custom',
+                  order_id: orderId,
+                  currency: 'BRL',
+                  value_minor: 15990,
+                  discount_minor: 1000,
+                  shipping_minor: 990,
+                  tax_minor: 0,
+                  items: [
+                    { item_id: 'sku-e2e-01', name: 'E2E Item A', quantity: 2, unit_price_minor: 4995 },
+                    { item_id: 'sku-e2e-02', name: 'E2E Item B', quantity: 1, unit_price_minor: 6000 },
+                  ],
+                },
+              },
+            ],
+          };
+
+          const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+              'content-type': 'application/json',
+              origin: 'https://lp.prismaag.com.br',
+            },
+            body: JSON.stringify(body),
+          });
+          const text = await response.text();
+          console.log(`HTTP ${response.status}`);
+          console.log(text);
+          console.log(JSON.stringify({ visitorId, sessionId, checkoutEventId, purchaseEventId, orderId }));
+          if (!response.ok) process.exit(1);
+          NODE
