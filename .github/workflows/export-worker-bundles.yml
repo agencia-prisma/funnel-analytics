@@ -1,0 +1,53 @@
+name: Export Worker Bundles
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/export-worker-bundles.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  bundle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Bundle Funnel Worker production
+        run: pnpm --filter @funnel/funnel-worker exec wrangler deploy --env production --dry-run --outdir dist-production
+
+      - name: Bundle Journey Worker production
+        run: pnpm --filter @funnel/journey-worker exec wrangler deploy --env production --dry-run --outdir dist-production
+
+      - name: Collect bundles
+        run: |
+          mkdir -p artifacts/funnel-worker artifacts/journey-worker
+          cp -R apps/funnel-worker/dist-production/. artifacts/funnel-worker/
+          cp -R apps/journey-worker/dist-production/. artifacts/journey-worker/
+          find artifacts -maxdepth 3 -type f -print
+
+      - name: Upload bundles
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-worker-bundles
+          path: artifacts
+          if-no-files-found: error
+          retention-days: 1
