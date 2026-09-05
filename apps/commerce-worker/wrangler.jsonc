@@ -18,6 +18,10 @@
       "queues": {
         "producers": [
           {
+            "binding": "ATTRIBUTION_QUEUE",
+            "queue": "funnel-analytics-attribution-local",
+          },
+          {
             "binding": "COMMERCE_DLQ",
             "queue": "funnel-analytics-commerce-dlq-local",
           },
@@ -47,6 +51,10 @@
       "queues": {
         "producers": [
           {
+            "binding": "ATTRIBUTION_QUEUE",
+            "queue": "funnel-analytics-attribution-preview",
+          },
+          {
             "binding": "COMMERCE_DLQ",
             "queue": "funnel-analytics-commerce-dlq-preview",
           },
@@ -75,6 +83,10 @@
       },
       "queues": {
         "producers": [
+          {
+            "binding": "ATTRIBUTION_QUEUE",
+            "queue": "funnel-analytics-attribution-production",
+          },
           {
             "binding": "COMMERCE_DLQ",
             "queue": "funnel-analytics-commerce-dlq-production",
