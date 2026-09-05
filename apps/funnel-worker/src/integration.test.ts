@@ -128,6 +128,12 @@ beforeEach(async () => {
 });
 
 describe('Funnel facts on isolated ClickHouse', () => {
+  it('queries journey context without UUID alias shadowing', async () => {
+    await expect(
+      repository.findJourney(workspaceId, journeyId),
+    ).resolves.toBeNull();
+  });
+
   it('replaces current facts deterministically and tombstones stale rows', async () => {
     const complete = await evaluateFunnelProgression({
       workspaceId,
