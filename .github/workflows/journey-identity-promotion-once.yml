@@ -1,0 +1,36 @@
+name: Journey Identity Promotion Once
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/journey-identity-promotion-once.yml
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Identify existing journey visitor
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE='https://funnel-analytics-collector-production.prismaag.workers.dev'
+          ORIGIN='https://lp.prismaag.com.br'
+          NOW="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+          status="$(curl -sS -o /tmp/body -w '%{http_code}' \
+            -X POST "$BASE/v1/identify" \
+            -H 'Content-Type: application/json' \
+            -H "Origin: $ORIGIN" \
+            --data "{\"identify_version\":1,\"pixel_key\":\"px_pub_5a53e35861b97c4584f39d5c670d03b99bda\",\"visitor_id\":\"00000000-0000-7000-8000-000000000001\",\"session_id\":\"00000000-0000-7000-8000-000000000002\",\"occurred_at\":\"$NOW\",\"identifiers\":{\"email\":\"journey-promotion-smoke@example.com\"},\"consent_state\":\"granted\",\"sdk_version\":\"journey-promotion-smoke/1.0\",\"test_mode\":true}")"
+
+          echo "HTTP_STATUS=$status"
+          cat /tmp/body
+          echo
+          test "$status" = '202'
+          sleep 15
