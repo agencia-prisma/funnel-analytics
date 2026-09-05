@@ -1,0 +1,43 @@
+name: EPIC 11 Format Hotfix Once
+
+on:
+  push:
+    branches:
+      - fix/epic11-commerce-normalized-event-names
+    paths:
+      - .github/workflows/epic11-format-hotfix-once.yml
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/epic11-commerce-normalized-event-names
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec prettier --write packages/commerce-engine/src/index.test.ts
+      - name: Commit formatting
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet; then
+            echo 'Formatting already current.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add packages/commerce-engine/src/index.test.ts
+          git commit -m 'style: format commerce regression test'
+          git push origin HEAD:fix/epic11-commerce-normalized-event-names
