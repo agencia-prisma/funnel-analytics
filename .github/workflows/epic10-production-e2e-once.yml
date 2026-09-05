@@ -11,42 +11,60 @@ permissions:
 jobs:
   e2e:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
     steps:
-      - name: Send ordered production funnel events
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - name: Tail Funnel Worker and retrigger Journey recompute
         shell: bash
         run: |
           set -euo pipefail
+          test -n "${CLOUDFLARE_API_TOKEN:-}"
+          test -n "${CLOUDFLARE_ACCOUNT_ID:-}"
+
+          (
+            cd apps/funnel-worker
+            timeout 45s pnpm exec wrangler tail --env production --format json > /tmp/funnel-tail.log 2>&1 || true
+          ) &
+          TAIL_PID=$!
+          sleep 8
+
           BASE='https://funnel-analytics-collector-production.prismaag.workers.dev'
           ORIGIN='https://lp.prismaag.com.br'
           PIXEL_KEY='px_pub_5a53e35861b97c4584f39d5c670d03b99bda'
           VISITOR_ID='00000000-0000-7000-8000-000000000031'
           SESSION_ID='00000000-0000-7000-8000-000000000032'
-          EVENT_1='00000000-0000-7000-8000-000000000033'
-          EVENT_2='00000000-0000-7000-8000-000000000034'
+          EVENT_ID='00000000-0000-7000-8000-000000000035'
+          NOW="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
-          send_event() {
-            local event_id="$1"
-            local page_path="$2"
-            local title="$3"
-            local now
-            now="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-            payload="$(cat <<JSON
+          PAYLOAD=$(cat <<JSON
           {
             "batch_version": 1,
-            "sent_at": "$now",
+            "sent_at": "$NOW",
             "events": [{
-              "event_id": "$event_id",
+              "event_id": "$EVENT_ID",
               "event_name": "page_view",
               "event_version": 1,
-              "sdk_version": "epic10-production-e2e/1.0",
+              "sdk_version": "epic10-production-e2e/1.1",
               "pixel_key": "$PIXEL_KEY",
               "visitor_id": "$VISITOR_ID",
               "session_id": "$SESSION_ID",
-              "occurred_at": "$now",
-              "page_url": "https://lp.prismaag.com.br$page_path",
-              "page_path": "$page_path",
-              "page_title": "$title",
+              "occurred_at": "$NOW",
+              "page_url": "https://lp.prismaag.com.br/epic10-funnel-e2e-step-2",
+              "page_path": "/epic10-funnel-e2e-step-2",
+              "page_title": "EPIC 10 Funnel E2E retrigger",
               "referrer": null,
               "referrer_domain": null,
               "utm_source": null,
@@ -67,14 +85,16 @@ jobs:
             }]
           }
           JSON
-          )"
-            status="$(curl -sS -o /tmp/e2e-body -w '%{http_code}' -X POST "$BASE/v1/events" -H 'Content-Type: application/json' -H "Origin: $ORIGIN" --data "$payload")"
-            cat /tmp/e2e-body
-            echo
-            echo "HTTP_STATUS=$status PATH=$page_path"
-            test "$status" = '202'
-          }
+          )
 
-          send_event "$EVENT_1" '/epic10-funnel-e2e-step-1' 'EPIC 10 Funnel E2E Step 1'
-          sleep 2
-          send_event "$EVENT_2" '/epic10-funnel-e2e-step-2' 'EPIC 10 Funnel E2E Step 2'
+          STATUS="$(curl -sS -o /tmp/e2e-body -w '%{http_code}' -X POST "$BASE/v1/events" -H 'Content-Type: application/json' -H "Origin: $ORIGIN" --data "$PAYLOAD")"
+          cat /tmp/e2e-body
+          echo
+          echo "HTTP_STATUS=$STATUS"
+          test "$STATUS" = '202'
+
+          sleep 25
+          kill "$TAIL_PID" 2>/dev/null || true
+          wait "$TAIL_PID" 2>/dev/null || true
+          echo '===== FUNNEL WORKER TAIL ====='
+          cat /tmp/funnel-tail.log || true
