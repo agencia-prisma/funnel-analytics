@@ -47,6 +47,13 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Validate Identity Worker production configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fq '"SUPABASE_URL": "https://efkqeqaispyppxnjlobi.supabase.co"' apps/identity-worker/wrangler.jsonc
+          echo "Production Identity Worker SUPABASE_URL is declared in wrangler.jsonc."
+
       - name: Validate Identity Worker production secret names
         working-directory: apps/identity-worker
         shell: bash
@@ -57,7 +64,6 @@ jobs:
 
           missing=0
           for name in \
-            SUPABASE_URL \
             SUPABASE_SECRET_KEY \
             CLICKHOUSE_URL \
             CLICKHOUSE_USERNAME \
