@@ -5,6 +5,7 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./attribution": "./src/attribution.ts",
     "./commerce": "./src/commerce.ts",
     "./funnel": "./src/funnel.ts"
   },
