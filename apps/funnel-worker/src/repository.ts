@@ -95,13 +95,13 @@ export class ClickHouseFunnelFactsRepository implements FunnelFactsRepository {
       const result = await this.client.query({
         query: `
 SELECT
-  toString(journey_id) AS journey_id,
-  person_id,
-  test_mode
-FROM funnel_analytics.journey_facts_current
-WHERE workspace_id = {workspace_id:UUID}
-  AND journey_id = {journey_id:UUID}
-  AND is_deleted = false
+  toString(j.journey_id) AS journey_id,
+  j.person_id,
+  j.test_mode
+FROM funnel_analytics.journey_facts_current AS j
+WHERE j.workspace_id = {workspace_id:UUID}
+  AND j.journey_id = {journey_id:UUID}
+  AND j.is_deleted = false
 LIMIT 1
 `,
         query_params: { workspace_id: workspaceId, journey_id: journeyId },
