@@ -6,7 +6,7 @@ import type {
   PixelRecord,
   PixelRegistry,
 } from './pixel-registry';
-import { ControlPlaneUnavailableError } from './pixel-registry-supabase';
+import { ControlPlaneError } from './pixel-registry-supabase';
 
 function findAuthorizedDomain(
   pixel: PixelRecord,
@@ -43,8 +43,8 @@ export async function authorizePixel(input: {
   try {
     pixel = await input.registry.resolvePixel(input.pixelKey);
   } catch (error) {
-    if (error instanceof ControlPlaneUnavailableError) {
-      throw new CollectorError(503, 'CONTROL_PLANE_UNAVAILABLE');
+    if (error instanceof ControlPlaneError) {
+      throw new CollectorError(503, error.code);
     }
 
     throw error;

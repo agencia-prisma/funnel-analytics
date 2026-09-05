@@ -1,6 +1,23 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { SupabasePixelRegistry } from './pixel-registry-supabase';
+import {
+  ControlPlaneError,
+  SupabasePixelRegistry,
+  type ControlPlaneErrorCode,
+} from './pixel-registry-supabase';
+
+async function expectControlPlaneError(
+  promise: Promise<unknown>,
+  expectedCode: ControlPlaneErrorCode,
+): Promise<void> {
+  try {
+    await promise;
+    throw new Error('Expected ControlPlaneError');
+  } catch (error) {
+    expect(error).toBeInstanceOf(ControlPlaneError);
+    expect((error as ControlPlaneError).code).toBe(expectedCode);
+  }
+}
 
 describe('SupabasePixelRegistry', () => {
   it('resolves Pixel and domains in one Data API request', async () => {
@@ -12,6 +29,9 @@ describe('SupabasePixelRegistry', () => {
         expect(url.searchParams.get('public_key')).toMatch(/^eq\.px_pub_/);
         expect(url.searchParams.get('select')).toContain('pixel_domains');
         expect(new Headers(init?.headers).get('apikey')).toBe('test-secret');
+        expect(new Headers(init?.headers).get('authorization')).toBe(
+          'Bearer test-secret',
+        );
 
         return new Response(
           JSON.stringify([
@@ -147,5 +167,111 @@ describe('SupabasePixelRegistry', () => {
       status: 'active',
       verified_at: '2026-08-30T00:00:00.000Z',
     });
+  });
+
+  it('classifies missing runtime configuration before HTTP', async () => {
+    const registry = new SupabasePixelRegistry('', '');
+
+    await expectControlPlaneError(
+      registry.resolvePixel('px_pub_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'),
+      'CONTROL_PLANE_CONFIG_MISSING',
+    );
+  });
+
+  it('classifies an invalid Supabase URL before HTTP', async () => {
+    const registry = new SupabasePixelRegistry('not-a-url', 'test-secret');
+
+    await expectControlPlaneError(
+      registry.resolvePixel('px_pub_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'),
+      'CONTROL_PLANE_URL_INVALID',
+    );
+  });
+
+  it.each([401, 403])('classifies HTTP %i as unauthorized', async (status) => {
+    const registry = new SupabasePixelRegistry(
+      'https://project.supabase.co',
+      'test-secret',
+      vi.fn(async () => new Response(null, { status })) as typeof fetch,
+    );
+
+    await expectControlPlaneError(
+      registry.resolvePixel('px_pub_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'),
+      'CONTROL_PLANE_UNAUTHORIZED',
+    );
+  });
+
+  it.each([
+    [408, 'CONTROL_PLANE_TIMEOUT'],
+    [504, 'CONTROL_PLANE_TIMEOUT'],
+    [429, 'CONTROL_PLANE_UNAVAILABLE'],
+    [500, 'CONTROL_PLANE_UNAVAILABLE'],
+    [400, 'CONTROL_PLANE_RESPONSE_INVALID'],
+  ] as const)('classifies HTTP %i as %s', async (status, expectedCode) => {
+    const registry = new SupabasePixelRegistry(
+      'https://project.supabase.co',
+      'test-secret',
+      vi.fn(async () => new Response(null, { status })) as typeof fetch,
+    );
+
+    await expectControlPlaneError(
+      registry.resolvePixel('px_pub_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'),
+      expectedCode,
+    );
+  });
+
+  it('classifies malformed JSON responses', async () => {
+    const registry = new SupabasePixelRegistry(
+      'https://project.supabase.co',
+      'test-secret',
+      vi.fn(
+        async () =>
+          new Response('not-json', {
+            status: 200,
+            headers: { 'content-type': 'application/json' },
+          }),
+      ) as typeof fetch,
+    );
+
+    await expectControlPlaneError(
+      registry.resolvePixel('px_pub_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'),
+      'CONTROL_PLANE_RESPONSE_INVALID',
+    );
+  });
+
+  it('classifies network failures separately from response failures', async () => {
+    const registry = new SupabasePixelRegistry(
+      'https://project.supabase.co',
+      'test-secret',
+      vi.fn(async () => {
+        throw new TypeError('network unavailable');
+      }) as typeof fetch,
+    );
+
+    await expectControlPlaneError(
+      registry.resolvePixel('px_pub_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'),
+      'CONTROL_PLANE_NETWORK_ERROR',
+    );
+  });
+
+  it('classifies aborted requests as timeouts', async () => {
+    const fetchRef = vi.fn(
+      async (_input: RequestInfo | URL, init?: RequestInit) =>
+        new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener('abort', () => {
+            reject(new DOMException('Aborted', 'AbortError'));
+          });
+        }),
+    );
+    const registry = new SupabasePixelRegistry(
+      'https://project.supabase.co',
+      'test-secret',
+      fetchRef as typeof fetch,
+      1,
+    );
+
+    await expectControlPlaneError(
+      registry.resolvePixel('px_pub_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'),
+      'CONTROL_PLANE_TIMEOUT',
+    );
   });
 });
