@@ -3,7 +3,8 @@
   "name": "funnel-analytics-collector",
   "main": "src/index.ts",
   "compatibility_date": "2026-08-29",
-  "workers_dev": false,
+  "compatibility_flags": ["global_fetch_strictly_public"],
+  "workers_dev": true,
   "vars": {
     "COLLECTOR_ENV": "local",
   },
