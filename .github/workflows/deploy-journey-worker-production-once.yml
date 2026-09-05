@@ -1,0 +1,98 @@
+name: Deploy Journey Worker Production Once
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/deploy-journey-worker-production-once.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cloudflare-workers-production
+  cancel-in-progress: false
+
+jobs:
+  deploy-journey-worker:
+    name: Deploy Journey Worker production
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Validate Cloudflare credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "${CLOUDFLARE_API_TOKEN:-}" || { echo "::error::Missing CLOUDFLARE_API_TOKEN"; exit 1; }
+          test -n "${CLOUDFLARE_ACCOUNT_ID:-}" || { echo "::error::Missing CLOUDFLARE_ACCOUNT_ID"; exit 1; }
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate Journey production configuration
+        working-directory: apps/journey-worker
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fq '"name": "funnel-analytics-journey-worker-production"' wrangler.jsonc
+          grep -Fq '"binding": "JOURNEYS_DLQ"' wrangler.jsonc
+          grep -Fq '"queue": "funnel-analytics-journeys-dlq-production"' wrangler.jsonc
+          grep -Fq '"binding": "FUNNELS_QUEUE"' wrangler.jsonc
+          grep -Fq '"queue": "funnel-analytics-funnels-production"' wrangler.jsonc
+          grep -Fq '"binding": "COMMERCE_QUEUE"' wrangler.jsonc
+          grep -Fq '"queue": "funnel-analytics-commerce-production"' wrangler.jsonc
+          grep -Fq '"queue": "funnel-analytics-journeys-production"' wrangler.jsonc
+
+          queue_list="$(pnpm exec wrangler queues list)"
+          for queue_name in             funnel-analytics-journeys-dlq-production             funnel-analytics-funnels-production             funnel-analytics-commerce-production             funnel-analytics-journeys-production
+          do
+            printf '%s\n' "$queue_list" | grep -Fq "$queue_name"
+          done
+
+      - name: Validate existing Journey secret names
+        working-directory: apps/journey-worker
+        shell: bash
+        run: |
+          set -euo pipefail
+          secret_list="$(pnpm exec wrangler secret list --env production)"
+          printf '%s\n' "$secret_list"
+          for name in CLICKHOUSE_URL CLICKHOUSE_USERNAME CLICKHOUSE_PASSWORD; do
+            printf '%s\n' "$secret_list" | grep -Fq "\"name\": \"$name\""
+          done
+
+      - name: Deploy Journey Worker production
+        working-directory: apps/journey-worker
+        run: pnpm exec wrangler deploy --env production
+
+      - name: Confirm deployment and Queue bindings
+        working-directory: apps/journey-worker
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm exec wrangler deployments list --env production
+          pnpm exec wrangler queues info funnel-analytics-journeys-production
+          pnpm exec wrangler queues info funnel-analytics-journeys-dlq-production
+          pnpm exec wrangler queues info funnel-analytics-funnels-production
+          pnpm exec wrangler queues info funnel-analytics-commerce-production
