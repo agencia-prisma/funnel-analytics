@@ -3,13 +3,25 @@ import {
   type PixelRecord,
   type PixelRegistry,
 } from './pixel-registry';
+import type { CollectorErrorCode } from './errors';
 
 const DEFAULT_TIMEOUT_MS = 2_500;
 
-export class ControlPlaneUnavailableError extends Error {
-  constructor() {
-    super('CONTROL_PLANE_UNAVAILABLE');
-    this.name = 'ControlPlaneUnavailableError';
+export type ControlPlaneErrorCode = Extract<
+  CollectorErrorCode,
+  | 'CONTROL_PLANE_CONFIG_MISSING'
+  | 'CONTROL_PLANE_URL_INVALID'
+  | 'CONTROL_PLANE_TIMEOUT'
+  | 'CONTROL_PLANE_NETWORK_ERROR'
+  | 'CONTROL_PLANE_UNAUTHORIZED'
+  | 'CONTROL_PLANE_RESPONSE_INVALID'
+  | 'CONTROL_PLANE_UNAVAILABLE'
+>;
+
+export class ControlPlaneError extends Error {
+  constructor(readonly code: ControlPlaneErrorCode) {
+    super(code);
+    this.name = 'ControlPlaneError';
   }
 }
 
@@ -31,11 +43,7 @@ export class SupabasePixelRegistry implements PixelRegistry {
   ) {}
 
   async resolvePixel(publicKey: string): Promise<PixelRecord | null> {
-    if (!this.supabaseUrl || !this.secretKey) {
-      throw new ControlPlaneUnavailableError();
-    }
-
-    const url = new URL('/rest/v1/pixels', this.supabaseUrl);
+    const url = this.controlPlaneUrl('/rest/v1/pixels');
     url.searchParams.set('public_key', `eq.${publicKey}`);
     url.searchParams.set(
       'select',
@@ -50,15 +58,19 @@ export class SupabasePixelRegistry implements PixelRegistry {
       },
     });
 
-    let rows: SupabasePixelRow[];
+    let rows: unknown;
 
     try {
-      rows = (await response.json()) as SupabasePixelRow[];
+      rows = await response.json();
     } catch {
-      throw new ControlPlaneUnavailableError();
+      throw new ControlPlaneError('CONTROL_PLANE_RESPONSE_INVALID');
     }
 
-    const row = rows[0];
+    if (!Array.isArray(rows)) {
+      throw new ControlPlaneError('CONTROL_PLANE_RESPONSE_INVALID');
+    }
+
+    const row = rows[0] as SupabasePixelRow | undefined;
 
     if (!row) {
       return null;
@@ -79,7 +91,7 @@ export class SupabasePixelRegistry implements PixelRegistry {
     domain: PixelDomainRecord,
     acceptedAt: string,
   ): Promise<void> {
-    const pixelUrl = new URL('/rest/v1/pixels', this.supabaseUrl);
+    const pixelUrl = this.controlPlaneUrl('/rest/v1/pixels');
     pixelUrl.searchParams.set('id', `eq.${pixel.id}`);
 
     const pixelPatch: Record<string, string> = {
@@ -90,7 +102,7 @@ export class SupabasePixelRegistry implements PixelRegistry {
       pixelPatch.health_status = 'healthy';
     }
 
-    const domainUrl = new URL('/rest/v1/pixel_domains', this.supabaseUrl);
+    const domainUrl = this.controlPlaneUrl('/rest/v1/pixel_domains');
     domainUrl.searchParams.set('id', `eq.${domain.id}`);
 
     const domainPatch: Record<string, string> = {
@@ -122,13 +134,36 @@ export class SupabasePixelRegistry implements PixelRegistry {
     ]);
   }
 
+  private controlPlaneUrl(path: string): URL {
+    const supabaseUrl = this.supabaseUrl?.trim();
+    const secretKey = this.secretKey?.trim();
+
+    if (!supabaseUrl || !secretKey) {
+      throw new ControlPlaneError('CONTROL_PLANE_CONFIG_MISSING');
+    }
+
+    try {
+      const baseUrl = new URL(supabaseUrl);
+
+      if (!['http:', 'https:'].includes(baseUrl.protocol)) {
+        throw new TypeError('Unsupported Supabase URL protocol');
+      }
+
+      return new URL(path, baseUrl);
+    } catch {
+      throw new ControlPlaneError('CONTROL_PLANE_URL_INVALID');
+    }
+  }
+
   private async request(url: URL, init: RequestInit): Promise<Response> {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
 
     try {
       const headers = new Headers(init.headers);
-      headers.set('apikey', this.secretKey);
+      const secretKey = this.secretKey.trim();
+      headers.set('apikey', secretKey);
+      headers.set('authorization', `Bearer ${secretKey}`);
 
       const requestInit: RequestInit = {
         ...init,
@@ -147,16 +182,32 @@ export class SupabasePixelRegistry implements PixelRegistry {
         : await fetch(url.toString(), requestInit);
 
       if (!response.ok) {
-        throw new ControlPlaneUnavailableError();
+        if ([401, 403].includes(response.status)) {
+          throw new ControlPlaneError('CONTROL_PLANE_UNAUTHORIZED');
+        }
+
+        if ([408, 504].includes(response.status)) {
+          throw new ControlPlaneError('CONTROL_PLANE_TIMEOUT');
+        }
+
+        if (response.status === 429 || response.status >= 500) {
+          throw new ControlPlaneError('CONTROL_PLANE_UNAVAILABLE');
+        }
+
+        throw new ControlPlaneError('CONTROL_PLANE_RESPONSE_INVALID');
       }
 
       return response;
     } catch (error) {
-      if (error instanceof ControlPlaneUnavailableError) {
+      if (error instanceof ControlPlaneError) {
         throw error;
       }
 
-      throw new ControlPlaneUnavailableError();
+      if (controller.signal.aborted) {
+        throw new ControlPlaneError('CONTROL_PLANE_TIMEOUT');
+      }
+
+      throw new ControlPlaneError('CONTROL_PLANE_NETWORK_ERROR');
     } finally {
       clearTimeout(timeout);
     }

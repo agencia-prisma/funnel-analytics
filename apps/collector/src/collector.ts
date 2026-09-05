@@ -3,6 +3,7 @@ import { CollectorError } from './errors';
 import { logCollector } from './logging';
 import { authorizePixel } from './pixel-auth';
 import type { PixelRegistry } from './pixel-registry';
+import { ControlPlaneError } from './pixel-registry-supabase';
 import { createCollectorEnvelope, type QueueProducer } from './queue';
 import type { RateLimiter } from './rate-limit';
 import { readJsonBody, requireJsonContentType } from './request';
@@ -116,7 +117,7 @@ export function createCollector(dependencies: CollectorDependencies) {
       ctx.waitUntil(
         dependencies.registry
           .touchAccepted(pixel, domain, receivedAt)
-          .catch(() => {
+          .catch((error: unknown) => {
             logCollector('collector.control_plane.failed', {
               request_id: requestId,
               workspace_id: pixel.workspace_id,
@@ -124,6 +125,10 @@ export function createCollector(dependencies: CollectorDependencies) {
               origin_host: originHost,
               event_count: batch.events.length,
               status_code: 202,
+              error_code:
+                error instanceof ControlPlaneError
+                  ? error.code
+                  : 'CONTROL_PLANE_NETWORK_ERROR',
             });
           }),
       );
