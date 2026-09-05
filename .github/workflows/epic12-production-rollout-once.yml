@@ -80,7 +80,8 @@ jobs:
           if (q.queue_name !== 'funnel-analytics-attribution-production') throw new Error('Wrong Attribution Queue');
           if (d.queue_name !== 'funnel-analytics-attribution-dlq-production') throw new Error('Wrong Attribution DLQ');
           if (q.producers_total_count !== 1 || q.producers?.[0]?.script !== 'funnel-analytics-commerce-worker-production') throw new Error('Commerce producer topology invalid');
-          if (q.consumers_total_count !== 1 || q.consumers?.[0]?.script_name !== 'funnel-analytics-attribution-worker-production') throw new Error('Attribution consumer topology invalid');
+          if (q.consumers_total_count !== 1 || q.consumers?.[0]?.script !== 'funnel-analytics-attribution-worker-production') throw new Error('Attribution consumer topology invalid');
+          if (q.consumers?.[0]?.dead_letter_queue !== 'funnel-analytics-attribution-dlq-production') throw new Error('Attribution consumer DLQ topology invalid');
           if (d.producers_total_count !== 1 || d.producers?.[0]?.script !== 'funnel-analytics-attribution-worker-production') throw new Error('Attribution DLQ producer topology invalid');
           if (Number(qm.backlog_count) !== 0) throw new Error(`Attribution Queue backlog is ${qm.backlog_count}`);
           if (Number(dm.backlog_count) !== 0) throw new Error(`Attribution DLQ backlog is ${dm.backlog_count}`);
