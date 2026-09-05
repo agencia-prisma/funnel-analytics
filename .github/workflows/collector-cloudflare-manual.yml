@@ -64,9 +64,9 @@ jobs:
         run: |
           set -euo pipefail
           grep -Fq '"SUPABASE_URL": "https://efkqeqaispyppxnjlobi.supabase.co"' apps/collector/wrangler.jsonc
-          grep -Fq '"global_fetch_strictly_public"' apps/collector/wrangler.jsonc
-          grep -Fq '"workers_dev": true' apps/collector/wrangler.jsonc
-          echo "Production SUPABASE_URL, public fetch routing, and workers.dev are declared in wrangler.jsonc."
+          grep -Fq '"pattern": "collector.prismaag.com.br"' apps/collector/wrangler.jsonc
+          grep -Fq '"custom_domain": true' apps/collector/wrangler.jsonc
+          echo "Production SUPABASE_URL and collector.prismaag.com.br Custom Domain are declared in wrangler.jsonc."
 
       - name: Validate production Collector secret names
         working-directory: apps/collector
@@ -100,13 +100,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          BASE='https://funnel-analytics-collector-production.prismaag.workers.dev'
+          BASE='https://collector.prismaag.com.br'
           ORIGIN='https://lp.prismaag.com.br'
           PIXEL_KEY='px_pub_5a53e35861b97c4584f39d5c670d03b99bda'
           VISITOR_ID='00000000-0000-7000-8000-000000000001'
           SESSION_ID='00000000-0000-7000-8000-000000000002'
           EVENT_ID='00000000-0000-7000-8000-000000000003'
-          NOW="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
           probe_expect() {
             local label="$1"
@@ -133,10 +132,30 @@ jobs:
             fi
           }
 
-          # Allow the freshly published workers.dev route to settle before acceptance probes.
-          sleep 2
+          echo "Waiting for collector.prismaag.com.br Custom Domain to become ready..."
+          ready=0
+          for attempt in $(seq 1 12); do
+            set +e
+            status="$(curl -sS -o /tmp/health-body -w '%{http_code}' "$BASE/health")"
+            rc=$?
+            set -e
+            echo "health attempt $attempt/12: curl_rc=$rc http=$status"
+            if [ "$rc" -eq 0 ] && [ "$status" = "200" ]; then
+              ready=1
+              break
+            fi
+            sleep 5
+          done
+
+          if [ "$ready" -ne 1 ]; then
+            echo "::error::Custom Domain did not become healthy within 60 seconds."
+            cat /tmp/health-body 2>/dev/null || true
+            exit 1
+          fi
 
           probe_expect 'GET /health' 200 "$BASE/health"
+
+          NOW="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
           IDENTIFY_PAYLOAD=$(cat <<JSON
           {
