@@ -1,0 +1,80 @@
+name: EPIC 10 Production E2E Once
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/epic10-production-e2e-once.yml
+
+permissions:
+  contents: read
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Send ordered production funnel events
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE='https://funnel-analytics-collector-production.prismaag.workers.dev'
+          ORIGIN='https://lp.prismaag.com.br'
+          PIXEL_KEY='px_pub_5a53e35861b97c4584f39d5c670d03b99bda'
+          VISITOR_ID='00000000-0000-7000-8000-000000000031'
+          SESSION_ID='00000000-0000-7000-8000-000000000032'
+          EVENT_1='00000000-0000-7000-8000-000000000033'
+          EVENT_2='00000000-0000-7000-8000-000000000034'
+
+          send_event() {
+            local event_id="$1"
+            local page_path="$2"
+            local title="$3"
+            local now
+            now="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            payload="$(cat <<JSON
+          {
+            "batch_version": 1,
+            "sent_at": "$now",
+            "events": [{
+              "event_id": "$event_id",
+              "event_name": "page_view",
+              "event_version": 1,
+              "sdk_version": "epic10-production-e2e/1.0",
+              "pixel_key": "$PIXEL_KEY",
+              "visitor_id": "$VISITOR_ID",
+              "session_id": "$SESSION_ID",
+              "occurred_at": "$now",
+              "page_url": "https://lp.prismaag.com.br$page_path",
+              "page_path": "$page_path",
+              "page_title": "$title",
+              "referrer": null,
+              "referrer_domain": null,
+              "utm_source": null,
+              "utm_medium": null,
+              "utm_campaign": null,
+              "utm_content": null,
+              "utm_term": null,
+              "click_ids": {},
+              "device": {"type": "desktop"},
+              "browser": {"name": "github-actions"},
+              "os": {"name": "linux"},
+              "screen": {"width": 1920, "height": 1080, "device_pixel_ratio": 1},
+              "viewport": {"width": 1280, "height": 720},
+              "language": "pt-BR",
+              "timezone": "America/Sao_Paulo",
+              "consent_state": "granted",
+              "test_mode": true
+            }]
+          }
+          JSON
+          )"
+            status="$(curl -sS -o /tmp/e2e-body -w '%{http_code}' -X POST "$BASE/v1/events" -H 'Content-Type: application/json' -H "Origin: $ORIGIN" --data "$payload")"
+            cat /tmp/e2e-body
+            echo
+            echo "HTTP_STATUS=$status PATH=$page_path"
+            test "$status" = '202'
+          }
+
+          send_event "$EVENT_1" '/epic10-funnel-e2e-step-1' 'EPIC 10 Funnel E2E Step 1'
+          sleep 2
+          send_event "$EVENT_2" '/epic10-funnel-e2e-step-2' 'EPIC 10 Funnel E2E Step 2'
