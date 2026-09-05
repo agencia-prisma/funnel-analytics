@@ -11,33 +11,37 @@ permissions:
   contents: read
 
 jobs:
-  purchase-attribution:
+  attributed-refund:
     runs-on: ubuntu-latest
     steps:
-      - name: Send two-touchpoint purchase to production Collector
+      - name: Send partial refund to production Collector
         shell: bash
         run: |
           set -euo pipefail
           node <<'NODE'
           const endpoint = 'https://funnel-analytics-collector-production.prismaag.workers.dev/v1/events';
-          const pixelKey = 'px_pub_5a53e35861b97c4584f39d5c670d03b99bda';
-          const visitorId = '02b08112-1111-7a01-8a01-111111111111';
-          const session1 = '02b08112-1112-7a01-8a01-111111111112';
-          const session2 = '02b08112-1114-7a01-8a01-111111111114';
-          const now = Date.now();
-
-          const base = {
+          const now = new Date().toISOString();
+          const event = {
             event_version: 1,
             sdk_version: 'epic12-e2e/1.0.0',
-            pixel_key: pixelKey,
-            visitor_id: visitorId,
+            event_id: '02b08112-1117-7a01-8a01-111111111117',
+            pixel_key: 'px_pub_5a53e35861b97c4584f39d5c670d03b99bda',
+            visitor_id: '02b08112-1111-7a01-8a01-111111111111',
+            session_id: '02b08112-1114-7a01-8a01-111111111114',
+            event_name: 'custom_event',
+            custom_event_name: 'refund',
+            occurred_at: now,
             page_url: 'https://lp.prismaag.com.br/epic12-attribution-e2e',
             page_path: '/epic12-attribution-e2e',
             page_title: 'EPIC 12 Attribution E2E',
             referrer: null,
             referrer_domain: null,
+            utm_source: null,
+            utm_medium: null,
+            utm_campaign: null,
             utm_content: null,
             utm_term: null,
+            click_ids: {},
             device: { type: 'desktop' },
             browser: { name: 'GitHub Actions' },
             os: { name: 'Linux' },
@@ -47,66 +51,20 @@ jobs:
             timezone: 'America/Sao_Paulo',
             consent_state: 'granted',
             test_mode: true,
-          };
-
-          const googleTouch = {
-            ...base,
-            event_id: '02b08112-1113-7a01-8a01-111111111113',
-            event_name: 'page_view',
-            session_id: session1,
-            occurred_at: new Date(now - 120000).toISOString(),
-            utm_source: 'google',
-            utm_medium: 'cpc',
-            utm_campaign: 'epic12-attribution-e2e',
-            click_ids: { gclid: 'epic12-gclid-001' },
-          };
-
-          const directTouch = {
-            ...base,
-            event_id: '02b08112-1115-7a01-8a01-111111111115',
-            event_name: 'page_view',
-            session_id: session2,
-            occurred_at: new Date(now - 60000).toISOString(),
-            utm_source: null,
-            utm_medium: null,
-            utm_campaign: null,
-            click_ids: {},
-          };
-
-          const purchase = {
-            ...base,
-            event_id: '02b08112-1116-7a01-8a01-111111111116',
-            event_name: 'custom_event',
-            custom_event_name: 'purchase',
-            session_id: session2,
-            occurred_at: new Date(now).toISOString(),
-            utm_source: null,
-            utm_medium: null,
-            utm_campaign: null,
-            click_ids: {},
             properties: {
               provider: 'custom',
               order_id: 'epic12-e2e-20260905-001',
               currency: 'BRL',
-              value_minor: 12000,
-              discount_minor: 0,
-              shipping_minor: 0,
-              tax_minor: 0,
-              items: [
-                { item_id: 'epic12-item-1', name: 'EPIC 12 Test Item', quantity: 1, unit_price_minor: 12000 }
-              ]
-            },
+              refund_minor: 3000
+            }
           };
-
-          for (const events of [[googleTouch], [directTouch, purchase]]) {
-            const response = await fetch(endpoint, {
-              method: 'POST',
-              headers: { 'content-type': 'application/json', origin: 'https://lp.prismaag.com.br' },
-              body: JSON.stringify({ batch_version: 1, sent_at: new Date().toISOString(), events }),
-            });
-            const text = await response.text();
-            console.log(`HTTP ${response.status}`);
-            console.log(text);
-            if (response.status !== 202) process.exit(1);
-          }
+          const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json', origin: 'https://lp.prismaag.com.br' },
+            body: JSON.stringify({ batch_version: 1, sent_at: now, events: [event] }),
+          });
+          const text = await response.text();
+          console.log(`HTTP ${response.status}`);
+          console.log(text);
+          if (response.status !== 202) process.exit(1);
           NODE
