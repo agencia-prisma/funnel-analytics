@@ -1,0 +1,57 @@
+name: EPIC 11 Idempotency Once
+on:
+  push:
+    branches: [chore/epic11-production-e2e-20260905]
+    paths: [.github/workflows/epic11-idempotency-once.yml]
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger benign Journey recompute
+        shell: bash
+        run: |
+          node <<'NODE'
+          const now = new Date().toISOString();
+          const e = {
+            event_version: 1,
+            sdk_version: 'epic11-e2e/1.0.0',
+            event_id: '01a07194-c90c-70a5-9d06-3ff0080e992b',
+            pixel_key: 'px_pub_5a53e35861b97c4584f39d5c670d03b99bda',
+            visitor_id: '01a07184-9619-7c61-9e03-d19141b4ba5a',
+            session_id: '01a07184-9619-707b-ab0f-dbcfe9fc35f8',
+            event_name: 'custom_event',
+            custom_event_name: 'epic11_idempotency_probe',
+            occurred_at: now,
+            page_url: 'https://lp.prismaag.com.br/epic11-commerce-e2e',
+            page_path: '/epic11-commerce-e2e',
+            page_title: 'EPIC 11 Commerce E2E',
+            referrer: null,
+            referrer_domain: null,
+            utm_source: 'epic11-e2e',
+            utm_medium: 'qa',
+            utm_campaign: 'commerce-production-e2e',
+            utm_content: null,
+            utm_term: null,
+            click_ids: {},
+            device: { type: 'desktop' },
+            browser: { name: 'GitHub Actions' },
+            os: { name: 'Linux' },
+            screen: { width: 1920, height: 1080, device_pixel_ratio: 1 },
+            viewport: { width: 1280, height: 720 },
+            language: 'pt-BR',
+            timezone: 'America/Sao_Paulo',
+            consent_state: 'granted',
+            test_mode: true,
+            properties: { purpose: 'idempotency' }
+          };
+          const r = await fetch('https://funnel-analytics-collector-production.prismaag.workers.dev/v1/events', {
+            method: 'POST',
+            headers: {'content-type':'application/json', origin:'https://lp.prismaag.com.br'},
+            body: JSON.stringify({batch_version:1, sent_at:now, events:[e]})
+          });
+          console.log(`HTTP ${r.status}`);
+          console.log(await r.text());
+          if (!r.ok) process.exit(1);
+          NODE
