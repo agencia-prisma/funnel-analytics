@@ -11,10 +11,10 @@ permissions:
   contents: read
 
 jobs:
-  recompute-probe:
+  refund:
     runs-on: ubuntu-latest
     steps:
-      - name: Send benign recompute probe to production Collector
+      - name: Send partial refund to production Collector
         shell: bash
         run: |
           set -euo pipefail
@@ -24,12 +24,12 @@ jobs:
           const event = {
             event_version: 1,
             sdk_version: 'epic11-e2e/1.0.0',
-            event_id: '01a07194-c90b-73b7-8849-b0164d482770',
+            event_id: '01a07194-c90c-7d9c-ba60-77a049731816',
             pixel_key: 'px_pub_5a53e35861b97c4584f39d5c670d03b99bda',
             visitor_id: '01a07184-9619-7c61-9e03-d19141b4ba5a',
             session_id: '01a07184-9619-707b-ab0f-dbcfe9fc35f8',
             event_name: 'custom_event',
-            custom_event_name: 'epic11_recompute_probe',
+            custom_event_name: 'refund',
             occurred_at: new Date(now).toISOString(),
             page_url: 'https://lp.prismaag.com.br/epic11-commerce-e2e',
             page_path: '/epic11-commerce-e2e',
@@ -51,7 +51,12 @@ jobs:
             timezone: 'America/Sao_Paulo',
             consent_state: 'granted',
             test_mode: true,
-            properties: { purpose: 'commerce-recompute-after-hotfix' },
+            properties: {
+              provider: 'custom',
+              order_id: 'epic11-e2e-20260905-001',
+              currency: 'BRL',
+              refund_minor: 4000,
+            },
           };
           const response = await fetch(endpoint, {
             method: 'POST',
