@@ -68,7 +68,7 @@ describe('commerce facts on isolated ClickHouse', () => {
       query: `SELECT count() AS orders, sum(net_amount_minor) AS revenue FROM funnel_analytics.commerce_revenue_facts_current WHERE is_deleted=false`,
       format: 'JSONEachRow',
     });
-    expect(await current.json()).toEqual([{ orders: 1, revenue: '10000' }]);
+    expect(await current.json()).toEqual([{ orders: 1, revenue: 10000 }]);
 
     await repository.tombstoneJourneyFacts(
       workspaceId,
