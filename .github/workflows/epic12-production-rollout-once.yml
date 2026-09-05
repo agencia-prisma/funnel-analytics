@@ -1,4 +1,4 @@
-name: EPIC 12 Production Rollout Once
+name: EPIC 12 Cloudflare Final Validation Once
 
 on:
   push:
@@ -10,149 +10,78 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  group: cloudflare-workers-production
-  cancel-in-progress: false
-
 jobs:
-  rollout-attribution:
-    name: Rollout Attribution production
+  validate-attribution-cloudflare:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 10
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-      CLICKHOUSE_URL: ${{ secrets.CLICKHOUSE_URL }}
-      CLICKHOUSE_USERNAME: ${{ secrets.CLICKHOUSE_USERNAME }}
-      CLICKHOUSE_PASSWORD: ${{ secrets.CLICKHOUSE_PASSWORD }}
+      ATTRIBUTION_QUEUE_ID: 8a2e2bae49e344d295881ecc51b60f43
+      ATTRIBUTION_DLQ_ID: b7a2e120b49c42ccb308a5fccbf16b0b
 
     steps:
-      - name: Checkout main
-        uses: actions/checkout@v4
-        with:
-          ref: main
-
-      - name: Preflight credentials
+      - name: Validate credentials
         shell: bash
         run: |
           set -euo pipefail
-          missing=0
-          for name in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID CLICKHOUSE_URL CLICKHOUSE_USERNAME CLICKHOUSE_PASSWORD; do
-            if [ -z "${!name:-}" ]; then
-              echo "::error::Missing $name"
-              missing=1
-            fi
-          done
-          [ "$missing" -eq 0 ]
+          test -n "${CLOUDFLARE_API_TOKEN:-}"
+          test -n "${CLOUDFLARE_ACCOUNT_ID:-}"
 
-      - name: Set up pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 11.19.0
-          run_install: false
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Validate EPIC 12 production configuration
+      - name: Read Attribution Queue topology and realtime backlog
         shell: bash
         run: |
           set -euo pipefail
-          grep -Fq '"name": "funnel-analytics-attribution-worker-production"' apps/attribution-worker/wrangler.jsonc
-          grep -Fq '"queue": "funnel-analytics-attribution-production"' apps/attribution-worker/wrangler.jsonc
-          grep -Fq '"queue": "funnel-analytics-attribution-dlq-production"' apps/attribution-worker/wrangler.jsonc
-          grep -Fq '"dead_letter_queue": "funnel-analytics-attribution-dlq-production"' apps/attribution-worker/wrangler.jsonc
-          grep -Fq '"binding": "ATTRIBUTION_QUEUE"' apps/commerce-worker/wrangler.jsonc
-          grep -Fq '"queue": "funnel-analytics-attribution-production"' apps/commerce-worker/wrangler.jsonc
-          test -f infra/clickhouse/migrations/0007_attribution_facts.sql
+          api='https://api.cloudflare.com/client/v4'
+          auth="Authorization: Bearer ${CLOUDFLARE_API_TOKEN}"
 
-      - name: Apply ClickHouse migrations through 0007
-        run: pnpm clickhouse:migrate
+          curl -fsS "$api/accounts/${CLOUDFLARE_ACCOUNT_ID}/queues/${ATTRIBUTION_QUEUE_ID}" -H "$auth" -o /tmp/queue.json
+          curl -fsS "$api/accounts/${CLOUDFLARE_ACCOUNT_ID}/queues/${ATTRIBUTION_QUEUE_ID}/metrics" -H "$auth" -o /tmp/queue-metrics.json
+          curl -fsS "$api/accounts/${CLOUDFLARE_ACCOUNT_ID}/queues/${ATTRIBUTION_DLQ_ID}" -H "$auth" -o /tmp/dlq.json
+          curl -fsS "$api/accounts/${CLOUDFLARE_ACCOUNT_ID}/queues/${ATTRIBUTION_DLQ_ID}/metrics" -H "$auth" -o /tmp/dlq-metrics.json
 
-      - name: Ensure Attribution Queues exist
-        working-directory: apps/attribution-worker
-        shell: bash
-        run: |
-          set -euo pipefail
-          queue_list="$(pnpm exec wrangler queues list)"
-          printf '%s\n' "$queue_list"
-          for queue in funnel-analytics-attribution-production funnel-analytics-attribution-dlq-production; do
-            if ! printf '%s\n' "$queue_list" | grep -Fq "$queue"; then
-              pnpm exec wrangler queues create "$queue"
-            fi
-          done
+          node <<'NODE'
+          const fs = require('node:fs');
+          const queue = JSON.parse(fs.readFileSync('/tmp/queue.json', 'utf8'));
+          const queueMetrics = JSON.parse(fs.readFileSync('/tmp/queue-metrics.json', 'utf8'));
+          const dlq = JSON.parse(fs.readFileSync('/tmp/dlq.json', 'utf8'));
+          const dlqMetrics = JSON.parse(fs.readFileSync('/tmp/dlq-metrics.json', 'utf8'));
 
-      - name: Create inactive Attribution Worker shell
-        working-directory: apps/attribution-worker
-        shell: bash
-        run: |
-          set -euo pipefail
-          bootstrap_source="$RUNNER_TEMP/attribution-bootstrap.ts"
-          bootstrap_config="$RUNNER_TEMP/attribution-bootstrap.jsonc"
-          printf '%s\n' 'export default { async fetch() { return new Response("inactive", { status: 503 }); } };' > "$bootstrap_source"
-          printf '%s\n' \
-            '{' \
-            '  "name": "funnel-analytics-attribution-worker-production",' \
-            "  \"main\": \"$bootstrap_source\"," \
-            '  "compatibility_date": "2026-08-29",' \
-            '  "workers_dev": false' \
-            '}' > "$bootstrap_config"
-          pnpm exec wrangler deploy --config "$bootstrap_config"
+          for (const [label, value] of Object.entries({queue, queueMetrics, dlq, dlqMetrics})) {
+            if (!value.success) throw new Error(`${label} API request was not successful`);
+          }
 
-      - name: Configure Attribution ClickHouse secrets
-        working-directory: apps/attribution-worker
-        shell: bash
-        run: |
-          set -euo pipefail
-          secret_file="$RUNNER_TEMP/attribution-secrets.json"
-          bootstrap_config="$RUNNER_TEMP/attribution-bootstrap.jsonc"
-          node -e '
-            const fs = require("node:fs");
-            const path = require("node:path");
-            const target = path.join(process.env.RUNNER_TEMP, "attribution-secrets.json");
-            fs.writeFileSync(target, JSON.stringify({
-              CLICKHOUSE_URL: process.env.CLICKHOUSE_URL,
-              CLICKHOUSE_USERNAME: process.env.CLICKHOUSE_USERNAME,
-              CLICKHOUSE_PASSWORD: process.env.CLICKHOUSE_PASSWORD
-            }), { mode: 0o600 });
-          '
-          pnpm exec wrangler secret bulk "$secret_file" --config "$bootstrap_config"
-          rm -f "$secret_file"
+          const q = queue.result;
+          const qm = queueMetrics.result;
+          const d = dlq.result;
+          const dm = dlqMetrics.result;
 
-      - name: Confirm Attribution secret names
-        working-directory: apps/attribution-worker
-        shell: bash
-        run: |
-          set -euo pipefail
-          secret_list="$(pnpm exec wrangler secret list --env production)"
-          printf '%s\n' "$secret_list"
-          for name in CLICKHOUSE_URL CLICKHOUSE_USERNAME CLICKHOUSE_PASSWORD; do
-            printf '%s\n' "$secret_list" | grep -Fq "\"name\": \"$name\""
-          done
+          const summary = {
+            attribution_queue: {
+              queue_id: q.queue_id,
+              queue_name: q.queue_name,
+              producers_total_count: q.producers_total_count,
+              producers: q.producers,
+              consumers_total_count: q.consumers_total_count,
+              consumers: q.consumers,
+              metrics: qm,
+            },
+            attribution_dlq: {
+              queue_id: d.queue_id,
+              queue_name: d.queue_name,
+              producers_total_count: d.producers_total_count,
+              producers: d.producers,
+              consumers_total_count: d.consumers_total_count,
+              metrics: dm,
+            },
+          };
+          console.log(JSON.stringify(summary, null, 2));
 
-      - name: Deploy Attribution Worker production
-        working-directory: apps/attribution-worker
-        run: pnpm exec wrangler deploy --env production
-
-      - name: Redeploy Commerce Worker with Attribution producer binding
-        working-directory: apps/commerce-worker
-        run: pnpm exec wrangler deploy --env production
-
-      - name: Confirm deployments and Queue topology
-        shell: bash
-        run: |
-          set -euo pipefail
-          echo '===== Attribution deployment ====='
-          (cd apps/attribution-worker && pnpm exec wrangler deployments list --env production)
-          echo '===== Commerce deployment ====='
-          (cd apps/commerce-worker && pnpm exec wrangler deployments list --env production)
-          echo '===== Attribution Queue ====='
-          (cd apps/attribution-worker && pnpm exec wrangler queues info funnel-analytics-attribution-production)
-          echo '===== Attribution DLQ ====='
-          (cd apps/attribution-worker && pnpm exec wrangler queues info funnel-analytics-attribution-dlq-production)
+          if (q.queue_name !== 'funnel-analytics-attribution-production') throw new Error('Wrong Attribution Queue');
+          if (d.queue_name !== 'funnel-analytics-attribution-dlq-production') throw new Error('Wrong Attribution DLQ');
+          if (q.producers_total_count !== 1 || q.producers?.[0]?.script !== 'funnel-analytics-commerce-worker-production') throw new Error('Commerce producer topology invalid');
+          if (q.consumers_total_count !== 1 || q.consumers?.[0]?.script_name !== 'funnel-analytics-attribution-worker-production') throw new Error('Attribution consumer topology invalid');
+          if (d.producers_total_count !== 1 || d.producers?.[0]?.script !== 'funnel-analytics-attribution-worker-production') throw new Error('Attribution DLQ producer topology invalid');
+          if (Number(qm.backlog_count) !== 0) throw new Error(`Attribution Queue backlog is ${qm.backlog_count}`);
+          if (Number(dm.backlog_count) !== 0) throw new Error(`Attribution DLQ backlog is ${dm.backlog_count}`);
+          NODE
