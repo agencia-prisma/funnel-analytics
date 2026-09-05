@@ -85,6 +85,7 @@
       "name": "funnel-analytics-collector-production",
       "vars": {
         "COLLECTOR_ENV": "production",
+        "SUPABASE_URL": "https://efkqeqaispyppxnjlobi.supabase.co",
       },
       "queues": {
         "producers": [
