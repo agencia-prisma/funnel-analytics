@@ -64,9 +64,12 @@ jobs:
         run: |
           set -euo pipefail
           grep -Fq '"SUPABASE_URL": "https://efkqeqaispyppxnjlobi.supabase.co"' apps/collector/wrangler.jsonc
-          grep -Fq '"pattern": "collector.prismaag.com.br"' apps/collector/wrangler.jsonc
-          grep -Fq '"custom_domain": true' apps/collector/wrangler.jsonc
-          echo "Production SUPABASE_URL and collector.prismaag.com.br Custom Domain are declared in wrangler.jsonc."
+          grep -Fq '"workers_dev": true' apps/collector/wrangler.jsonc
+          if grep -Fq 'collector.prismaag.com.br' apps/collector/wrangler.jsonc; then
+            echo "::error::Custom Domain must not be configured because this Cloudflare account has no active zone."
+            exit 1
+          fi
+          echo "Production uses workers.dev and keeps the Supabase URL declared in wrangler.jsonc."
 
       - name: Validate production Collector secret names
         working-directory: apps/collector
@@ -95,17 +98,59 @@ jobs:
         working-directory: apps/collector
         run: pnpm exec wrangler deploy --env production
 
+      - name: Inspect workers.dev routing and Access
+        shell: bash
+        run: |
+          set -euo pipefail
+          API='https://api.cloudflare.com/client/v4'
+          SCRIPT='funnel-analytics-collector-production'
+          AUTH="Authorization: Bearer ${CLOUDFLARE_API_TOKEN}"
+
+          echo '===== Account workers.dev subdomain ====='
+          curl -sS \
+            "$API/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/subdomain" \
+            -H "$AUTH" | jq '{success, result, errors}'
+
+          echo
+          echo '===== Production Worker workers.dev status ====='
+          curl -sS \
+            "$API/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/scripts/$SCRIPT/subdomain" \
+            -H "$AUTH" | jq '{success, result, errors}'
+
+          echo
+          echo '===== Cloudflare Access applications ====='
+          set +e
+          ACCESS_STATUS="$(curl -sS \
+            -o /tmp/access-apps.json \
+            -w '%{http_code}' \
+            "$API/accounts/$CLOUDFLARE_ACCOUNT_ID/access/apps?per_page=100" \
+            -H "$AUTH")"
+          ACCESS_RC=$?
+          set -e
+          echo "ACCESS_HTTP_STATUS=$ACCESS_STATUS"
+          if [ "$ACCESS_RC" -ne 0 ]; then
+            echo "Access API request failed at transport level (curl exit $ACCESS_RC)."
+          elif [ "$ACCESS_STATUS" = '200' ]; then
+            echo "Access applications visible to this token:"
+            jq -c '.result[]? | {name, type, domain, destinations}' /tmp/access-apps.json
+          else
+            echo "Access applications could not be inspected with the current API token."
+            jq '{success, errors}' /tmp/access-apps.json 2>/dev/null || cat /tmp/access-apps.json
+            echo "If this is HTTP 403, add Access: Apps and Policies Read to the Cloudflare API token only if we need deeper Access inspection."
+          fi
+
       - name: Smoke production Collector after deploy
         if: ${{ inputs.action == 'deploy' }}
         shell: bash
         run: |
           set -euo pipefail
-          BASE='https://collector.prismaag.com.br'
+          BASE='https://funnel-analytics-collector-production.prismaag.workers.dev'
           ORIGIN='https://lp.prismaag.com.br'
           PIXEL_KEY='px_pub_5a53e35861b97c4584f39d5c670d03b99bda'
           VISITOR_ID='00000000-0000-7000-8000-000000000001'
           SESSION_ID='00000000-0000-7000-8000-000000000002'
           EVENT_ID='00000000-0000-7000-8000-000000000003'
+          NOW="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
           probe_expect() {
             local label="$1"
@@ -132,30 +177,10 @@ jobs:
             fi
           }
 
-          echo "Waiting for collector.prismaag.com.br Custom Domain to become ready..."
-          ready=0
-          for attempt in $(seq 1 12); do
-            set +e
-            status="$(curl -sS -o /tmp/health-body -w '%{http_code}' "$BASE/health")"
-            rc=$?
-            set -e
-            echo "health attempt $attempt/12: curl_rc=$rc http=$status"
-            if [ "$rc" -eq 0 ] && [ "$status" = "200" ]; then
-              ready=1
-              break
-            fi
-            sleep 5
-          done
-
-          if [ "$ready" -ne 1 ]; then
-            echo "::error::Custom Domain did not become healthy within 60 seconds."
-            cat /tmp/health-body 2>/dev/null || true
-            exit 1
-          fi
+          # Allow the workers.dev route to settle after being re-enabled by deploy.
+          sleep 3
 
           probe_expect 'GET /health' 200 "$BASE/health"
-
-          NOW="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
           IDENTIFY_PAYLOAD=$(cat <<JSON
           {

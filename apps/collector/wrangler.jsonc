@@ -83,13 +83,7 @@
     },
     "production": {
       "name": "funnel-analytics-collector-production",
-      "workers_dev": false,
-      "routes": [
-        {
-          "pattern": "collector.prismaag.com.br",
-          "custom_domain": true,
-        },
-      ],
+      "workers_dev": true,
       "vars": {
         "COLLECTOR_ENV": "production",
         "SUPABASE_URL": "https://efkqeqaispyppxnjlobi.supabase.co",
