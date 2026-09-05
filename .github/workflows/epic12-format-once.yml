@@ -1,0 +1,67 @@
+name: EPIC 12 Format Once
+
+on:
+  push:
+    branches:
+      - feature/epic-12-attribution-engine
+    paths:
+      - .github/workflows/epic12-format-once.yml
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/epic-12-attribution-engine
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Format exact EPIC 12 files
+        run: >-
+          pnpm exec prettier --write
+          apps/attribution-worker/src/consumer.test.ts
+          apps/attribution-worker/src/consumer.ts
+          apps/attribution-worker/src/dlq.ts
+          apps/attribution-worker/src/index.ts
+          apps/attribution-worker/src/integration.test.ts
+          apps/attribution-worker/src/repository.ts
+          apps/commerce-worker/src/attribution-publisher.ts
+          apps/commerce-worker/src/consumer.test.ts
+          packages/attribution-engine/src/index.test.ts
+          packages/attribution-engine/src/index.ts
+      - name: Commit formatted files only
+        shell: bash
+        run: |
+          set -euo pipefail
+          paths=(
+            apps/attribution-worker/src/consumer.test.ts
+            apps/attribution-worker/src/consumer.ts
+            apps/attribution-worker/src/dlq.ts
+            apps/attribution-worker/src/index.ts
+            apps/attribution-worker/src/integration.test.ts
+            apps/attribution-worker/src/repository.ts
+            apps/commerce-worker/src/attribution-publisher.ts
+            apps/commerce-worker/src/consumer.test.ts
+            packages/attribution-engine/src/index.test.ts
+            packages/attribution-engine/src/index.ts
+          )
+          if git diff --quiet -- "${paths[@]}"; then
+            echo 'Files already formatted'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- "${paths[@]}"
+          git commit -m 'style: format EPIC 12'
+          git push origin HEAD:feature/epic-12-attribution-engine
