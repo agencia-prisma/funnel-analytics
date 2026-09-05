@@ -76,6 +76,7 @@ jobs:
         run: pnpm clickhouse:migrate
 
       - name: Ensure Attribution Queues exist
+        working-directory: apps/attribution-worker
         shell: bash
         run: |
           set -euo pipefail
@@ -152,6 +153,6 @@ jobs:
           echo '===== Commerce deployment ====='
           (cd apps/commerce-worker && pnpm exec wrangler deployments list --env production)
           echo '===== Attribution Queue ====='
-          pnpm exec wrangler queues info funnel-analytics-attribution-production
+          (cd apps/attribution-worker && pnpm exec wrangler queues info funnel-analytics-attribution-production)
           echo '===== Attribution DLQ ====='
-          pnpm exec wrangler queues info funnel-analytics-attribution-dlq-production
+          (cd apps/attribution-worker && pnpm exec wrangler queues info funnel-analytics-attribution-dlq-production)
