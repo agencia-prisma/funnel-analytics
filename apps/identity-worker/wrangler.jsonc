@@ -81,10 +81,10 @@
       "name": "funnel-analytics-identity-worker-production",
       "vars": {
         "IDENTITY_WORKER_ENV": "production",
+        "SUPABASE_URL": "https://efkqeqaispyppxnjlobi.supabase.co",
       },
       "secrets": {
         "required": [
-          "SUPABASE_URL",
           "SUPABASE_SECRET_KEY",
           "CLICKHOUSE_URL",
           "CLICKHOUSE_USERNAME",
