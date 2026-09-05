@@ -25,11 +25,7 @@ export type AttributionChannelV1 =
   | 'other';
 
 export type AttributionClickIdTypeV1 =
-  | 'gclid'
-  | 'msclkid'
-  | 'fbclid'
-  | 'ttclid'
-  | 'tblci';
+  'gclid' | 'msclkid' | 'fbclid' | 'ttclid' | 'tblci';
 
 export type AttributionEngineErrorCode =
   | 'ATTRIBUTION_INPUT_INVALID'
@@ -257,7 +253,9 @@ function channelFor(input: {
     return 'organic_social';
   }
   if (medium === 'organic') {
-    return ['google', 'bing', 'microsoft', 'yahoo', 'duckduckgo'].includes(source)
+    return ['google', 'bing', 'microsoft', 'yahoo', 'duckduckgo'].includes(
+      source,
+    )
       ? 'organic_search'
       : 'other';
   }
@@ -278,12 +276,12 @@ function channelFor(input: {
 function hasMarketingSignal(event: AttributionSourceEventV1): boolean {
   return Boolean(
     nonEmpty(event.utm_source) ||
-      nonEmpty(event.utm_medium) ||
-      nonEmpty(event.utm_campaign) ||
-      nonEmpty(event.utm_content) ||
-      nonEmpty(event.utm_term) ||
-      nonEmpty(event.referrer_domain) ||
-      clickId(event),
+    nonEmpty(event.utm_medium) ||
+    nonEmpty(event.utm_campaign) ||
+    nonEmpty(event.utm_content) ||
+    nonEmpty(event.utm_term) ||
+    nonEmpty(event.referrer_domain) ||
+    clickId(event),
   );
 }
 
@@ -297,15 +295,15 @@ function toTouchpoint(
   const referrerDomain = lower(nonEmpty(event.referrer_domain));
   const hasCampaignSignal = Boolean(
     explicitSource ||
-      explicitMedium ||
-      nonEmpty(event.utm_campaign) ||
-      nonEmpty(event.utm_content) ||
-      nonEmpty(event.utm_term),
+    explicitMedium ||
+    nonEmpty(event.utm_campaign) ||
+    nonEmpty(event.utm_content) ||
+    nonEmpty(event.utm_term),
   );
   const direct = !hasCampaignSignal && !click && !referrerDomain;
   const source =
     explicitSource ??
-    (click ? inferredSource(click.type) : referrerDomain ?? 'direct');
+    (click ? inferredSource(click.type) : (referrerDomain ?? 'direct'));
   const medium =
     explicitMedium ??
     (click ? inferredMedium(click.type) : referrerDomain ? 'referral' : null);
@@ -341,12 +339,18 @@ function buildTouchpoints(
   order: AttributionOrderV1,
   lookbackWindowSeconds: number,
 ): AttributionTouchpointV1[] {
-  const purchasedAt = timestamp(order.purchased_at, 'ATTRIBUTION_ORDER_INVALID');
+  const purchasedAt = timestamp(
+    order.purchased_at,
+    'ATTRIBUTION_ORDER_INVALID',
+  );
   const earliest = purchasedAt - lookbackWindowSeconds * 1000;
   const eligible = events
     .filter((event) => event.test_mode === order.test_mode)
     .filter((event) => {
-      const occurredAt = timestamp(event.occurred_at, 'ATTRIBUTION_EVENT_INVALID');
+      const occurredAt = timestamp(
+        event.occurred_at,
+        'ATTRIBUTION_EVENT_INVALID',
+      );
       return occurredAt >= earliest && occurredAt <= purchasedAt;
     })
     .sort(compareEvents);
@@ -369,7 +373,8 @@ function buildTouchpoints(
   for (const sessionEvents of sessions.values()) {
     sessionEvents.sort(compareEvents);
     const selected =
-      sessionEvents.find((event) => hasMarketingSignal(event)) ?? sessionEvents[0];
+      sessionEvents.find((event) => hasMarketingSignal(event)) ??
+      sessionEvents[0];
     if (selected) touchpoints.push(toTouchpoint(selected, 0));
   }
 

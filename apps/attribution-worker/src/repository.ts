@@ -28,7 +28,10 @@ export interface AttributionFactsRepository {
     workspaceId: string,
     journeyId: string,
   ): Promise<JourneyAttributionContext | null>;
-  findOrders(workspaceId: string, journeyId: string): Promise<AttributionOrderV1[]>;
+  findOrders(
+    workspaceId: string,
+    journeyId: string,
+  ): Promise<AttributionOrderV1[]>;
   findEvents(
     workspaceId: string,
     journeyId: string,
@@ -76,9 +79,7 @@ function bool(value: unknown): boolean {
   return value === true || value === 1 || value === '1';
 }
 
-export class ClickHouseAttributionFactsRepository
-  implements AttributionFactsRepository
-{
+export class ClickHouseAttributionFactsRepository implements AttributionFactsRepository {
   private readonly client: ReturnType<typeof createClickHouseWebClient>;
 
   constructor(config: ClickHouseConfig) {
@@ -246,8 +247,7 @@ ORDER BY e.occurred_at, e.received_at, e.event_id
         utm_medium: row.utm_medium === null ? null : String(row.utm_medium),
         utm_campaign:
           row.utm_campaign === null ? null : String(row.utm_campaign),
-        utm_content:
-          row.utm_content === null ? null : String(row.utm_content),
+        utm_content: row.utm_content === null ? null : String(row.utm_content),
         utm_term: row.utm_term === null ? null : String(row.utm_term),
         fbclid: row.fbclid === null ? null : String(row.fbclid),
         ttclid: row.ttclid === null ? null : String(row.ttclid),
@@ -297,7 +297,9 @@ WHERE workspace_id = {workspace_id:UUID}
     });
   }
 
-  async replaceJourneyFacts(input: ReplaceAttributionFactsInput): Promise<void> {
+  async replaceJourneyFacts(
+    input: ReplaceAttributionFactsInput,
+  ): Promise<void> {
     const versions = attributionVersions(input.sourceJourneyVersion);
     try {
       await this.tombstone(

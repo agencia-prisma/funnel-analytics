@@ -3,15 +3,9 @@ import {
   evaluateAttribution,
 } from '@funnel/attribution-engine';
 
-import {
-  attributionDlqAndAck,
-  type AttributionDlqProducer,
-} from './dlq';
+import { attributionDlqAndAck, type AttributionDlqProducer } from './dlq';
 import { validateAttributionEnvelope } from './envelope';
-import {
-  AttributionWorkerError,
-  toAttributionWorkerError,
-} from './errors';
+import { AttributionWorkerError, toAttributionWorkerError } from './errors';
 import { logAttributionWorker } from './logging';
 import type { AttributionFactsRepository } from './repository';
 import type {
@@ -48,7 +42,9 @@ export function createAttributionConsumer(
 ) {
   const now = dependencies.now ?? Date.now;
 
-  return async function consume(batch: AttributionQueueBatchLike): Promise<void> {
+  return async function consume(
+    batch: AttributionQueueBatchLike,
+  ): Promise<void> {
     logAttributionWorker('attribution_worker.batch.received', {
       message_count: batch.messages.length,
     });

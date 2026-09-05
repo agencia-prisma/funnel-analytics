@@ -9,9 +9,7 @@ export interface AttributionDlqProducer {
   send(message: AttributionDeadLetterEnvelopeV1): Promise<void>;
 }
 
-export class CloudflareAttributionDlqProducer
-  implements AttributionDlqProducer
-{
+export class CloudflareAttributionDlqProducer implements AttributionDlqProducer {
   constructor(private readonly queue: AttributionDlqBinding) {}
 
   async send(message: AttributionDeadLetterEnvelopeV1): Promise<void> {

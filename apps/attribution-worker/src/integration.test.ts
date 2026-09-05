@@ -34,12 +34,12 @@ describe('attribution facts on isolated ClickHouse', () => {
     await expect(
       repository.findJourney(workspaceId, journeyId),
     ).resolves.toBeNull();
-    await expect(repository.findOrders(workspaceId, journeyId)).resolves.toEqual(
-      [],
-    );
-    await expect(repository.findEvents(workspaceId, journeyId)).resolves.toEqual(
-      [],
-    );
+    await expect(
+      repository.findOrders(workspaceId, journeyId),
+    ).resolves.toEqual([]);
+    await expect(
+      repository.findEvents(workspaceId, journeyId),
+    ).resolves.toEqual([]);
   });
 
   it('replaces attribution facts idempotently and tombstones them', async () => {

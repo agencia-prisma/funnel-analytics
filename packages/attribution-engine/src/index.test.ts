@@ -35,7 +35,9 @@ function event(
   };
 }
 
-function order(overrides: Partial<AttributionOrderV1> = {}): AttributionOrderV1 {
+function order(
+  overrides: Partial<AttributionOrderV1> = {},
+): AttributionOrderV1 {
   return {
     workspace_id: workspaceId,
     journey_id: journeyId,
@@ -146,9 +148,9 @@ describe('evaluateAttribution', () => {
     expect(linear.map((fact) => fact.attributed_gross_amount_minor)).toEqual([
       5_330, 5_330, 5_330,
     ]);
-    expect(linear.map((fact) => fact.attributed_refunded_amount_minor)).toEqual([
-      1_334, 1_333, 1_333,
-    ]);
+    expect(linear.map((fact) => fact.attributed_refunded_amount_minor)).toEqual(
+      [1_334, 1_333, 1_333],
+    );
     expect(linear.map((fact) => fact.attributed_net_amount_minor)).toEqual([
       3_997, 3_997, 3_996,
     ]);
@@ -156,10 +158,7 @@ describe('evaluateAttribution', () => {
       ATTRIBUTION_CREDIT_MICROS,
     );
     expect(
-      linear.reduce(
-        (sum, fact) => sum + fact.attributed_net_amount_minor,
-        0,
-      ),
+      linear.reduce((sum, fact) => sum + fact.attributed_net_amount_minor, 0),
     ).toBe(11_990);
   });
 

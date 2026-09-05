@@ -20,28 +20,30 @@ function message(body: unknown = envelope) {
   return { body, attempts: 1, ack: vi.fn(), retry: vi.fn() };
 }
 
-function repository(events = [
-  {
-    event_id: purchaseEventId,
-    session_id: sessionId,
-    occurred_at: '2026-09-05T10:00:00.000Z',
-    received_at: '2026-09-05T10:00:00.000Z',
-    test_mode: false,
-    page_url: 'https://example.com/',
-    page_path: '/',
-    referrer_domain: null,
-    utm_source: 'google',
-    utm_medium: 'cpc',
-    utm_campaign: 'brand',
-    utm_content: null,
-    utm_term: null,
-    fbclid: null,
-    ttclid: null,
-    gclid: 'gclid-1',
-    msclkid: null,
-    tblci: null,
-  },
-]) {
+function repository(
+  events = [
+    {
+      event_id: purchaseEventId,
+      session_id: sessionId,
+      occurred_at: '2026-09-05T10:00:00.000Z',
+      received_at: '2026-09-05T10:00:00.000Z',
+      test_mode: false,
+      page_url: 'https://example.com/',
+      page_path: '/',
+      referrer_domain: null,
+      utm_source: 'google',
+      utm_medium: 'cpc',
+      utm_campaign: 'brand',
+      utm_content: null,
+      utm_term: null,
+      fbclid: null,
+      ttclid: null,
+      gclid: 'gclid-1',
+      msclkid: null,
+      tblci: null,
+    },
+  ],
+) {
   return {
     findJourney: vi.fn().mockResolvedValue({
       journeyId: envelope.journey_ids[0],

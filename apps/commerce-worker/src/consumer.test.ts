@@ -80,12 +80,12 @@ describe('commerce consumer', () => {
         source_journey_version: '2',
       }),
     );
-    expect(
-      repo.replaceFacts.mock.invocationCallOrder[0],
-    ).toBeLessThan(attributionPublisher.send.mock.invocationCallOrder[0]!);
-    expect(
-      attributionPublisher.send.mock.invocationCallOrder[0],
-    ).toBeLessThan(msg.ack.mock.invocationCallOrder[0]!);
+    expect(repo.replaceFacts.mock.invocationCallOrder[0]).toBeLessThan(
+      attributionPublisher.send.mock.invocationCallOrder[0]!,
+    );
+    expect(attributionPublisher.send.mock.invocationCallOrder[0]).toBeLessThan(
+      msg.ack.mock.invocationCallOrder[0]!,
+    );
     expect(msg.ack).toHaveBeenCalledOnce();
     expect(msg.retry).not.toHaveBeenCalled();
   });

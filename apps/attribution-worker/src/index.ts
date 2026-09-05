@@ -1,10 +1,7 @@
 import { createAttributionConsumer } from './consumer';
 import { CloudflareAttributionDlqProducer } from './dlq';
 import { ClickHouseAttributionFactsRepository } from './repository';
-import type {
-  AttributionQueueBatchLike,
-  AttributionWorkerEnv,
-} from './types';
+import type { AttributionQueueBatchLike, AttributionWorkerEnv } from './types';
 
 export default {
   async queue(

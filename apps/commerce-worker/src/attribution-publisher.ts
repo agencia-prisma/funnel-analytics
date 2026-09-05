@@ -10,9 +10,7 @@ export interface AttributionRecomputeProducer {
   send(message: AttributionRecomputeEnvelopeV1): Promise<void>;
 }
 
-export class CloudflareAttributionRecomputeProducer
-  implements AttributionRecomputeProducer
-{
+export class CloudflareAttributionRecomputeProducer implements AttributionRecomputeProducer {
   constructor(private readonly queue: AttributionQueueBinding) {}
 
   async send(message: AttributionRecomputeEnvelopeV1): Promise<void> {
