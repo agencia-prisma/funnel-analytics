@@ -1,17 +1,17 @@
 {
-  "name": "@funnel/event-contracts",
+  "name": "@funnel/commerce-engine",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts",
-    "./commerce": "./src/commerce.ts",
-    "./funnel": "./src/funnel.ts"
+    ".": "./src/index.ts"
   },
   "scripts": {
+    "test": "vitest run src/index.test.ts",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "vitest": "4.1.11"
   }
 }

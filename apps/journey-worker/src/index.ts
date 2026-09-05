@@ -3,6 +3,7 @@ import {
   type JourneyPolicyV1,
 } from '@funnel/journey-engine';
 
+import { CloudflareCommerceRecomputeProducer } from './commerce-publisher';
 import { createJourneyConsumer } from './consumer';
 import { CloudflareJourneyDlqProducer } from './dlq';
 import { CloudflareFunnelRecomputeProducer } from './funnel-publisher';
@@ -37,6 +38,9 @@ export default {
       repository,
       dlq: new CloudflareJourneyDlqProducer(env.JOURNEYS_DLQ),
       funnelPublisher: new CloudflareFunnelRecomputeProducer(env.FUNNELS_QUEUE),
+      commercePublisher: new CloudflareCommerceRecomputeProducer(
+        env.COMMERCE_QUEUE,
+      ),
       policy: policyFromEnv(env),
     });
 

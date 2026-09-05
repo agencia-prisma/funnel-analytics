@@ -1,4 +1,8 @@
 import {
+  COMMERCE_RECOMPUTE_V1_MAX_JOURNEY_IDS,
+  type CommerceRecomputeEnvelopeV1,
+} from '@funnel/event-contracts/commerce';
+import {
   FUNNEL_RECOMPUTE_V1_MAX_JOURNEY_IDS,
   type FunnelRecomputeEnvelopeV1,
 } from '@funnel/event-contracts/funnel';
@@ -10,6 +14,7 @@ import {
   type JourneyPolicyV1,
 } from '@funnel/journey-engine';
 
+import type { CommerceRecomputeProducer } from './commerce-publisher';
 import { journeyDlqAndAck, type JourneyDlqProducer } from './dlq';
 import { validateJourneyEnvelope } from './envelope';
 import { JourneyWorkerError, toJourneyWorkerError } from './errors';
@@ -22,6 +27,7 @@ export interface JourneyConsumerDependencies {
   repository: JourneyRepository;
   dlq: JourneyDlqProducer;
   funnelPublisher?: FunnelRecomputeProducer;
+  commercePublisher?: CommerceRecomputeProducer;
   policy: JourneyPolicyV1;
   now?: () => number;
 }
@@ -70,6 +76,44 @@ async function publishFunnelRecomputes(input: {
 
   for (const batch of chunks(references, FUNNEL_RECOMPUTE_V1_MAX_JOURNEY_IDS)) {
     const envelope: FunnelRecomputeEnvelopeV1 = {
+      envelope_version: 1,
+      request_id: crypto.randomUUID(),
+      generated_at: input.generatedAt,
+      workspace_id: input.workspaceId,
+      reason: 'journey_recomputed',
+      journey_ids: batch
+        .filter((reference) => !reference.deleted)
+        .map((reference) => reference.journeyId),
+      deleted_journey_ids: batch
+        .filter((reference) => reference.deleted)
+        .map((reference) => reference.journeyId),
+      source_journey_version: input.sourceJourneyVersion,
+    };
+    await input.publisher.send(envelope);
+  }
+}
+
+async function publishCommerceRecomputes(input: {
+  publisher: CommerceRecomputeProducer;
+  workspaceId: string;
+  journeyIds: string[];
+  deletedJourneyIds: string[];
+  sourceJourneyVersion: string;
+  generatedAt: string;
+}): Promise<void> {
+  const references = [
+    ...input.journeyIds.map((journeyId) => ({ journeyId, deleted: false })),
+    ...input.deletedJourneyIds.map((journeyId) => ({
+      journeyId,
+      deleted: true,
+    })),
+  ];
+
+  for (const batch of chunks(
+    references,
+    COMMERCE_RECOMPUTE_V1_MAX_JOURNEY_IDS,
+  )) {
+    const envelope: CommerceRecomputeEnvelopeV1 = {
       envelope_version: 1,
       request_id: crypto.randomUUID(),
       generated_at: input.generatedAt,
@@ -208,6 +252,17 @@ export function createJourneyConsumer(
         if (dependencies.funnelPublisher) {
           await publishFunnelRecomputes({
             publisher: dependencies.funnelPublisher,
+            workspaceId: envelope.workspace_id,
+            journeyIds: [...currentJourneyIds],
+            deletedJourneyIds: staleJourneyIds,
+            sourceJourneyVersion: version,
+            generatedAt: updatedAt,
+          });
+        }
+
+        if (dependencies.commercePublisher) {
+          await publishCommerceRecomputes({
+            publisher: dependencies.commercePublisher,
             workspaceId: envelope.workspace_id,
             journeyIds: [...currentJourneyIds],
             deletedJourneyIds: staleJourneyIds,

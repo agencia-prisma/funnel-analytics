@@ -1,0 +1,96 @@
+name: Commerce + Purchase Foundation
+
+on:
+  pull_request:
+    paths:
+      - 'packages/commerce-engine/**'
+      - 'packages/event-contracts/src/commerce.ts'
+      - 'packages/event-contracts/package.json'
+      - 'apps/commerce-worker/**'
+      - 'apps/journey-worker/**'
+      - 'infra/clickhouse/migrations/0006_commerce_facts.sql'
+      - 'docs/commerce-purchase-foundation.md'
+      - '.github/workflows/commerce-purchase.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/commerce-engine/**'
+      - 'packages/event-contracts/src/commerce.ts'
+      - 'packages/event-contracts/package.json'
+      - 'apps/commerce-worker/**'
+      - 'apps/journey-worker/**'
+      - 'infra/clickhouse/migrations/0006_commerce_facts.sql'
+      - 'docs/commerce-purchase-foundation.md'
+      - '.github/workflows/commerce-purchase.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: commerce-purchase-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  engine:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @funnel/event-contracts typecheck
+      - run: pnpm --filter @funnel/commerce-engine typecheck
+      - run: pnpm --filter @funnel/commerce-engine test
+      - run: pnpm --filter @funnel/journey-worker typecheck
+      - run: pnpm --filter @funnel/journey-worker test
+
+  worker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      CLICKHOUSE_URL: http://127.0.0.1:8123
+      CLICKHOUSE_USERNAME: default
+      CLICKHOUSE_PASSWORD: test-password
+    services:
+      clickhouse:
+        image: clickhouse/clickhouse-server:26.7.5.10
+        env:
+          CLICKHOUSE_PASSWORD: test-password
+        ports:
+          - 8123:8123
+        options: >-
+          --health-cmd "clickhouse-client --password test-password --query 'SELECT 1'"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm audit --prod --audit-level high
+      - run: pnpm --filter @funnel/commerce-worker typecheck
+      - run: pnpm --filter @funnel/commerce-worker test
+      - name: Commerce Worker dry-run build
+        run: |
+          cp apps/commerce-worker/.dev.vars.example apps/commerce-worker/.dev.vars
+          sed -i 's/REPLACE_LOCAL_TEST_PASSWORD/test-password/' apps/commerce-worker/.dev.vars
+          pnpm --filter @funnel/commerce-worker build
+      - run: pnpm --filter @funnel/journey-worker build
+      - name: Apply ClickHouse migrations 0001 through 0006
+        run: pnpm clickhouse:migrate
+      - run: pnpm --filter @funnel/commerce-worker test:integration
