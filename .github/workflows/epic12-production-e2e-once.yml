@@ -11,10 +11,10 @@ permissions:
   contents: read
 
 jobs:
-  attributed-refund:
+  idempotency-probe:
     runs-on: ubuntu-latest
     steps:
-      - name: Send partial refund to production Collector
+      - name: Trigger neutral Journey recompute in production
         shell: bash
         run: |
           set -euo pipefail
@@ -24,12 +24,12 @@ jobs:
           const event = {
             event_version: 1,
             sdk_version: 'epic12-e2e/1.0.0',
-            event_id: '02b08112-1117-7a01-8a01-111111111117',
+            event_id: '02b08112-1118-7a01-8a01-111111111118',
             pixel_key: 'px_pub_5a53e35861b97c4584f39d5c670d03b99bda',
             visitor_id: '02b08112-1111-7a01-8a01-111111111111',
             session_id: '02b08112-1114-7a01-8a01-111111111114',
             event_name: 'custom_event',
-            custom_event_name: 'refund',
+            custom_event_name: 'epic12_idempotency_probe',
             occurred_at: now,
             page_url: 'https://lp.prismaag.com.br/epic12-attribution-e2e',
             page_path: '/epic12-attribution-e2e',
@@ -51,12 +51,7 @@ jobs:
             timezone: 'America/Sao_Paulo',
             consent_state: 'granted',
             test_mode: true,
-            properties: {
-              provider: 'custom',
-              order_id: 'epic12-e2e-20260905-001',
-              currency: 'BRL',
-              refund_minor: 3000
-            }
+            properties: { purpose: 'attribution-idempotency' }
           };
           const response = await fetch(endpoint, {
             method: 'POST',
