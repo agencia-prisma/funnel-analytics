@@ -36,7 +36,11 @@ describe('commerce consumer', () => {
           event_name: 'custom_event',
           custom_event_name: 'purchase',
           test_mode: false,
-          properties: { order_id: 'order-1', currency: 'BRL', value_minor: 10000 },
+          properties: {
+            order_id: 'order-1',
+            currency: 'BRL',
+            value_minor: 10000,
+          },
         },
       ]),
       replaceFacts: vi.fn().mockResolvedValue(undefined),
@@ -44,13 +48,22 @@ describe('commerce consumer', () => {
     };
     const dlq = { send: vi.fn().mockResolvedValue(undefined) };
     const msg = message();
-    await createCommerceConsumer({ repository, dlq, now: () => Date.parse('2026-09-05T10:01:00.000Z') })({
+    await createCommerceConsumer({
+      repository,
+      dlq,
+      now: () => Date.parse('2026-09-05T10:01:00.000Z'),
+    })({
       messages: [msg],
     });
     expect(repository.replaceFacts).toHaveBeenCalledWith(
       expect.objectContaining({
         sourceJourneyVersion: '2',
-        revenue: [expect.objectContaining({ order_id: 'order-1', net_amount_minor: 10000 })],
+        revenue: [
+          expect.objectContaining({
+            order_id: 'order-1',
+            net_amount_minor: 10000,
+          }),
+        ],
       }),
     );
     expect(msg.ack).toHaveBeenCalledOnce();
@@ -66,7 +79,9 @@ describe('commerce consumer', () => {
     };
     const dlq = { send: vi.fn().mockResolvedValue(undefined) };
     const msg = message({ invalid: true });
-    await createCommerceConsumer({ repository, dlq, now: () => 0 })({ messages: [msg] });
+    await createCommerceConsumer({ repository, dlq, now: () => 0 })({
+      messages: [msg],
+    });
     expect(dlq.send).toHaveBeenCalledWith(
       expect.objectContaining({ error_code: 'COMMERCE_ENVELOPE_INVALID' }),
     );

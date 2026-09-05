@@ -13,12 +13,16 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function validUuidArray(value: unknown): value is string[] {
   return (
     Array.isArray(value) &&
-    value.every((item) => typeof item === 'string' && UUID_PATTERN.test(item)) &&
+    value.every(
+      (item) => typeof item === 'string' && UUID_PATTERN.test(item),
+    ) &&
     new Set(value).size === value.length
   );
 }
 
-export function validateCommerceEnvelope(value: unknown): ValidatedCommerceEnvelope {
+export function validateCommerceEnvelope(
+  value: unknown,
+): ValidatedCommerceEnvelope {
   if (!isRecord(value)) {
     throw new CommerceWorkerError('PERMANENT', 'COMMERCE_ENVELOPE_INVALID');
   }
@@ -36,7 +40,8 @@ export function validateCommerceEnvelope(value: unknown): ValidatedCommerceEnvel
     !validUuidArray(journeyIds) ||
     !validUuidArray(deletedJourneyIds) ||
     journeyIds.length + deletedJourneyIds.length < 1 ||
-    journeyIds.length + deletedJourneyIds.length > COMMERCE_RECOMPUTE_V1_MAX_JOURNEY_IDS ||
+    journeyIds.length + deletedJourneyIds.length >
+      COMMERCE_RECOMPUTE_V1_MAX_JOURNEY_IDS ||
     journeyIds.some((journeyId) => deletedJourneyIds.includes(journeyId)) ||
     typeof value.source_journey_version !== 'string'
   ) {

@@ -68,7 +68,10 @@ async function publishFunnelRecomputes(input: {
 }): Promise<void> {
   const references = [
     ...input.journeyIds.map((journeyId) => ({ journeyId, deleted: false })),
-    ...input.deletedJourneyIds.map((journeyId) => ({ journeyId, deleted: true })),
+    ...input.deletedJourneyIds.map((journeyId) => ({
+      journeyId,
+      deleted: true,
+    })),
   ];
 
   for (const batch of chunks(references, FUNNEL_RECOMPUTE_V1_MAX_JOURNEY_IDS)) {
@@ -100,10 +103,16 @@ async function publishCommerceRecomputes(input: {
 }): Promise<void> {
   const references = [
     ...input.journeyIds.map((journeyId) => ({ journeyId, deleted: false })),
-    ...input.deletedJourneyIds.map((journeyId) => ({ journeyId, deleted: true })),
+    ...input.deletedJourneyIds.map((journeyId) => ({
+      journeyId,
+      deleted: true,
+    })),
   ];
 
-  for (const batch of chunks(references, COMMERCE_RECOMPUTE_V1_MAX_JOURNEY_IDS)) {
+  for (const batch of chunks(
+    references,
+    COMMERCE_RECOMPUTE_V1_MAX_JOURNEY_IDS,
+  )) {
     const envelope: CommerceRecomputeEnvelopeV1 = {
       envelope_version: 1,
       request_id: crypto.randomUUID(),

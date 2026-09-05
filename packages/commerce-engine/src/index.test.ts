@@ -194,8 +194,8 @@ describe('commerce engine', () => {
       name: 'purchase',
       properties: { order_id: 'order-1', currency: 'BRL', value_minor: 100 },
     });
-    expect(() => evaluateCommerce({ ...base, events: [duplicate, duplicate] })).toThrowError(
-      new CommerceEngineError('COMMERCE_EVENT_DUPLICATE'),
-    );
+    expect(() =>
+      evaluateCommerce({ ...base, events: [duplicate, duplicate] }),
+    ).toThrowError(new CommerceEngineError('COMMERCE_EVENT_DUPLICATE'));
   });
 });

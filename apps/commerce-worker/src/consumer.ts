@@ -31,7 +31,9 @@ async function permanentFailure(
   }
 }
 
-export function createCommerceConsumer(dependencies: CommerceConsumerDependencies) {
+export function createCommerceConsumer(
+  dependencies: CommerceConsumerDependencies,
+) {
   const now = dependencies.now ?? Date.now;
 
   return async function consume(batch: CommerceQueueBatchLike): Promise<void> {
@@ -45,7 +47,12 @@ export function createCommerceConsumer(dependencies: CommerceConsumerDependencie
       try {
         envelope = validateCommerceEnvelope(message.body);
       } catch (error) {
-        await permanentFailure(dependencies, message, toCommerceWorkerError(error), now);
+        await permanentFailure(
+          dependencies,
+          message,
+          toCommerceWorkerError(error),
+          now,
+        );
         continue;
       }
 

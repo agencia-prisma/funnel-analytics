@@ -2,16 +2,10 @@ export const COMMERCE_MAX_EVENTS_PER_RECOMPUTE = 100_000;
 export const COMMERCE_MAX_ITEMS_PER_ORDER = 500;
 
 export type CommerceEventNameV1 =
-  | 'checkout_started'
-  | 'purchase'
-  | 'refund'
-  | 'order_cancelled';
+  'checkout_started' | 'purchase' | 'refund' | 'order_cancelled';
 
 export type CommerceOrderStatusV1 =
-  | 'paid'
-  | 'partially_refunded'
-  | 'refunded'
-  | 'cancelled';
+  'paid' | 'partially_refunded' | 'refunded' | 'cancelled';
 
 export type CommerceEngineErrorCode =
   | 'COMMERCE_INPUT_INVALID'
@@ -168,7 +162,9 @@ function provider(value: unknown): string {
   return normalized;
 }
 
-function commerceName(event: CommerceSourceEventV1): CommerceEventNameV1 | null {
+function commerceName(
+  event: CommerceSourceEventV1,
+): CommerceEventNameV1 | null {
   const candidate =
     event.event_name === 'purchase'
       ? 'purchase'
@@ -191,7 +187,10 @@ function iso(value: string): string {
   return value;
 }
 
-function compareEvents(left: CommerceSourceEventV1, right: CommerceSourceEventV1) {
+function compareEvents(
+  left: CommerceSourceEventV1,
+  right: CommerceSourceEventV1,
+) {
   const occurred = Date.parse(left.occurred_at) - Date.parse(right.occurred_at);
   if (occurred !== 0) return occurred;
   const received = Date.parse(left.received_at) - Date.parse(right.received_at);
@@ -234,7 +233,10 @@ function parseItems(input: {
   testMode: boolean;
 }): CommerceItemFactDraft[] {
   if (input.value === undefined || input.value === null) return [];
-  if (!Array.isArray(input.value) || input.value.length > COMMERCE_MAX_ITEMS_PER_ORDER) {
+  if (
+    !Array.isArray(input.value) ||
+    input.value.length > COMMERCE_MAX_ITEMS_PER_ORDER
+  ) {
     throw new CommerceEngineError('COMMERCE_EVENT_INVALID');
   }
 
@@ -280,7 +282,9 @@ function validateInput(input: EvaluateCommerceInput): void {
   }
 }
 
-export function evaluateCommerce(input: EvaluateCommerceInput): CommerceEvaluationResult {
+export function evaluateCommerce(
+  input: EvaluateCommerceInput,
+): CommerceEvaluationResult {
   validateInput(input);
 
   const seenEvents = new Set<string>();
@@ -360,7 +364,10 @@ export function evaluateCommerce(input: EvaluateCommerceInput): CommerceEvaluati
         }
         continue;
       }
-      const totalQuantity = itemFacts.reduce((sum, item) => sum + item.quantity, 0);
+      const totalQuantity = itemFacts.reduce(
+        (sum, item) => sum + item.quantity,
+        0,
+      );
       orders.set(key, {
         purchaseSignature: signature,
         cancelled: false,
@@ -398,7 +405,10 @@ export function evaluateCommerce(input: EvaluateCommerceInput): CommerceEvaluati
 
     if (name === 'refund') {
       if (order.refundEventIds.has(event.event_id)) continue;
-      if (props.currency !== undefined && currency(props.currency) !== order.revenue.currency) {
+      if (
+        props.currency !== undefined &&
+        currency(props.currency) !== order.revenue.currency
+      ) {
         throw new CommerceEngineError('COMMERCE_ORDER_CONFLICT');
       }
       const amount = money(props.refund_minor);
@@ -408,9 +418,12 @@ export function evaluateCommerce(input: EvaluateCommerceInput): CommerceEvaluati
       }
       order.refundEventIds.add(event.event_id);
       order.revenue.refunded_amount_minor = refunded;
-      order.revenue.net_amount_minor = order.revenue.gross_amount_minor - refunded;
+      order.revenue.net_amount_minor =
+        order.revenue.gross_amount_minor - refunded;
       order.revenue.status =
-        refunded === order.revenue.gross_amount_minor ? 'refunded' : 'partially_refunded';
+        refunded === order.revenue.gross_amount_minor
+          ? 'refunded'
+          : 'partially_refunded';
       order.revenue.last_event_at = iso(event.occurred_at);
       continue;
     }

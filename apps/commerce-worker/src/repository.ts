@@ -28,8 +28,14 @@ export interface ReplaceCommerceFactsInput {
 }
 
 export interface CommerceFactsRepository {
-  findJourney(workspaceId: string, journeyId: string): Promise<JourneyCommerceContext | null>;
-  findEvents(workspaceId: string, journeyId: string): Promise<CommerceSourceEventV1[]>;
+  findJourney(
+    workspaceId: string,
+    journeyId: string,
+  ): Promise<JourneyCommerceContext | null>;
+  findEvents(
+    workspaceId: string,
+    journeyId: string,
+  ): Promise<CommerceSourceEventV1[]>;
   replaceFacts(input: ReplaceCommerceFactsInput): Promise<void>;
   tombstoneJourneyFacts(
     workspaceId: string,
@@ -100,7 +106,11 @@ LIMIT 1
       }>;
       const row = rows[0];
       return row
-        ? { journeyId: row.journey_id, personId: row.person_id, testMode: Boolean(row.test_mode) }
+        ? {
+            journeyId: row.journey_id,
+            personId: row.person_id,
+            testMode: Boolean(row.test_mode),
+          }
         : null;
     } catch (error) {
       throw classify(error, 'COMMERCE_JOURNEY_QUERY_UNAVAILABLE');
@@ -199,7 +209,10 @@ WHERE workspace_id = {workspace_id:UUID}
         );
       }
 
-      const insert = async (table: CommerceTable, rows: Array<Record<string, unknown>>) => {
+      const insert = async (
+        table: CommerceTable,
+        rows: Array<Record<string, unknown>>,
+      ) => {
         if (!rows.length) return;
         await this.client.insert({
           table: `funnel_analytics.${table}`,

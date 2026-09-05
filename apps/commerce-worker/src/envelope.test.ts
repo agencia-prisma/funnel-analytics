@@ -25,6 +25,8 @@ describe('commerce envelope', () => {
         ...valid,
         deleted_journey_ids: valid.journey_ids,
       }),
-    ).toThrowError(new CommerceWorkerError('PERMANENT', 'COMMERCE_ENVELOPE_INVALID'));
+    ).toThrowError(
+      new CommerceWorkerError('PERMANENT', 'COMMERCE_ENVELOPE_INVALID'),
+    );
   });
 });

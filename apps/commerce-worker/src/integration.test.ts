@@ -5,8 +5,11 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { ClickHouseCommerceFactsRepository } from './repository';
 
 const runtimeEnv =
-  (globalThis as typeof globalThis & { process?: { env?: Record<string, string | undefined> } })
-    .process?.env ?? {};
+  (
+    globalThis as typeof globalThis & {
+      process?: { env?: Record<string, string | undefined> };
+    }
+  ).process?.env ?? {};
 const config = {
   url: runtimeEnv.CLICKHOUSE_URL ?? 'http://127.0.0.1:8123',
   username: runtimeEnv.CLICKHOUSE_USERNAME ?? 'default',
@@ -30,7 +33,9 @@ beforeEach(async () => {
 
 describe('commerce facts on isolated ClickHouse', () => {
   it('queries journey context without UUID alias shadowing', async () => {
-    await expect(repository.findJourney(workspaceId, journeyId)).resolves.toBeNull();
+    await expect(
+      repository.findJourney(workspaceId, journeyId),
+    ).resolves.toBeNull();
   });
 
   it('replaces revenue facts idempotently and tombstones them', async () => {
@@ -50,7 +55,11 @@ describe('commerce facts on isolated ClickHouse', () => {
           event_name: 'custom_event',
           custom_event_name: 'purchase',
           test_mode: false,
-          properties: { order_id: 'order-1', currency: 'BRL', value_minor: 10000 },
+          properties: {
+            order_id: 'order-1',
+            currency: 'BRL',
+            value_minor: 10000,
+          },
         },
       ],
     });
@@ -88,8 +97,17 @@ describe('commerce facts on isolated ClickHouse', () => {
       query: `SELECT lower(name) AS name FROM system.columns WHERE database='funnel_analytics' AND table IN ('commerce_checkout_facts','commerce_revenue_facts','commerce_item_facts')`,
       format: 'JSONEachRow',
     });
-    const names = ((await result.json()) as Array<{ name: string }>).map((row) => row.name);
-    for (const forbidden of ['email', 'phone', 'cpf', 'buyer_name', 'ciphertext', 'blind_index']) {
+    const names = ((await result.json()) as Array<{ name: string }>).map(
+      (row) => row.name,
+    );
+    for (const forbidden of [
+      'email',
+      'phone',
+      'cpf',
+      'buyer_name',
+      'ciphertext',
+      'blind_index',
+    ]) {
       expect(names).not.toContain(forbidden);
     }
   });
