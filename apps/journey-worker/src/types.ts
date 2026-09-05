@@ -1,5 +1,6 @@
 import type { JourneyDeadLetterEnvelopeV1 } from '@funnel/event-contracts';
 
+import type { CommerceQueueBinding } from './commerce-publisher';
 import type { FunnelQueueBinding } from './funnel-publisher';
 
 export interface JourneyDlqBinding {
@@ -14,6 +15,7 @@ export interface JourneyWorkerEnv {
   CLICKHOUSE_PASSWORD: string;
   JOURNEYS_DLQ: JourneyDlqBinding;
   FUNNELS_QUEUE: FunnelQueueBinding;
+  COMMERCE_QUEUE: CommerceQueueBinding;
 }
 
 export interface JourneyQueueMessageLike {
