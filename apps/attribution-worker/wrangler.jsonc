@@ -1,0 +1,96 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "funnel-analytics-attribution-worker",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-29",
+  "workers_dev": false,
+  "env": {
+    "local": {
+      "name": "funnel-analytics-attribution-worker-local",
+      "vars": { "ATTRIBUTION_WORKER_ENV": "local" },
+      "secrets": {
+        "required": [
+          "CLICKHOUSE_URL",
+          "CLICKHOUSE_USERNAME",
+          "CLICKHOUSE_PASSWORD",
+        ],
+      },
+      "queues": {
+        "producers": [
+          {
+            "binding": "ATTRIBUTION_DLQ",
+            "queue": "funnel-analytics-attribution-dlq-local",
+          },
+        ],
+        "consumers": [
+          {
+            "queue": "funnel-analytics-attribution-local",
+            "max_batch_size": 5,
+            "max_batch_timeout": 1,
+            "max_retries": 3,
+            "max_concurrency": 1,
+            "dead_letter_queue": "funnel-analytics-attribution-dlq-local",
+          },
+        ],
+      },
+    },
+    "preview": {
+      "name": "funnel-analytics-attribution-worker-preview",
+      "vars": { "ATTRIBUTION_WORKER_ENV": "preview" },
+      "secrets": {
+        "required": [
+          "CLICKHOUSE_URL",
+          "CLICKHOUSE_USERNAME",
+          "CLICKHOUSE_PASSWORD",
+        ],
+      },
+      "queues": {
+        "producers": [
+          {
+            "binding": "ATTRIBUTION_DLQ",
+            "queue": "funnel-analytics-attribution-dlq-preview",
+          },
+        ],
+        "consumers": [
+          {
+            "queue": "funnel-analytics-attribution-preview",
+            "max_batch_size": 5,
+            "max_batch_timeout": 1,
+            "max_retries": 3,
+            "max_concurrency": 1,
+            "dead_letter_queue": "funnel-analytics-attribution-dlq-preview",
+          },
+        ],
+      },
+    },
+    "production": {
+      "name": "funnel-analytics-attribution-worker-production",
+      "vars": { "ATTRIBUTION_WORKER_ENV": "production" },
+      "secrets": {
+        "required": [
+          "CLICKHOUSE_URL",
+          "CLICKHOUSE_USERNAME",
+          "CLICKHOUSE_PASSWORD",
+        ],
+      },
+      "queues": {
+        "producers": [
+          {
+            "binding": "ATTRIBUTION_DLQ",
+            "queue": "funnel-analytics-attribution-dlq-production",
+          },
+        ],
+        "consumers": [
+          {
+            "queue": "funnel-analytics-attribution-production",
+            "max_batch_size": 5,
+            "max_batch_timeout": 1,
+            "max_retries": 3,
+            "max_concurrency": 1,
+            "dead_letter_queue": "funnel-analytics-attribution-dlq-production",
+          },
+        ],
+      },
+    },
+  },
+}
