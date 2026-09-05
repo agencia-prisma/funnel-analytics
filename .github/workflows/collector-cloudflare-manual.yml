@@ -1,0 +1,163 @@
+name: Collector Cloudflare Manual Ops
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: Operation to run against the production Collector
+        required: true
+        default: inspect
+        type: choice
+        options:
+          - inspect
+          - deploy
+
+permissions:
+  contents: read
+
+jobs:
+  collector-cloudflare:
+    name: Collector Cloudflare ${{ inputs.action }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Validate Cloudflare credentials are configured
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "${CLOUDFLARE_API_TOKEN:-}" ]; then
+            echo "::error::Missing GitHub secret CLOUDFLARE_API_TOKEN"
+            exit 1
+          fi
+          if [ -z "${CLOUDFLARE_ACCOUNT_ID:-}" ]; then
+            echo "::error::Missing GitHub secret CLOUDFLARE_ACCOUNT_ID"
+            exit 1
+          fi
+          echo "Cloudflare deploy credentials are configured."
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: List production Collector secret names
+        working-directory: apps/collector
+        run: pnpm exec wrangler secret list --env production
+
+      - name: Deploy production Collector
+        if: ${{ inputs.action == 'deploy' }}
+        working-directory: apps/collector
+        run: pnpm exec wrangler deploy --env production
+
+      - name: Smoke production Collector after deploy
+        if: ${{ inputs.action == 'deploy' }}
+        shell: bash
+        run: |
+          set -u
+          BASE='https://funnel-analytics-collector-production.prismaag.workers.dev'
+          ORIGIN='https://lp.prismaag.com.br'
+          PIXEL_KEY='px_pub_5a53e35861b97c4584f39d5c670d03b99bda'
+          VISITOR_ID='00000000-0000-7000-8000-000000000001'
+          SESSION_ID='00000000-0000-7000-8000-000000000002'
+          EVENT_ID='00000000-0000-7000-8000-000000000003'
+          NOW="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+          probe() {
+            local label="$1"
+            shift
+            echo
+            echo "===== $label ====="
+            curl -sS -D - -o /tmp/body -w '\nHTTP_STATUS=%{http_code}\n' "$@" || true
+            cat /tmp/body || true
+            echo
+          }
+
+          probe 'GET /health' "$BASE/health"
+
+          IDENTIFY_PAYLOAD=$(cat <<JSON
+          {
+            "identify_version": 1,
+            "pixel_key": "$PIXEL_KEY",
+            "visitor_id": "$VISITOR_ID",
+            "session_id": null,
+            "occurred_at": "$NOW",
+            "identifiers": {
+              "email": "collector-manual-smoke@example.com"
+            },
+            "consent_state": "granted",
+            "sdk_version": "github-actions-manual/1.0",
+            "test_mode": true
+          }
+          JSON
+          )
+
+          probe 'POST /v1/identify' \
+            -X POST "$BASE/v1/identify" \
+            -H 'Content-Type: application/json' \
+            -H "Origin: $ORIGIN" \
+            --data "$IDENTIFY_PAYLOAD"
+
+          EVENT_PAYLOAD=$(cat <<JSON
+          {
+            "batch_version": 1,
+            "sent_at": "$NOW",
+            "events": [
+              {
+                "event_id": "$EVENT_ID",
+                "event_name": "page_view",
+                "event_version": 1,
+                "sdk_version": "github-actions-manual/1.0",
+                "pixel_key": "$PIXEL_KEY",
+                "visitor_id": "$VISITOR_ID",
+                "session_id": "$SESSION_ID",
+                "occurred_at": "$NOW",
+                "page_url": "https://lp.prismaag.com.br/collector-manual-smoke",
+                "page_path": "/collector-manual-smoke",
+                "page_title": "Collector manual smoke",
+                "referrer": null,
+                "referrer_domain": null,
+                "utm_source": null,
+                "utm_medium": null,
+                "utm_campaign": null,
+                "utm_content": null,
+                "utm_term": null,
+                "click_ids": {},
+                "device": {"type": "desktop"},
+                "browser": {"name": "curl"},
+                "os": {"name": "linux"},
+                "screen": {"width": 1920, "height": 1080, "device_pixel_ratio": 1},
+                "viewport": {"width": 1280, "height": 720},
+                "language": "pt-BR",
+                "timezone": "America/Sao_Paulo",
+                "consent_state": "granted",
+                "test_mode": true
+              }
+            ]
+          }
+          JSON
+          )
+
+          probe 'POST /v1/events' \
+            -X POST "$BASE/v1/events" \
+            -H 'Content-Type: application/json' \
+            -H "Origin: $ORIGIN" \
+            --data "$EVENT_PAYLOAD"
