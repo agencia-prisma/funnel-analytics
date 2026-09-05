@@ -1,0 +1,100 @@
+name: Attribution Engine
+
+on:
+  pull_request:
+    paths:
+      - 'packages/attribution-engine/**'
+      - 'packages/event-contracts/src/attribution.ts'
+      - 'packages/event-contracts/package.json'
+      - 'apps/attribution-worker/**'
+      - 'apps/commerce-worker/**'
+      - 'infra/clickhouse/migrations/0007_attribution_facts.sql'
+      - 'docs/attribution-engine.md'
+      - '.github/workflows/attribution-engine.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/attribution-engine/**'
+      - 'packages/event-contracts/src/attribution.ts'
+      - 'packages/event-contracts/package.json'
+      - 'apps/attribution-worker/**'
+      - 'apps/commerce-worker/**'
+      - 'infra/clickhouse/migrations/0007_attribution_facts.sql'
+      - 'docs/attribution-engine.md'
+      - '.github/workflows/attribution-engine.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: attribution-engine-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  engine:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @funnel/event-contracts typecheck
+      - run: pnpm --filter @funnel/attribution-engine typecheck
+      - run: pnpm --filter @funnel/attribution-engine test
+      - run: pnpm --filter @funnel/commerce-worker typecheck
+      - run: pnpm --filter @funnel/commerce-worker test
+
+  worker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      CLICKHOUSE_URL: http://127.0.0.1:8123
+      CLICKHOUSE_USERNAME: default
+      CLICKHOUSE_PASSWORD: test-password
+    services:
+      clickhouse:
+        image: clickhouse/clickhouse-server:26.7.5.10
+        env:
+          CLICKHOUSE_PASSWORD: test-password
+        ports:
+          - 8123:8123
+        options: >-
+          --health-cmd "clickhouse-client --password test-password --query 'SELECT 1'"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm audit --prod --audit-level high
+      - run: pnpm --filter @funnel/attribution-worker typecheck
+      - run: pnpm --filter @funnel/attribution-worker test
+      - name: Attribution Worker dry-run build
+        run: |
+          cp apps/attribution-worker/.dev.vars.example apps/attribution-worker/.dev.vars
+          sed -i 's/REPLACE_LOCAL_TEST_PASSWORD/test-password/' apps/attribution-worker/.dev.vars
+          pnpm --filter @funnel/attribution-worker build
+      - name: Commerce Worker dry-run build with Attribution binding
+        run: |
+          cp apps/commerce-worker/.dev.vars.example apps/commerce-worker/.dev.vars
+          sed -i 's/REPLACE_LOCAL_TEST_PASSWORD/test-password/' apps/commerce-worker/.dev.vars
+          pnpm --filter @funnel/commerce-worker build
+      - name: Apply ClickHouse migrations 0001 through 0007
+        run: pnpm clickhouse:migrate
+      - run: pnpm --filter @funnel/attribution-worker test:integration
