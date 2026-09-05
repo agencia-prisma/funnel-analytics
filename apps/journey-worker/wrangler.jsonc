@@ -9,18 +9,13 @@
       "name": "funnel-analytics-journey-worker-local",
       "vars": {
         "JOURNEY_WORKER_ENV": "local",
-        "JOURNEY_INACTIVITY_WINDOW_SECONDS": "2592000",
+        "JOURNEY_INACTIVITY_WINDOW_SECONDS": "2592000"
       },
       "queues": {
         "producers": [
-          {
-            "binding": "JOURNEYS_DLQ",
-            "queue": "funnel-analytics-journeys-dlq-local",
-          },
-          {
-            "binding": "FUNNELS_QUEUE",
-            "queue": "funnel-analytics-funnels-local",
-          },
+          { "binding": "JOURNEYS_DLQ", "queue": "funnel-analytics-journeys-dlq-local" },
+          { "binding": "FUNNELS_QUEUE", "queue": "funnel-analytics-funnels-local" },
+          { "binding": "COMMERCE_QUEUE", "queue": "funnel-analytics-commerce-local" }
         ],
         "consumers": [
           {
@@ -29,27 +24,22 @@
             "max_batch_timeout": 1,
             "max_retries": 3,
             "max_concurrency": 1,
-            "dead_letter_queue": "funnel-analytics-journeys-dlq-local",
-          },
-        ],
-      },
+            "dead_letter_queue": "funnel-analytics-journeys-dlq-local"
+          }
+        ]
+      }
     },
     "preview": {
       "name": "funnel-analytics-journey-worker-preview",
       "vars": {
         "JOURNEY_WORKER_ENV": "preview",
-        "JOURNEY_INACTIVITY_WINDOW_SECONDS": "2592000",
+        "JOURNEY_INACTIVITY_WINDOW_SECONDS": "2592000"
       },
       "queues": {
         "producers": [
-          {
-            "binding": "JOURNEYS_DLQ",
-            "queue": "funnel-analytics-journeys-dlq-preview",
-          },
-          {
-            "binding": "FUNNELS_QUEUE",
-            "queue": "funnel-analytics-funnels-preview",
-          },
+          { "binding": "JOURNEYS_DLQ", "queue": "funnel-analytics-journeys-dlq-preview" },
+          { "binding": "FUNNELS_QUEUE", "queue": "funnel-analytics-funnels-preview" },
+          { "binding": "COMMERCE_QUEUE", "queue": "funnel-analytics-commerce-preview" }
         ],
         "consumers": [
           {
@@ -58,27 +48,22 @@
             "max_batch_timeout": 1,
             "max_retries": 3,
             "max_concurrency": 1,
-            "dead_letter_queue": "funnel-analytics-journeys-dlq-preview",
-          },
-        ],
-      },
+            "dead_letter_queue": "funnel-analytics-journeys-dlq-preview"
+          }
+        ]
+      }
     },
     "production": {
       "name": "funnel-analytics-journey-worker-production",
       "vars": {
         "JOURNEY_WORKER_ENV": "production",
-        "JOURNEY_INACTIVITY_WINDOW_SECONDS": "2592000",
+        "JOURNEY_INACTIVITY_WINDOW_SECONDS": "2592000"
       },
       "queues": {
         "producers": [
-          {
-            "binding": "JOURNEYS_DLQ",
-            "queue": "funnel-analytics-journeys-dlq-production",
-          },
-          {
-            "binding": "FUNNELS_QUEUE",
-            "queue": "funnel-analytics-funnels-production",
-          },
+          { "binding": "JOURNEYS_DLQ", "queue": "funnel-analytics-journeys-dlq-production" },
+          { "binding": "FUNNELS_QUEUE", "queue": "funnel-analytics-funnels-production" },
+          { "binding": "COMMERCE_QUEUE", "queue": "funnel-analytics-commerce-production" }
         ],
         "consumers": [
           {
@@ -87,10 +72,10 @@
             "max_batch_timeout": 1,
             "max_retries": 3,
             "max_concurrency": 1,
-            "dead_letter_queue": "funnel-analytics-journeys-dlq-production",
-          },
-        ],
-      },
-    },
-  },
+            "dead_letter_queue": "funnel-analytics-journeys-dlq-production"
+          }
+        ]
+      }
+    }
+  }
 }
