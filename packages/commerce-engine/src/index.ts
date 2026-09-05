@@ -162,21 +162,27 @@ function provider(value: unknown): string {
   return normalized;
 }
 
+function isCommerceEventName(
+  value: string | null,
+): value is CommerceEventNameV1 {
+  return (
+    value === 'checkout_started' ||
+    value === 'purchase' ||
+    value === 'refund' ||
+    value === 'order_cancelled'
+  );
+}
+
 function commerceName(
   event: CommerceSourceEventV1,
 ): CommerceEventNameV1 | null {
-  const candidate =
-    event.event_name === 'purchase'
-      ? 'purchase'
-      : event.event_name === 'custom_event'
-        ? event.custom_event_name
-        : null;
+  if (isCommerceEventName(event.event_name)) {
+    return event.event_name;
+  }
 
-  return candidate === 'checkout_started' ||
-    candidate === 'purchase' ||
-    candidate === 'refund' ||
-    candidate === 'order_cancelled'
-    ? candidate
+  return event.event_name === 'custom_event' &&
+    isCommerceEventName(event.custom_event_name)
+    ? event.custom_event_name
     : null;
 }
 

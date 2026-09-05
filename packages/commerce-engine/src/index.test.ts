@@ -198,4 +198,75 @@ describe('commerce engine', () => {
       evaluateCommerce({ ...base, events: [duplicate, duplicate] }),
     ).toThrowError(new CommerceEngineError('COMMERCE_EVENT_DUPLICATE'));
   });
+
+  it('accepts normalized commerce event names persisted by the event pipeline', () => {
+    const normalized = (
+      id: string,
+      at: string,
+      name: 'checkout_started' | 'purchase' | 'refund' | 'order_cancelled',
+      properties: Record<string, unknown>,
+    ) => ({
+      ...event({ id, at, name, properties }),
+      event_name: name,
+      custom_event_name: name,
+    });
+
+    const result = evaluateCommerce({
+      ...base,
+      events: [
+        normalized(
+          '71000000-0000-4000-8000-000000000151',
+          '2026-09-05T10:00:00.000Z',
+          'checkout_started',
+          {
+            checkout_id: 'checkout-normalized',
+            provider: 'custom',
+            currency: 'BRL',
+            value_minor: 10000,
+          },
+        ),
+        normalized(
+          '71000000-0000-4000-8000-000000000152',
+          '2026-09-05T10:01:00.000Z',
+          'purchase',
+          {
+            provider: 'custom',
+            order_id: 'order-normalized',
+            currency: 'BRL',
+            value_minor: 10000,
+          },
+        ),
+        normalized(
+          '71000000-0000-4000-8000-000000000153',
+          '2026-09-05T10:02:00.000Z',
+          'refund',
+          {
+            provider: 'custom',
+            order_id: 'order-normalized',
+            currency: 'BRL',
+            refund_minor: 2500,
+          },
+        ),
+        normalized(
+          '71000000-0000-4000-8000-000000000154',
+          '2026-09-05T10:03:00.000Z',
+          'order_cancelled',
+          {
+            provider: 'custom',
+            order_id: 'order-normalized',
+          },
+        ),
+      ],
+    });
+
+    expect(result.checkouts).toHaveLength(1);
+    expect(result.revenue).toEqual([
+      expect.objectContaining({
+        order_id: 'order-normalized',
+        status: 'cancelled',
+        refunded_amount_minor: 2500,
+        net_amount_minor: 7500,
+      }),
+    ]);
+  });
 });
