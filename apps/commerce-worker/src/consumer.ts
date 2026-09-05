@@ -1,5 +1,7 @@
 import { CommerceEngineError, evaluateCommerce } from '@funnel/commerce-engine';
+import type { AttributionRecomputeEnvelopeV1 } from '@funnel/event-contracts/attribution';
 
+import type { AttributionRecomputeProducer } from './attribution-publisher';
 import { commerceDlqAndAck, type CommerceDlqProducer } from './dlq';
 import { validateCommerceEnvelope } from './envelope';
 import { CommerceWorkerError, toCommerceWorkerError } from './errors';
@@ -10,6 +12,7 @@ import type { CommerceQueueBatchLike, CommerceQueueMessageLike } from './types';
 export interface CommerceConsumerDependencies {
   repository: CommerceFactsRepository;
   dlq: CommerceDlqProducer;
+  attributionPublisher: AttributionRecomputeProducer;
   now?: () => number;
 }
 
@@ -112,6 +115,18 @@ export function createCommerceConsumer(
           evaluatedJourneys += 1;
         }
 
+        const attributionEnvelope: AttributionRecomputeEnvelopeV1 = {
+          envelope_version: 1,
+          request_id: crypto.randomUUID(),
+          generated_at: updatedAt,
+          workspace_id: envelope.workspace_id,
+          reason: 'commerce_recomputed',
+          journey_ids: envelope.journey_ids,
+          deleted_journey_ids: envelope.deleted_journey_ids,
+          source_journey_version: envelope.source_journey_version,
+        };
+        await dependencies.attributionPublisher.send(attributionEnvelope);
+
         message.ack();
         logCommerceWorker('commerce_worker.recompute.completed', {
           workspace_id: envelope.workspace_id,
@@ -121,6 +136,7 @@ export function createCommerceConsumer(
           checkout_count: checkoutCount,
           order_count: orderCount,
           item_count: itemCount,
+          attribution_published: true,
           latency: Math.round(performance.now() - startedAt),
           retry_count: Math.max(0, (message.attempts ?? 1) - 1),
         });
