@@ -136,24 +136,24 @@ LIMIT 1
       const result = await this.client.query({
         query: `
 SELECT
-  toString(workspace_id) AS workspace_id,
-  toString(journey_id) AS journey_id,
-  person_id,
-  provider,
-  order_id,
-  currency,
-  status,
-  toString(purchase_event_id) AS purchase_event_id,
-  purchased_at,
-  gross_amount_minor,
-  refunded_amount_minor,
-  net_amount_minor,
-  test_mode
-FROM funnel_analytics.commerce_revenue_facts_current
-WHERE workspace_id = {workspace_id:UUID}
-  AND journey_id = {journey_id:UUID}
-  AND is_deleted = false
-ORDER BY provider, order_id
+  toString(c.workspace_id) AS workspace_id,
+  toString(c.journey_id) AS journey_id,
+  c.person_id,
+  c.provider,
+  c.order_id,
+  c.currency,
+  c.status,
+  toString(c.purchase_event_id) AS purchase_event_id,
+  c.purchased_at,
+  c.gross_amount_minor,
+  c.refunded_amount_minor,
+  c.net_amount_minor,
+  c.test_mode
+FROM funnel_analytics.commerce_revenue_facts_current AS c
+WHERE c.workspace_id = {workspace_id:UUID}
+  AND c.journey_id = {journey_id:UUID}
+  AND c.is_deleted = false
+ORDER BY c.provider, c.order_id
 `,
         query_params: { workspace_id: workspaceId, journey_id: journeyId },
         format: 'JSONEachRow',
