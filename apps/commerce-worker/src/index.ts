@@ -1,3 +1,4 @@
+import { CloudflareAttributionRecomputeProducer } from './attribution-publisher';
 import { createCommerceConsumer } from './consumer';
 import { CloudflareCommerceDlqProducer } from './dlq';
 import { ClickHouseCommerceFactsRepository } from './repository';
@@ -17,6 +18,9 @@ export default {
     const consume = createCommerceConsumer({
       repository,
       dlq: new CloudflareCommerceDlqProducer(env.COMMERCE_DLQ),
+      attributionPublisher: new CloudflareAttributionRecomputeProducer(
+        env.ATTRIBUTION_QUEUE,
+      ),
     });
     await consume(batch);
   },
