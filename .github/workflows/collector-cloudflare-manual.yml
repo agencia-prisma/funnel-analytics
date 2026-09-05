@@ -23,7 +23,6 @@ jobs:
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-      SUPABASE_URL_VALUE: https://efkqeqaispyppxnjlobi.supabase.co
 
     steps:
       - name: Checkout main
@@ -60,14 +59,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Ensure production SUPABASE_URL before deploy
-        if: ${{ inputs.action == 'deploy' }}
-        working-directory: apps/collector
+      - name: Validate production Collector configuration
         shell: bash
         run: |
           set -euo pipefail
-          printf '%s' "$SUPABASE_URL_VALUE" | pnpm exec wrangler secret put SUPABASE_URL --env production
-          echo "SUPABASE_URL configured for production Collector."
+          grep -Fq '"SUPABASE_URL": "https://efkqeqaispyppxnjlobi.supabase.co"' apps/collector/wrangler.jsonc
+          echo "Production SUPABASE_URL is declared in wrangler.jsonc."
 
       - name: Validate production Collector secret names
         working-directory: apps/collector
@@ -79,7 +76,6 @@ jobs:
 
           missing=0
           for name in \
-            SUPABASE_URL \
             SUPABASE_SECRET_KEY \
             IDENTITY_ENCRYPTION_KEY_V1 \
             IDENTITY_HMAC_KEY_V1
