@@ -3,7 +3,6 @@
   "name": "funnel-analytics-collector",
   "main": "src/index.ts",
   "compatibility_date": "2026-08-29",
-  "compatibility_flags": ["global_fetch_strictly_public"],
   "workers_dev": true,
   "vars": {
     "COLLECTOR_ENV": "local",
@@ -84,6 +83,13 @@
     },
     "production": {
       "name": "funnel-analytics-collector-production",
+      "workers_dev": false,
+      "routes": [
+        {
+          "pattern": "collector.prismaag.com.br",
+          "custom_domain": true,
+        },
+      ],
       "vars": {
         "COLLECTOR_ENV": "production",
         "SUPABASE_URL": "https://efkqeqaispyppxnjlobi.supabase.co",
