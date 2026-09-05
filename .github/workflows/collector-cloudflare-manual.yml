@@ -64,7 +64,9 @@ jobs:
         run: |
           set -euo pipefail
           grep -Fq '"SUPABASE_URL": "https://efkqeqaispyppxnjlobi.supabase.co"' apps/collector/wrangler.jsonc
-          echo "Production SUPABASE_URL is declared in wrangler.jsonc."
+          grep -Fq '"global_fetch_strictly_public"' apps/collector/wrangler.jsonc
+          grep -Fq '"workers_dev": true' apps/collector/wrangler.jsonc
+          echo "Production SUPABASE_URL, public fetch routing, and workers.dev are declared in wrangler.jsonc."
 
       - name: Validate production Collector secret names
         working-directory: apps/collector
@@ -97,7 +99,7 @@ jobs:
         if: ${{ inputs.action == 'deploy' }}
         shell: bash
         run: |
-          set -u
+          set -euo pipefail
           BASE='https://funnel-analytics-collector-production.prismaag.workers.dev'
           ORIGIN='https://lp.prismaag.com.br'
           PIXEL_KEY='px_pub_5a53e35861b97c4584f39d5c670d03b99bda'
@@ -106,17 +108,35 @@ jobs:
           EVENT_ID='00000000-0000-7000-8000-000000000003'
           NOW="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
-          probe() {
+          probe_expect() {
             local label="$1"
-            shift
+            local expected="$2"
+            shift 2
             echo
             echo "===== $label ====="
-            curl -sS -D - -o /tmp/body -w '\nHTTP_STATUS=%{http_code}\n' "$@" || true
-            cat /tmp/body || true
+            rm -f /tmp/headers /tmp/body
+            set +e
+            status="$(curl -sS -D /tmp/headers -o /tmp/body -w '%{http_code}' "$@")"
+            rc=$?
+            set -e
+            cat /tmp/headers 2>/dev/null || true
+            echo "HTTP_STATUS=$status"
+            cat /tmp/body 2>/dev/null || true
             echo
+            if [ "$rc" -ne 0 ]; then
+              echo "::error::$label curl failed with exit code $rc"
+              return 1
+            fi
+            if [ "$status" != "$expected" ]; then
+              echo "::error::$label expected HTTP $expected but received $status"
+              return 1
+            fi
           }
 
-          probe 'GET /health' "$BASE/health"
+          # Allow the freshly published workers.dev route to settle before acceptance probes.
+          sleep 2
+
+          probe_expect 'GET /health' 200 "$BASE/health"
 
           IDENTIFY_PAYLOAD=$(cat <<JSON
           {
@@ -135,7 +155,7 @@ jobs:
           JSON
           )
 
-          probe 'POST /v1/identify' \
+          probe_expect 'POST /v1/identify' 202 \
             -X POST "$BASE/v1/identify" \
             -H 'Content-Type: application/json' \
             -H "Origin: $ORIGIN" \
@@ -181,7 +201,7 @@ jobs:
           JSON
           )
 
-          probe 'POST /v1/events' \
+          probe_expect 'POST /v1/events' 202 \
             -X POST "$BASE/v1/events" \
             -H 'Content-Type: application/json' \
             -H "Origin: $ORIGIN" \
