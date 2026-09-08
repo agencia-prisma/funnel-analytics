@@ -6,7 +6,7 @@ import {
   type FunnelRuleV1,
 } from '@funnel/rule-engine';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
+import { useEffect, useMemo, useState, useTransition } from 'react';
 
 import {
   publishFunnelAction,
@@ -133,8 +133,8 @@ export function FunnelBuilder({
   const [error, setError] = useState<string | null>(null);
   const [showPublish, setShowPublish] = useState(false);
   const [isPending, startTransition] = useTransition();
-  const undoStack = useRef<BuilderDraft[]>([]);
-  const redoStack = useRef<BuilderDraft[]>([]);
+  const [undoStack, setUndoStack] = useState<BuilderDraft[]>([]);
+  const [redoStack, setRedoStack] = useState<BuilderDraft[]>([]);
   const storageKey = `funnel-builder:${workspaceId}:${funnelId ?? 'new'}`;
   const effectiveReadOnly = readOnly || archived;
 
@@ -152,23 +152,27 @@ export function FunnelBuilder({
     draft.steps.find((step) => step.id === selectedStepId) ?? null;
 
   useEffect(() => {
-    try {
-      const stored = window.localStorage.getItem(storageKey);
-      if (!stored) return;
-      const candidate = JSON.parse(stored) as BuilderDraft;
-      if (
-        candidate &&
-        Array.isArray(candidate.steps) &&
-        candidate.baseVersion === currentVersion &&
-        candidate.funnelId === funnelId
-      ) {
-        setDraft(candidate);
-        setSelectedStepId(candidate.steps[0]?.id ?? null);
-        setMessage('Rascunho local restaurado.');
+    const restoreTimer = window.setTimeout(() => {
+      try {
+        const stored = window.localStorage.getItem(storageKey);
+        if (!stored) return;
+        const candidate = JSON.parse(stored) as BuilderDraft;
+        if (
+          candidate &&
+          Array.isArray(candidate.steps) &&
+          candidate.baseVersion === currentVersion &&
+          candidate.funnelId === funnelId
+        ) {
+          setDraft(candidate);
+          setSelectedStepId(candidate.steps[0]?.id ?? null);
+          setMessage('Rascunho local restaurado.');
+        }
+      } catch {
+        window.localStorage.removeItem(storageKey);
       }
-    } catch {
-      window.localStorage.removeItem(storageKey);
-    }
+    }, 0);
+
+    return () => window.clearTimeout(restoreTimer);
   }, [currentVersion, funnelId, storageKey]);
 
   useEffect(() => {
@@ -181,12 +185,9 @@ export function FunnelBuilder({
 
   function mutate(recipe: (current: BuilderDraft) => BuilderDraft) {
     if (effectiveReadOnly) return;
-    setDraft((current) => {
-      undoStack.current.push(cloneDraft(current));
-      if (undoStack.current.length > 50) undoStack.current.shift();
-      redoStack.current = [];
-      return recipe(current);
-    });
+    setUndoStack([...undoStack.slice(-49), cloneDraft(draft)]);
+    setRedoStack([]);
+    setDraft(recipe(draft));
     setMessage(null);
     setError(null);
   }
@@ -229,16 +230,18 @@ export function FunnelBuilder({
   }
 
   function undo() {
-    const previous = undoStack.current.pop();
+    const previous = undoStack.at(-1);
     if (!previous) return;
-    redoStack.current.push(cloneDraft(draft));
+    setUndoStack(undoStack.slice(0, -1));
+    setRedoStack([...redoStack, cloneDraft(draft)]);
     setDraft(previous);
   }
 
   function redo() {
-    const next = redoStack.current.pop();
+    const next = redoStack.at(-1);
     if (!next) return;
-    undoStack.current.push(cloneDraft(draft));
+    setRedoStack(redoStack.slice(0, -1));
+    setUndoStack([...undoStack, cloneDraft(draft)].slice(-50));
     setDraft(next);
   }
 
@@ -318,7 +321,7 @@ export function FunnelBuilder({
         <div className="flex flex-wrap gap-2">
           <button
             className="rounded-lg border border-white/10 px-3 py-2 text-sm text-zinc-300 disabled:opacity-40"
-            disabled={effectiveReadOnly || !undoStack.current.length}
+            disabled={effectiveReadOnly || undoStack.length === 0}
             type="button"
             onClick={undo}
           >
@@ -326,7 +329,7 @@ export function FunnelBuilder({
           </button>
           <button
             className="rounded-lg border border-white/10 px-3 py-2 text-sm text-zinc-300 disabled:opacity-40"
-            disabled={effectiveReadOnly || !redoStack.current.length}
+            disabled={effectiveReadOnly || redoStack.length === 0}
             type="button"
             onClick={redo}
           >
