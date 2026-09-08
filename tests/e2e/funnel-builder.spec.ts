@@ -59,5 +59,7 @@ test('owner configures rules, publishes a funnel, and reloads the immutable vers
     page.getByRole('heading', { name: `Checkout ${suffix}` }),
   ).toBeVisible();
   await expect(page.getByText('Base v1')).toBeVisible();
-  await expect(page.getByLabel('Valor', { exact: true })).toHaveValue('/oferta');
+  await expect(page.getByLabel('Valor', { exact: true })).toHaveValue(
+    '/oferta',
+  );
 });
