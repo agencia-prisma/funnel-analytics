@@ -337,9 +337,7 @@ export function FunnelBuilder({
 
   function removeSelectedStep() {
     if (!selectedStep) return;
-    if (
-      !window.confirm('Remover etapa? A sequência visual será reorganizada.')
-    )
+    if (!window.confirm('Remover etapa? A sequência visual será reorganizada.'))
       return;
 
     const nextSelectedId =
@@ -538,7 +536,8 @@ export function FunnelBuilder({
           aria-modal="true"
           aria-labelledby="funnel-settings-title"
           onMouseDown={(event) => {
-            if (event.target === event.currentTarget) setShowFunnelSettings(false);
+            if (event.target === event.currentTarget)
+              setShowFunnelSettings(false);
           }}
         >
           <div className="w-full max-w-xl rounded-2xl border border-white/10 bg-[#120f19] p-6 shadow-2xl">
@@ -572,7 +571,10 @@ export function FunnelBuilder({
                 maxLength={120}
                 value={draft.name}
                 onChange={(event) =>
-                  mutate((current) => ({ ...current, name: event.target.value }))
+                  mutate((current) => ({
+                    ...current,
+                    name: event.target.value,
+                  }))
                 }
               />
             </label>
@@ -642,7 +644,8 @@ export function FunnelBuilder({
           aria-modal="true"
           aria-labelledby="step-settings-title"
           onMouseDown={(event) => {
-            if (event.target === event.currentTarget) setShowStepSettings(false);
+            if (event.target === event.currentTarget)
+              setShowStepSettings(false);
           }}
         >
           <div className="w-full max-w-4xl rounded-2xl border border-white/10 bg-[#120f19] p-6 shadow-2xl">
