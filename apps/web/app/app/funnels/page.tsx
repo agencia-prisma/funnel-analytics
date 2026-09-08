@@ -86,7 +86,7 @@ export default async function FunnelsPage({
                 <div className="bg-[#0b0911] p-5">
                   <p className="text-xs tracking-wider text-zinc-600 uppercase">Steps</p>
                   <p className="mt-2 text-sm font-medium text-zinc-200">
-                    {funnel.current_version?.steps.length ?? 0}
+                    {funnel.current_version?.step_count ?? 0}
                   </p>
                 </div>
                 <div className="bg-[#0b0911] p-5">
