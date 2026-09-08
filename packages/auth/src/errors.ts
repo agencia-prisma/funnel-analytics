@@ -20,6 +20,15 @@ export const DOMAIN_ERROR_CODES = [
   'DOMAIN_INVALID',
   'DOMAIN_DUPLICATE',
   'DOMAIN_NOT_FOUND',
+  'FUNNEL_NOT_FOUND',
+  'FUNNEL_ARCHIVED',
+  'FUNNEL_INVALID',
+  'FUNNEL_STEPS_INVALID',
+  'FUNNEL_STEP_KEY_DUPLICATE',
+  'FUNNEL_VERSION_CONFLICT',
+  'FUNNEL_DEFINITION_INVALID',
+  'FUNNEL_RULE_INVALID',
+  'FUNNEL_RULE_TOO_COMPLEX',
 ] as const;
 
 export type DomainErrorCode = (typeof DOMAIN_ERROR_CODES)[number];
@@ -47,6 +56,16 @@ const DOMAIN_MESSAGES: Record<DomainErrorCode, string> = {
   DOMAIN_INVALID: 'Informe um domínio válido.',
   DOMAIN_DUPLICATE: 'Este domínio já está cadastrado no Pixel.',
   DOMAIN_NOT_FOUND: 'Domínio não encontrado.',
+  FUNNEL_NOT_FOUND: 'Funil não encontrado neste Workspace.',
+  FUNNEL_ARCHIVED: 'Este funil está arquivado e não pode ser alterado.',
+  FUNNEL_INVALID: 'Revise os dados do funil e tente novamente.',
+  FUNNEL_STEPS_INVALID: 'Revise as etapas antes de publicar.',
+  FUNNEL_STEP_KEY_DUPLICATE: 'Cada etapa precisa ter uma chave única.',
+  FUNNEL_VERSION_CONFLICT:
+    'Uma versão mais recente deste funil foi publicada. Recarregue antes de continuar.',
+  FUNNEL_DEFINITION_INVALID: 'A definição do funil não é válida.',
+  FUNNEL_RULE_INVALID: 'Uma ou mais regras do funil são inválidas.',
+  FUNNEL_RULE_TOO_COMPLEX: 'Uma regra ultrapassou o limite de complexidade.',
 };
 
 export function extractDomainErrorCode(error: unknown): DomainErrorCode | null {
