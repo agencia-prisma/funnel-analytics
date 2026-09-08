@@ -32,6 +32,9 @@ import { RuleBuilder } from './RuleBuilder';
 const inputClass =
   'mt-2 h-11 w-full rounded-lg border border-white/10 bg-black/30 px-3 text-sm text-zinc-100 outline-none focus:border-violet-400 disabled:cursor-not-allowed disabled:opacity-60';
 
+const dialogBackdropClass =
+  'fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-black/75 p-4 backdrop-blur-sm sm:p-6';
+
 function initialSteps(definition?: FunnelDefinitionV1): BuilderStep[] {
   if (definition) {
     return definition.steps.map((step, index) => ({
@@ -43,6 +46,7 @@ function initialSteps(definition?: FunnelDefinitionV1): BuilderStep[] {
       canvas: { x: 80 + index * 300, y: 160 },
     }));
   }
+
   return [
     {
       id: 'landing',
@@ -129,6 +133,8 @@ export function FunnelBuilder({
   const [selectedStepId, setSelectedStepId] = useState<string | null>(
     draft.steps[0]?.id ?? null,
   );
+  const [showStepSettings, setShowStepSettings] = useState(false);
+  const [showFunnelSettings, setShowFunnelSettings] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showPublish, setShowPublish] = useState(false);
@@ -183,6 +189,20 @@ export function FunnelBuilder({
     return () => window.clearTimeout(timer);
   }, [draft, effectiveReadOnly, storageKey]);
 
+  useEffect(() => {
+    if (!showStepSettings && !showFunnelSettings && !showPublish) return;
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key !== 'Escape') return;
+      setShowStepSettings(false);
+      setShowFunnelSettings(false);
+      setShowPublish(false);
+    }
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [showFunnelSettings, showPublish, showStepSettings]);
+
   function mutate(recipe: (current: BuilderDraft) => BuilderDraft) {
     if (effectiveReadOnly) return;
     setUndoStack([...undoStack.slice(-49), cloneDraft(draft)]);
@@ -201,6 +221,11 @@ export function FunnelBuilder({
     }));
   }
 
+  function openStepSettings(stepId: string) {
+    setSelectedStepId(stepId);
+    setShowStepSettings(true);
+  }
+
   function addStep() {
     const nextPosition = draft.steps.length + 1;
     const base = `etapa_${nextPosition}`;
@@ -212,6 +237,7 @@ export function FunnelBuilder({
       typeof crypto !== 'undefined' && 'randomUUID' in crypto
         ? crypto.randomUUID()
         : `${key}-${Date.now()}`;
+
     mutate((current) => ({
       ...current,
       steps: [
@@ -227,6 +253,7 @@ export function FunnelBuilder({
       ],
     }));
     setSelectedStepId(id);
+    setShowStepSettings(true);
   }
 
   function undo() {
@@ -259,6 +286,7 @@ export function FunnelBuilder({
       setShowPublish(false);
       return;
     }
+
     setError(null);
     startTransition(async () => {
       const response = await publishFunnelAction({
@@ -273,6 +301,7 @@ export function FunnelBuilder({
         setShowPublish(false);
         return;
       }
+
       window.localStorage.removeItem(storageKey);
       setShowPublish(false);
       router.push(
@@ -283,19 +312,46 @@ export function FunnelBuilder({
   }
 
   function saveMetadata() {
-    if (!draft.funnelId) return;
+    if (!draft.funnelId) {
+      setShowFunnelSettings(false);
+      return;
+    }
+
     startTransition(async () => {
       const response = await updateFunnelMetadataAction({
         funnelId: draft.funnelId!,
         name: draft.name,
         description: draft.description,
       });
-      if (!response.ok)
+      if (!response.ok) {
         setError(
           response.error ?? 'Não foi possível salvar os dados do funil.',
         );
-      else setMessage('Nome e descrição atualizados.');
+        return;
+      }
+
+      setMessage('Nome e descrição atualizados.');
+      setShowFunnelSettings(false);
     });
+  }
+
+  function removeSelectedStep() {
+    if (!selectedStep) return;
+    if (
+      !window.confirm('Remover etapa? A sequência visual será reorganizada.')
+    )
+      return;
+
+    const nextSelectedId =
+      draft.steps.find((step) => step.id !== selectedStep.id)?.id ?? null;
+    mutate((current) => ({
+      ...current,
+      steps: current.steps
+        .filter((step) => step.id !== selectedStep.id)
+        .map((step, index) => ({ ...step, position: index + 1 })),
+    }));
+    setSelectedStepId(nextSelectedId);
+    setShowStepSettings(false);
   }
 
   return (
@@ -318,7 +374,15 @@ export function FunnelBuilder({
             </span>
           ) : null}
         </div>
+
         <div className="flex flex-wrap gap-2">
+          <button
+            className="rounded-lg border border-white/10 px-3 py-2 text-sm text-zinc-300 hover:bg-white/5"
+            type="button"
+            onClick={() => setShowFunnelSettings(true)}
+          >
+            Configurar funil
+          </button>
           <button
             className="rounded-lg border border-white/10 px-3 py-2 text-sm text-zinc-300 disabled:opacity-40"
             disabled={effectiveReadOnly || undoStack.length === 0}
@@ -380,7 +444,12 @@ export function FunnelBuilder({
       <div className="grid gap-5 xl:grid-cols-[260px_minmax(0,1fr)]">
         <aside className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="text-sm font-semibold text-white">Etapas</h2>
+            <div>
+              <h2 className="text-sm font-semibold text-white">Etapas</h2>
+              <p className="mt-1 text-[11px] text-zinc-500">
+                Clique para configurar
+              </p>
+            </div>
             {!effectiveReadOnly ? (
               <button
                 className="rounded-lg bg-white/10 px-2.5 py-1.5 text-xs text-white hover:bg-white/15"
@@ -391,15 +460,16 @@ export function FunnelBuilder({
               </button>
             ) : null}
           </div>
+
           <div className="mt-4 grid gap-2">
             {[...draft.steps]
               .sort((a, b) => a.position - b.position)
               .map((step, index) => (
                 <button
-                  className={`rounded-xl border p-3 text-left ${selectedStepId === step.id ? 'border-violet-400/50 bg-violet-400/10' : 'border-white/10 bg-black/20 hover:bg-white/5'}`}
+                  className={`rounded-xl border p-3 text-left transition ${selectedStepId === step.id ? 'border-violet-400/50 bg-violet-400/10' : 'border-white/10 bg-black/20 hover:border-white/20 hover:bg-white/5'}`}
                   key={step.id}
                   type="button"
-                  onClick={() => setSelectedStepId(step.id)}
+                  onClick={() => openStepSettings(step.id)}
                 >
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-violet-300">
@@ -417,228 +487,20 @@ export function FunnelBuilder({
           </div>
         </aside>
 
-        <FunnelCanvas
-          invalidStepIds={invalidStepIds}
-          readOnly={effectiveReadOnly}
-          selectedStepId={selectedStepId}
-          steps={draft.steps}
-          onSelect={setSelectedStepId}
-          onMove={(stepId, canvas) => updateStep(stepId, { canvas })}
-        />
-      </div>
-
-      <div className="grid gap-5 xl:grid-cols-[360px_minmax(0,1fr)]">
-        <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
-          <h2 className="text-sm font-semibold text-white">
-            Configurações do funil
-          </h2>
-          <label className="mt-4 block text-xs font-medium text-zinc-400">
-            Nome
-            <input
-              className={inputClass}
-              disabled={effectiveReadOnly}
-              maxLength={120}
-              value={draft.name}
-              onChange={(event) =>
-                mutate((current) => ({ ...current, name: event.target.value }))
-              }
-            />
-          </label>
-          <label className="mt-4 block text-xs font-medium text-zinc-400">
-            Descrição
-            <textarea
-              className="mt-2 min-h-24 w-full rounded-lg border border-white/10 bg-black/30 p-3 text-sm text-zinc-100 outline-none focus:border-violet-400 disabled:opacity-60"
-              disabled={effectiveReadOnly}
-              maxLength={2000}
-              value={draft.description}
-              onChange={(event) =>
-                mutate((current) => ({
-                  ...current,
-                  description: event.target.value,
-                }))
-              }
-            />
-          </label>
-          <label className="mt-4 block text-xs font-medium text-zinc-400">
-            Janela de conversão
-            <select
-              className={inputClass}
-              disabled={effectiveReadOnly}
-              value={draft.conversionWindowSeconds}
-              onChange={(event) =>
-                mutate((current) => ({
-                  ...current,
-                  conversionWindowSeconds: Number(event.target.value),
-                }))
-              }
-            >
-              {CONVERSION_WINDOWS.map((window) => (
-                <option key={window.value} value={window.value}>
-                  {window.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          {draft.funnelId && !effectiveReadOnly ? (
-            <button
-              className="mt-4 rounded-lg border border-white/10 px-3 py-2 text-sm text-white"
-              disabled={isPending}
-              type="button"
-              onClick={saveMetadata}
-            >
-              Salvar nome/descrição
-            </button>
-          ) : null}
-          <div className="mt-5 border-t border-white/10 pt-4 text-xs leading-5 text-zinc-500">
-            A posição no canvas é metadata visual local. A ordem analítica vem
-            de <code>position</code>, nunca de coordenadas do React Flow.
-          </div>
-        </section>
-
-        <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
-          {selectedStep ? (
-            <>
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <h2 className="text-sm font-semibold text-white">
-                  Etapa {selectedStep.position} · Inspector
-                </h2>
-                {!effectiveReadOnly ? (
-                  <div className="flex gap-2">
-                    <button
-                      className="rounded-lg border border-white/10 px-2.5 py-1.5 text-xs text-zinc-300 disabled:opacity-30"
-                      disabled={selectedStep.position <= 1}
-                      type="button"
-                      onClick={() =>
-                        mutate((current) => ({
-                          ...current,
-                          steps: reorderSteps(
-                            current.steps,
-                            selectedStep.position - 1,
-                            selectedStep.position - 2,
-                          ),
-                        }))
-                      }
-                    >
-                      ←
-                    </button>
-                    <button
-                      className="rounded-lg border border-white/10 px-2.5 py-1.5 text-xs text-zinc-300 disabled:opacity-30"
-                      disabled={selectedStep.position >= draft.steps.length}
-                      type="button"
-                      onClick={() =>
-                        mutate((current) => ({
-                          ...current,
-                          steps: reorderSteps(
-                            current.steps,
-                            selectedStep.position - 1,
-                            selectedStep.position,
-                          ),
-                        }))
-                      }
-                    >
-                      →
-                    </button>
-                    <button
-                      className="rounded-lg border border-white/10 px-2.5 py-1.5 text-xs text-zinc-300"
-                      type="button"
-                      onClick={() =>
-                        mutate((current) => ({
-                          ...current,
-                          steps: duplicateStep(current.steps, selectedStep.id),
-                        }))
-                      }
-                    >
-                      Duplicar
-                    </button>
-                    <button
-                      className="rounded-lg border border-rose-400/20 px-2.5 py-1.5 text-xs text-rose-300"
-                      type="button"
-                      onClick={() => {
-                        if (
-                          !window.confirm(
-                            'Remover etapa? A sequência visual será reorganizada.',
-                          )
-                        )
-                          return;
-                        mutate((current) => ({
-                          ...current,
-                          steps: current.steps
-                            .filter((step) => step.id !== selectedStep.id)
-                            .map((step, index) => ({
-                              ...step,
-                              position: index + 1,
-                            })),
-                        }));
-                        setSelectedStepId(
-                          draft.steps.find(
-                            (step) => step.id !== selectedStep.id,
-                          )?.id ?? null,
-                        );
-                      }}
-                    >
-                      Remover
-                    </button>
-                  </div>
-                ) : null}
-              </div>
-              <div className="mt-4 grid gap-4 md:grid-cols-2">
-                <label className="text-xs font-medium text-zinc-400">
-                  Nome da etapa
-                  <input
-                    className={inputClass}
-                    disabled={effectiveReadOnly}
-                    maxLength={120}
-                    value={selectedStep.name}
-                    onChange={(event) => {
-                      const nameValue = event.target.value;
-                      const changes: Partial<BuilderStep> = { name: nameValue };
-                      if (
-                        !selectedStep.step_key ||
-                        selectedStep.step_key.startsWith('etapa_')
-                      )
-                        changes.step_key =
-                          slugifyStepKey(nameValue) || selectedStep.step_key;
-                      updateStep(selectedStep.id, changes);
-                    }}
-                  />
-                </label>
-                <label className="text-xs font-medium text-zinc-400">
-                  Step key
-                  <input
-                    className={inputClass}
-                    disabled={effectiveReadOnly}
-                    maxLength={64}
-                    value={selectedStep.step_key}
-                    onChange={(event) =>
-                      updateStep(selectedStep.id, {
-                        step_key: event.target.value.toLowerCase(),
-                      })
-                    }
-                  />
-                </label>
-              </div>
-              <div className="mt-6">
-                <div className="mb-3 flex items-center justify-between gap-3">
-                  <h3 className="text-xs font-semibold tracking-wider text-violet-200 uppercase">
-                    Regra
-                  </h3>
-                  <span className="text-xs text-zinc-600">AST canônico v1</span>
-                </div>
-                <RuleBuilder
-                  disabled={effectiveReadOnly}
-                  rule={selectedStep.rule}
-                  onChange={(rule: FunnelRuleV1) =>
-                    updateStep(selectedStep.id, { rule })
-                  }
-                />
-              </div>
-            </>
-          ) : (
-            <p className="text-sm text-zinc-500">
-              Selecione uma etapa no canvas.
-            </p>
-          )}
-        </section>
+        <div className="grid gap-3">
+          <FunnelCanvas
+            invalidStepIds={invalidStepIds}
+            readOnly={effectiveReadOnly}
+            selectedStepId={selectedStepId}
+            steps={draft.steps}
+            onSelect={openStepSettings}
+            onMove={(stepId, canvas) => updateStep(stepId, { canvas })}
+          />
+          <p className="px-1 text-xs text-zinc-500">
+            Clique em qualquer card do fluxo para visualizar e editar suas
+            configurações.
+          </p>
+        </div>
       </div>
 
       <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
@@ -669,9 +531,288 @@ export function FunnelBuilder({
         ) : null}
       </section>
 
+      {showFunnelSettings ? (
+        <div
+          className={dialogBackdropClass}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="funnel-settings-title"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setShowFunnelSettings(false);
+          }}
+        >
+          <div className="w-full max-w-xl rounded-2xl border border-white/10 bg-[#120f19] p-6 shadow-2xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2
+                  id="funnel-settings-title"
+                  className="text-xl font-semibold text-white"
+                >
+                  Configurações do funil
+                </h2>
+                <p className="mt-1 text-sm text-zinc-500">
+                  Ajuste as informações gerais sem sair do canvas.
+                </p>
+              </div>
+              <button
+                aria-label="Fechar configurações do funil"
+                className="rounded-lg border border-white/10 px-3 py-2 text-sm text-zinc-400 hover:bg-white/5"
+                type="button"
+                onClick={() => setShowFunnelSettings(false)}
+              >
+                ✕
+              </button>
+            </div>
+
+            <label className="mt-6 block text-xs font-medium text-zinc-400">
+              Nome
+              <input
+                className={inputClass}
+                disabled={effectiveReadOnly}
+                maxLength={120}
+                value={draft.name}
+                onChange={(event) =>
+                  mutate((current) => ({ ...current, name: event.target.value }))
+                }
+              />
+            </label>
+            <label className="mt-4 block text-xs font-medium text-zinc-400">
+              Descrição
+              <textarea
+                className="mt-2 min-h-24 w-full rounded-lg border border-white/10 bg-black/30 p-3 text-sm text-zinc-100 outline-none focus:border-violet-400 disabled:opacity-60"
+                disabled={effectiveReadOnly}
+                maxLength={2000}
+                value={draft.description}
+                onChange={(event) =>
+                  mutate((current) => ({
+                    ...current,
+                    description: event.target.value,
+                  }))
+                }
+              />
+            </label>
+            <label className="mt-4 block text-xs font-medium text-zinc-400">
+              Janela de conversão
+              <select
+                className={inputClass}
+                disabled={effectiveReadOnly}
+                value={draft.conversionWindowSeconds}
+                onChange={(event) =>
+                  mutate((current) => ({
+                    ...current,
+                    conversionWindowSeconds: Number(event.target.value),
+                  }))
+                }
+              >
+                {CONVERSION_WINDOWS.map((window) => (
+                  <option key={window.value} value={window.value}>
+                    {window.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <div className="mt-6 flex justify-end gap-2 border-t border-white/10 pt-5">
+              <button
+                className="rounded-lg border border-white/10 px-4 py-2 text-sm text-zinc-300 hover:bg-white/5"
+                type="button"
+                onClick={() => setShowFunnelSettings(false)}
+              >
+                Fechar
+              </button>
+              {!effectiveReadOnly ? (
+                <button
+                  className="rounded-lg bg-violet-500 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-400 disabled:opacity-50"
+                  disabled={isPending}
+                  type="button"
+                  onClick={saveMetadata}
+                >
+                  {draft.funnelId ? 'Salvar configurações' : 'Concluir'}
+                </button>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {showStepSettings && selectedStep ? (
+        <div
+          className={dialogBackdropClass}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="step-settings-title"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setShowStepSettings(false);
+          }}
+        >
+          <div className="w-full max-w-4xl rounded-2xl border border-white/10 bg-[#120f19] p-6 shadow-2xl">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="rounded-full bg-violet-400/10 px-2.5 py-1 text-xs font-semibold text-violet-300">
+                    {String(selectedStep.position).padStart(2, '0')}
+                  </span>
+                  <h2
+                    id="step-settings-title"
+                    className="text-xl font-semibold text-white"
+                  >
+                    Configurar {selectedStep.name}
+                  </h2>
+                </div>
+                <p className="mt-2 text-sm text-zinc-500">
+                  Os valores abaixo refletem a configuração atual deste card.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {!effectiveReadOnly ? (
+                  <>
+                    <button
+                      aria-label="Mover etapa para a esquerda"
+                      className="rounded-lg border border-white/10 px-3 py-2 text-sm text-zinc-300 disabled:opacity-30"
+                      disabled={selectedStep.position <= 1}
+                      type="button"
+                      onClick={() =>
+                        mutate((current) => ({
+                          ...current,
+                          steps: reorderSteps(
+                            current.steps,
+                            selectedStep.position - 1,
+                            selectedStep.position - 2,
+                          ),
+                        }))
+                      }
+                    >
+                      ←
+                    </button>
+                    <button
+                      aria-label="Mover etapa para a direita"
+                      className="rounded-lg border border-white/10 px-3 py-2 text-sm text-zinc-300 disabled:opacity-30"
+                      disabled={selectedStep.position >= draft.steps.length}
+                      type="button"
+                      onClick={() =>
+                        mutate((current) => ({
+                          ...current,
+                          steps: reorderSteps(
+                            current.steps,
+                            selectedStep.position - 1,
+                            selectedStep.position,
+                          ),
+                        }))
+                      }
+                    >
+                      →
+                    </button>
+                    <button
+                      className="rounded-lg border border-white/10 px-3 py-2 text-sm text-zinc-300 hover:bg-white/5"
+                      type="button"
+                      onClick={() =>
+                        mutate((current) => ({
+                          ...current,
+                          steps: duplicateStep(current.steps, selectedStep.id),
+                        }))
+                      }
+                    >
+                      Duplicar
+                    </button>
+                    <button
+                      className="rounded-lg border border-rose-400/20 px-3 py-2 text-sm text-rose-300 hover:bg-rose-400/5"
+                      type="button"
+                      onClick={removeSelectedStep}
+                    >
+                      Remover
+                    </button>
+                  </>
+                ) : null}
+                <button
+                  aria-label="Fechar configurações da etapa"
+                  className="rounded-lg border border-white/10 px-3 py-2 text-sm text-zinc-400 hover:bg-white/5"
+                  type="button"
+                  onClick={() => setShowStepSettings(false)}
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            <div className="mt-6 grid gap-4 md:grid-cols-2">
+              <label className="text-xs font-medium text-zinc-400">
+                Nome da etapa
+                <input
+                  className={inputClass}
+                  disabled={effectiveReadOnly}
+                  maxLength={120}
+                  value={selectedStep.name}
+                  onChange={(event) => {
+                    const nameValue = event.target.value;
+                    const changes: Partial<BuilderStep> = { name: nameValue };
+                    if (
+                      !selectedStep.step_key ||
+                      selectedStep.step_key.startsWith('etapa_')
+                    )
+                      changes.step_key =
+                        slugifyStepKey(nameValue) || selectedStep.step_key;
+                    updateStep(selectedStep.id, changes);
+                  }}
+                />
+              </label>
+              <label className="text-xs font-medium text-zinc-400">
+                Step key
+                <input
+                  className={inputClass}
+                  disabled={effectiveReadOnly}
+                  maxLength={64}
+                  value={selectedStep.step_key}
+                  onChange={(event) =>
+                    updateStep(selectedStep.id, {
+                      step_key: event.target.value.toLowerCase(),
+                    })
+                  }
+                />
+              </label>
+            </div>
+
+            <div className="mt-6">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-xs font-semibold tracking-wider text-violet-200 uppercase">
+                    Regra
+                  </h3>
+                  <p className="mt-1 text-xs text-zinc-600">
+                    Defina quando esta etapa deve ser considerada atingida.
+                  </p>
+                </div>
+                <span className="text-xs text-zinc-600">AST canônico v1</span>
+              </div>
+              <RuleBuilder
+                disabled={effectiveReadOnly}
+                rule={selectedStep.rule}
+                onChange={(rule: FunnelRuleV1) =>
+                  updateStep(selectedStep.id, { rule })
+                }
+              />
+            </div>
+
+            <div className="mt-6 flex items-center justify-between gap-3 border-t border-white/10 pt-5">
+              <p className="text-xs text-zinc-500">
+                As alterações ficam no rascunho até a publicação de uma nova
+                versão.
+              </p>
+              <button
+                className="rounded-lg bg-violet-500 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-400"
+                type="button"
+                onClick={() => setShowStepSettings(false)}
+              >
+                {effectiveReadOnly ? 'Fechar' : 'Concluir edição'}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       {showPublish ? (
         <div
-          className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-6"
+          className={dialogBackdropClass}
           role="dialog"
           aria-modal="true"
           aria-labelledby="publish-title"
