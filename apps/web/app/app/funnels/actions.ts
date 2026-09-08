@@ -68,8 +68,6 @@ export async function publishFunnelAction(input: {
 
       logger.info('funnel.builder_published', {
         actor_user_id: user.id,
-        funnel_id: created.funnel_id,
-        version: created.version,
         workspace_id: workspace.id,
       });
       return {
@@ -96,8 +94,6 @@ export async function publishFunnelAction(input: {
 
     logger.info('funnel.builder_published', {
       actor_user_id: user.id,
-      funnel_id: input.funnelId,
-      version: created.version,
       workspace_id: workspace.id,
     });
     return { ok: true, funnelId: input.funnelId, version: created.version };
