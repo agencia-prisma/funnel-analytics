@@ -24,7 +24,7 @@ async function createWorkspace(
   await expect(page).toHaveURL(/\/app$/);
 }
 
-test('owner creates and publishes a funnel, then reloads the immutable version', async ({
+test('owner configures rules, publishes a funnel, and reloads the immutable version', async ({
   page,
 }) => {
   const suffix = Date.now().toString(36);
@@ -38,7 +38,12 @@ test('owner creates and publishes a funnel, then reloads the immutable version',
   await expect(
     page.getByRole('heading', { name: 'Novo Funnel' }),
   ).toBeVisible();
-  await page.getByLabel('Nome').fill(`Checkout ${suffix}`);
+  await page.getByLabel('Nome', { exact: true }).fill(`Checkout ${suffix}`);
+
+  await page.getByLabel('Campo').selectOption('page_path');
+  await page.getByLabel('Operador').selectOption('contains');
+  await page.getByLabel('Valor', { exact: true }).fill('/oferta');
+
   await page.getByRole('button', { name: 'Publicar' }).click();
   await expect(
     page.getByRole('heading', { name: 'Publicar nova versão?' }),
@@ -54,4 +59,5 @@ test('owner creates and publishes a funnel, then reloads the immutable version',
     page.getByRole('heading', { name: `Checkout ${suffix}` }),
   ).toBeVisible();
   await expect(page.getByText('Base v1')).toBeVisible();
+  await expect(page.getByDisplayValue('/oferta')).toBeVisible();
 });
