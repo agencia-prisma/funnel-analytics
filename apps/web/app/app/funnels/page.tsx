@@ -8,7 +8,7 @@ import {
   requireCurrentWorkspace,
 } from '@/lib/workspaces';
 
-import { archiveFunnelAction } from './actions';
+import { ArchiveFunnelForm } from './ArchiveFunnelForm';
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat('pt-BR', {
@@ -126,15 +126,7 @@ export default async function FunnelsPage({
                     Abrir
                   </Link>
                   {canManage && funnel.status !== 'archived' ? (
-                    <form action={archiveFunnelAction}>
-                      <input name="funnel_id" type="hidden" value={funnel.id} />
-                      <button
-                        className="rounded-lg border border-rose-400/20 px-3 py-2 text-sm text-rose-300 hover:bg-rose-400/5"
-                        type="submit"
-                      >
-                        Arquivar
-                      </button>
-                    </form>
+                    <ArchiveFunnelForm funnelId={funnel.id} />
                   ) : null}
                 </div>
               </div>
