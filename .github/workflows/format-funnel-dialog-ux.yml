@@ -1,0 +1,38 @@
+name: Format Funnel Dialog UX
+
+on:
+  push:
+    branches:
+      - feature/funnel-builder-dialog-ux
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/funnel-builder-dialog-ux
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec prettier --write apps/web/components/funnel-builder/FunnelBuilder.tsx tests/e2e/funnel-builder.spec.ts
+      - name: Commit formatted files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apps/web/components/funnel-builder/FunnelBuilder.tsx tests/e2e/funnel-builder.spec.ts
+          if git diff --cached --quiet; then
+            echo "No formatting changes needed"
+            exit 0
+          fi
+          git commit -m "style(funnel-builder): format dialog UX"
+          git push origin HEAD:feature/funnel-builder-dialog-ux
