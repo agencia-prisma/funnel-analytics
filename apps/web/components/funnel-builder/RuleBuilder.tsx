@@ -55,6 +55,7 @@ function ConditionEditor({
       <div className="grid gap-2">
         <label className="text-xs font-medium text-zinc-400">Campo</label>
         <select
+          aria-label="Campo"
           className={inputClass}
           disabled={disabled}
           value={fieldValue}
