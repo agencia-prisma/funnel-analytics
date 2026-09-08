@@ -1,7 +1,7 @@
 import 'server-only';
 
-import type { FunnelRuleV1 } from '@funnel/rule-engine';
 import { createServerSupabaseClient } from '@funnel/db/supabase/server';
+import type { FunnelRuleV1 } from '@funnel/rule-engine';
 
 import {
   requireCurrentWorkspace,
@@ -23,6 +23,7 @@ export interface FunnelVersionRecord {
   mode: string;
   conversion_window_seconds: number;
   created_at: string;
+  step_count: number;
   steps: FunnelStepRecord[];
 }
 
@@ -59,7 +60,10 @@ export async function listCurrentWorkspaceFunnels(): Promise<FunnelRecord[]> {
     .map((funnel) => funnel.current_version_id)
     .filter((id): id is string => Boolean(id));
 
-  const versionsById = new Map<string, Omit<FunnelVersionRecord, 'steps'>>();
+  const versionsById = new Map<
+    string,
+    Omit<FunnelVersionRecord, 'steps' | 'step_count'>
+  >();
   if (versionIds.length) {
     const { data: versions, error: versionError } = await supabase
       .from('funnel_versions')
@@ -101,20 +105,8 @@ export async function listCurrentWorkspaceFunnels(): Promise<FunnelRecord[]> {
       current_version: version
         ? {
             ...version,
-            steps: Array.from(
-              { length: stepCountByVersion.get(version.id) ?? 0 },
-              (_, index) => ({
-                id: `count-${index}`,
-                step_key: '',
-                position: index + 1,
-                name: '',
-                rule: {
-                  kind: 'condition',
-                  field: 'event_name',
-                  operator: 'exists',
-                },
-              }),
-            ),
+            step_count: stepCountByVersion.get(version.id) ?? 0,
+            steps: [],
           }
         : null,
     };
@@ -174,6 +166,7 @@ export async function getCurrentWorkspaceFunnel(
     ...(funnel as Omit<FunnelRecord, 'current_version'>),
     current_version: {
       ...version,
+      step_count: steps?.length ?? 0,
       steps: (steps ?? []) as FunnelStepRecord[],
     },
   };
