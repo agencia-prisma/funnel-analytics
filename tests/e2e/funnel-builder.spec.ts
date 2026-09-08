@@ -24,7 +24,14 @@ async function createWorkspace(
   await expect(page).toHaveURL(/\/app$/);
 }
 
-test('owner configures rules, publishes a funnel, and reloads the immutable version', async ({
+async function openFirstStepDialog(page: import('@playwright/test').Page) {
+  await page.locator('.react-flow__node-funnelStep').first().click();
+  await expect(
+    page.getByRole('heading', { name: /Configurar Landing Page/ }),
+  ).toBeVisible();
+}
+
+test('owner configures rules in dialogs, publishes a funnel, and reloads the immutable version', async ({
   page,
 }) => {
   const suffix = Date.now().toString(36);
@@ -38,11 +45,19 @@ test('owner configures rules, publishes a funnel, and reloads the immutable vers
   await expect(
     page.getByRole('heading', { name: 'Novo Funnel' }),
   ).toBeVisible();
-  await page.getByLabel('Nome', { exact: true }).fill(`Checkout ${suffix}`);
 
+  await page.getByRole('button', { name: 'Configurar funil' }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Configurações do funil' }),
+  ).toBeVisible();
+  await page.getByLabel('Nome', { exact: true }).fill(`Checkout ${suffix}`);
+  await page.getByRole('button', { name: 'Concluir' }).click();
+
+  await openFirstStepDialog(page);
   await page.getByLabel('Campo').selectOption('page_path');
   await page.getByLabel('Operador').selectOption('contains');
   await page.getByLabel('Valor', { exact: true }).fill('/oferta');
+  await page.getByRole('button', { name: 'Concluir edição' }).click();
 
   await page.getByRole('button', { name: 'Publicar' }).click();
   await expect(
@@ -59,6 +74,8 @@ test('owner configures rules, publishes a funnel, and reloads the immutable vers
     page.getByRole('heading', { name: `Checkout ${suffix}` }),
   ).toBeVisible();
   await expect(page.getByText('Base v1')).toBeVisible();
+
+  await openFirstStepDialog(page);
   await expect(page.getByLabel('Valor', { exact: true })).toHaveValue(
     '/oferta',
   );
