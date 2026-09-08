@@ -20,7 +20,10 @@ function valueForInput(rule: FunnelConditionRuleV1): string {
   return String(rule.value);
 }
 
-function parseValue(operator: FunnelRuleOperator, raw: string): FunnelScalar | FunnelScalar[] | undefined {
+function parseValue(
+  operator: FunnelRuleOperator,
+  raw: string,
+): FunnelScalar | FunnelScalar[] | undefined {
   if (operator === 'exists') return undefined;
   if (operator === 'in') {
     return raw
@@ -113,14 +116,20 @@ function ConditionEditor({
       </label>
 
       {rule.operator === 'exists' ? (
-        <div className="flex items-end pb-2 text-xs text-zinc-500">Sem valor necessário.</div>
+        <div className="flex items-end pb-2 text-xs text-zinc-500">
+          Sem valor necessário.
+        </div>
       ) : (
         <label className="grid content-start gap-2 text-xs font-medium text-zinc-400">
           {rule.operator === 'in' ? 'Valores separados por vírgula' : 'Valor'}
           <input
             className={inputClass}
             disabled={disabled}
-            inputMode={['gt', 'gte', 'lt', 'lte'].includes(rule.operator) ? 'decimal' : 'text'}
+            inputMode={
+              ['gt', 'gte', 'lt', 'lte'].includes(rule.operator)
+                ? 'decimal'
+                : 'text'
+            }
             value={valueForInput(rule)}
             onChange={(event) => {
               const value = parseValue(rule.operator, event.target.value);
@@ -156,7 +165,11 @@ function RuleNode({
       <div className="grid gap-2">
         <ConditionEditor disabled={disabled} rule={rule} onChange={onChange} />
         {onRemove && !disabled ? (
-          <button className="justify-self-end text-xs text-rose-300" type="button" onClick={onRemove}>
+          <button
+            className="justify-self-end text-xs text-rose-300"
+            type="button"
+            onClick={onRemove}
+          >
             Remover condição
           </button>
         ) : null}
@@ -168,9 +181,15 @@ function RuleNode({
     return (
       <div className="rounded-xl border border-amber-400/20 bg-amber-400/5 p-3">
         <div className="mb-3 flex items-center justify-between gap-3">
-          <span className="text-xs font-semibold tracking-wider text-amber-200">NOT</span>
+          <span className="text-xs font-semibold tracking-wider text-amber-200">
+            NOT
+          </span>
           {onRemove && !disabled ? (
-            <button className="text-xs text-rose-300" type="button" onClick={onRemove}>
+            <button
+              className="text-xs text-rose-300"
+              type="button"
+              onClick={onRemove}
+            >
               Remover grupo
             </button>
           ) : null}
@@ -204,7 +223,11 @@ function RuleNode({
           <option value="any">ANY · qualquer</option>
         </select>
         {onRemove && !disabled ? (
-          <button className="text-xs text-rose-300" type="button" onClick={onRemove}>
+          <button
+            className="text-xs text-rose-300"
+            type="button"
+            onClick={onRemove}
+          >
             Remover grupo
           </button>
         ) : null}
@@ -227,7 +250,9 @@ function RuleNode({
                 ? () =>
                     onChange({
                       ...rule,
-                      rules: rule.rules.filter((_, itemIndex) => itemIndex !== index),
+                      rules: rule.rules.filter(
+                        (_, itemIndex) => itemIndex !== index,
+                      ),
                     })
                 : undefined
             }
@@ -240,7 +265,9 @@ function RuleNode({
           <button
             className="rounded-lg border border-white/10 px-3 py-2 text-xs text-zinc-200 hover:bg-white/5"
             type="button"
-            onClick={() => onChange({ ...rule, rules: [...rule.rules, defaultRule()] })}
+            onClick={() =>
+              onChange({ ...rule, rules: [...rule.rules, defaultRule()] })
+            }
           >
             + Condição
           </button>
@@ -286,5 +313,7 @@ export function RuleBuilder({
   disabled?: boolean;
   onChange: (rule: FunnelRuleV1) => void;
 }) {
-  return <RuleNode depth={1} disabled={disabled} rule={rule} onChange={onChange} />;
+  return (
+    <RuleNode depth={1} disabled={disabled} rule={rule} onChange={onChange} />
+  );
 }

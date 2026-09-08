@@ -4,7 +4,11 @@ import {
   type FunnelDefinitionV1,
 } from '@funnel/rule-engine';
 
-import type { BuilderDraft, BuilderPosition, BuilderStep } from './builder-model';
+import type {
+  BuilderDraft,
+  BuilderPosition,
+  BuilderStep,
+} from './builder-model';
 
 const X_GAP = 300;
 const Y = 160;
@@ -65,7 +69,10 @@ export function reorderSteps(
   return next.map((step, index) => ({ ...step, position: index + 1 }));
 }
 
-export function duplicateStep(steps: BuilderStep[], stepId: string): BuilderStep[] {
+export function duplicateStep(
+  steps: BuilderStep[],
+  stepId: string,
+): BuilderStep[] {
   const ordered = [...steps].sort((a, b) => a.position - b.position);
   const index = ordered.findIndex((step) => step.id === stepId);
   const source = ordered[index];

@@ -35,7 +35,9 @@ test('owner creates and publishes a funnel, then reloads the immutable version',
   await expect(page.getByRole('heading', { name: 'Funnels' })).toBeVisible();
   await page.getByRole('link', { name: 'Novo Funnel' }).click();
 
-  await expect(page.getByRole('heading', { name: 'Novo Funnel' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Novo Funnel' }),
+  ).toBeVisible();
   await page.getByLabel('Nome').fill(`Checkout ${suffix}`);
   await page.getByRole('button', { name: 'Publicar' }).click();
   await expect(
@@ -48,6 +50,8 @@ test('owner creates and publishes a funnel, then reloads the immutable version',
   await expect(page.getByText('2 etapas')).toBeVisible();
 
   await page.reload();
-  await expect(page.getByRole('heading', { name: `Checkout ${suffix}` })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: `Checkout ${suffix}` }),
+  ).toBeVisible();
   await expect(page.getByText('Base v1')).toBeVisible();
 });

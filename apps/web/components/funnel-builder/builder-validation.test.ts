@@ -65,7 +65,9 @@ describe('builder validation', () => {
     input.steps[1]!.step_key = 'landing';
     const result = validateBuilderDraft(input);
     expect(result.valid).toBe(false);
-    expect(result.issues.some((issue) => issue.message.includes('duplicada'))).toBe(true);
+    expect(
+      result.issues.some((issue) => issue.message.includes('duplicada')),
+    ).toBe(true);
   });
 
   it('blocks invalid rule values before publication', () => {

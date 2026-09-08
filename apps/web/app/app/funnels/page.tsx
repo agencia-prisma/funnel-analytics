@@ -42,9 +42,12 @@ export default async function FunnelsPage({
           <p className="text-xs font-semibold tracking-[0.18em] text-violet-300 uppercase">
             Funnel Control Plane
           </p>
-          <h1 className="mt-3 text-4xl font-semibold tracking-tight text-white">Funnels</h1>
+          <h1 className="mt-3 text-4xl font-semibold tracking-tight text-white">
+            Funnels
+          </h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">
-            Modele jornadas ordenadas visualmente sem acoplar o runtime ao canvas.
+            Modele jornadas ordenadas visualmente sem acoplar o runtime ao
+            canvas.
           </p>
         </div>
         {canManage ? (
@@ -68,7 +71,9 @@ export default async function FunnelsPage({
               <div className="grid gap-px bg-white/10 lg:grid-cols-[minmax(0,2fr)_repeat(4,minmax(120px,1fr))_auto]">
                 <div className="bg-[#0b0911] p-5">
                   <div className="flex flex-wrap items-center gap-2">
-                    <h2 className="truncate text-lg font-semibold text-white">{funnel.name}</h2>
+                    <h2 className="truncate text-lg font-semibold text-white">
+                      {funnel.name}
+                    </h2>
                     <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] text-zinc-300">
                       {statusLabel[funnel.status]}
                     </span>
@@ -78,23 +83,35 @@ export default async function FunnelsPage({
                   </p>
                 </div>
                 <div className="bg-[#0b0911] p-5">
-                  <p className="text-xs tracking-wider text-zinc-600 uppercase">Versão ativa</p>
+                  <p className="text-xs tracking-wider text-zinc-600 uppercase">
+                    Versão ativa
+                  </p>
                   <p className="mt-2 text-sm font-medium text-zinc-200">
-                    {funnel.current_version ? `v${funnel.current_version.version}` : '—'}
+                    {funnel.current_version
+                      ? `v${funnel.current_version.version}`
+                      : '—'}
                   </p>
                 </div>
                 <div className="bg-[#0b0911] p-5">
-                  <p className="text-xs tracking-wider text-zinc-600 uppercase">Steps</p>
+                  <p className="text-xs tracking-wider text-zinc-600 uppercase">
+                    Steps
+                  </p>
                   <p className="mt-2 text-sm font-medium text-zinc-200">
                     {funnel.current_version?.step_count ?? 0}
                   </p>
                 </div>
                 <div className="bg-[#0b0911] p-5">
-                  <p className="text-xs tracking-wider text-zinc-600 uppercase">Atualizado</p>
-                  <p className="mt-2 text-sm text-zinc-300">{formatDate(funnel.updated_at)}</p>
+                  <p className="text-xs tracking-wider text-zinc-600 uppercase">
+                    Atualizado
+                  </p>
+                  <p className="mt-2 text-sm text-zinc-300">
+                    {formatDate(funnel.updated_at)}
+                  </p>
                 </div>
                 <div className="bg-[#0b0911] p-5">
-                  <p className="text-xs tracking-wider text-zinc-600 uppercase">Janela</p>
+                  <p className="text-xs tracking-wider text-zinc-600 uppercase">
+                    Janela
+                  </p>
                   <p className="mt-2 text-sm text-zinc-300">
                     {funnel.current_version
                       ? `${Math.round(funnel.current_version.conversion_window_seconds / 86400)} dia(s)`
@@ -125,12 +142,18 @@ export default async function FunnelsPage({
           ))
         ) : (
           <Card>
-            <p className="text-lg font-semibold text-white">Você ainda não criou nenhum funil.</p>
+            <p className="text-lg font-semibold text-white">
+              Você ainda não criou nenhum funil.
+            </p>
             <p className="mt-2 text-sm leading-6 text-zinc-400">
-              Crie seu primeiro funil para começar a mapear a jornada de conversão.
+              Crie seu primeiro funil para começar a mapear a jornada de
+              conversão.
             </p>
             {canManage ? (
-              <Link className="mt-5 inline-flex rounded-lg bg-violet-500 px-4 py-2 text-sm font-semibold text-white" href="/app/funnels/new">
+              <Link
+                className="mt-5 inline-flex rounded-lg bg-violet-500 px-4 py-2 text-sm font-semibold text-white"
+                href="/app/funnels/new"
+              >
                 Criar primeiro funil
               </Link>
             ) : null}

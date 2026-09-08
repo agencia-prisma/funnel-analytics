@@ -22,7 +22,9 @@ export interface FunnelActionResult {
 }
 
 function text(value: unknown, max: number) {
-  return String(value ?? '').trim().slice(0, max);
+  return String(value ?? '')
+    .trim()
+    .slice(0, max);
 }
 
 function parseDefinition(raw: string) {
@@ -61,7 +63,8 @@ export async function publishFunnelAction(input: {
       });
       if (error) throw error;
       const created = Array.isArray(data) ? data[0] : data;
-      if (!created?.funnel_id || !created.version) throw new Error('FUNNEL_NOT_FOUND');
+      if (!created?.funnel_id || !created.version)
+        throw new Error('FUNNEL_NOT_FOUND');
 
       logger.info('funnel.builder_published', {
         actor_user_id: user.id,
@@ -69,7 +72,11 @@ export async function publishFunnelAction(input: {
         version: created.version,
         workspace_id: workspace.id,
       });
-      return { ok: true, funnelId: created.funnel_id, version: created.version };
+      return {
+        ok: true,
+        funnelId: created.funnel_id,
+        version: created.version,
+      };
     }
 
     if (!input.expectedCurrentVersion || input.expectedCurrentVersion < 1) {
@@ -138,7 +145,9 @@ export async function archiveFunnelAction(formData: FormData) {
     });
     if (error) throw error;
   } catch (error) {
-    redirect(`/app/funnels?error=${encodeURIComponent(domainErrorMessage(error))}`);
+    redirect(
+      `/app/funnels?error=${encodeURIComponent(domainErrorMessage(error))}`,
+    );
   }
   redirect('/app/funnels?message=' + encodeURIComponent('Funil arquivado.'));
 }

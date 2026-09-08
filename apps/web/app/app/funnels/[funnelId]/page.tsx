@@ -31,7 +31,10 @@ export default async function FunnelDetailPage({
     throw error;
   }
 
-  const canManage = await hasWorkspacePermission(workspace.id, 'funnels.manage');
+  const canManage = await hasWorkspacePermission(
+    workspace.id,
+    'funnels.manage',
+  );
   if (!funnel.current_version) notFound();
 
   const definition = validateFunnelDefinition({
@@ -61,10 +64,14 @@ export default async function FunnelDetailPage({
             {funnel.name}
           </h1>
           <p className="mt-2 text-sm text-zinc-500">
-            Versão ativa {funnel.current_version.version} · {funnel.current_version.steps.length} etapas
+            Versão ativa {funnel.current_version.version} ·{' '}
+            {funnel.current_version.steps.length} etapas
           </p>
         </div>
-        <Link className="text-sm text-zinc-400 hover:text-white" href="/app/funnels">
+        <Link
+          className="text-sm text-zinc-400 hover:text-white"
+          href="/app/funnels"
+        >
           ← Voltar para Funnels
         </Link>
       </div>

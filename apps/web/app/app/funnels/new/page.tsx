@@ -8,7 +8,10 @@ import {
 
 export default async function NewFunnelPage() {
   const workspace = await requireCurrentWorkspace();
-  const canManage = await hasWorkspacePermission(workspace.id, 'funnels.manage');
+  const canManage = await hasWorkspacePermission(
+    workspace.id,
+    'funnels.manage',
+  );
 
   if (!canManage) {
     redirect(
@@ -27,7 +30,8 @@ export default async function NewFunnelPage() {
           Novo Funnel
         </h1>
         <p className="mt-2 text-sm text-zinc-500">
-          O rascunho permanece no editor até que você publique a primeira versão.
+          O rascunho permanece no editor até que você publique a primeira
+          versão.
         </p>
       </div>
       <FunnelBuilder workspaceId={workspace.id} />

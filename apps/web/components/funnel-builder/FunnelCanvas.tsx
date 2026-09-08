@@ -18,16 +18,20 @@ import { FunnelStepNode, type FunnelStepFlowNode } from './FunnelStepNode';
 
 function ruleSummary(rule: FunnelRuleV1): string {
   if (rule.kind === 'condition') {
-    const value = rule.value === undefined
-      ? ''
-      : ` ${Array.isArray(rule.value) ? rule.value.join(', ') : String(rule.value)}`;
+    const value =
+      rule.value === undefined
+        ? ''
+        : ` ${Array.isArray(rule.value) ? rule.value.join(', ') : String(rule.value)}`;
     return `${rule.field} · ${rule.operator}${value}`;
   }
   if (rule.kind === 'not') return `NOT · ${ruleSummary(rule.rule)}`;
   return `${rule.combinator.toUpperCase()} · ${rule.rules.length} regras`;
 }
 
-function toNodes(steps: BuilderStep[], invalidIds: Set<string>): FunnelStepFlowNode[] {
+function toNodes(
+  steps: BuilderStep[],
+  invalidIds: Set<string>,
+): FunnelStepFlowNode[] {
   return [...steps]
     .sort((a, b) => a.position - b.position)
     .map((step) => ({
@@ -72,8 +76,12 @@ export function FunnelCanvas({
   onSelect: (stepId: string) => void;
   onMove: (stepId: string, position: { x: number; y: number }) => void;
 }) {
-  const desiredNodes = useMemo(() => toNodes(steps, invalidStepIds), [steps, invalidStepIds]);
-  const [nodes, setNodes, onNodesChange] = useNodesState<FunnelStepFlowNode>(desiredNodes);
+  const desiredNodes = useMemo(
+    () => toNodes(steps, invalidStepIds),
+    [steps, invalidStepIds],
+  );
+  const [nodes, setNodes, onNodesChange] =
+    useNodesState<FunnelStepFlowNode>(desiredNodes);
   const edges = useMemo(() => toEdges(steps), [steps]);
 
   useEffect(() => {
