@@ -27,10 +27,10 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     redirect('/onboarding');
   }
 
-  const canViewPixels = await hasWorkspacePermission(
-    workspace.id,
-    'pixels.view',
-  );
+  const [canViewPixels, canViewFunnels] = await Promise.all([
+    hasWorkspacePermission(workspace.id, 'pixels.view'),
+    hasWorkspacePermission(workspace.id, 'funnels.view'),
+  ]);
 
   return (
     <div className="min-h-screen">
@@ -48,6 +48,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           />
           <nav className="flex items-center gap-4 text-sm text-zinc-300">
             {canViewPixels ? <Link href="/app/pixels">Pixels</Link> : null}
+            {canViewFunnels ? <Link href="/app/funnels">Funnels</Link> : null}
             {can(workspace.role, 'workspace.view') ? (
               <Link href="/app/settings/workspace">Configurações</Link>
             ) : null}
