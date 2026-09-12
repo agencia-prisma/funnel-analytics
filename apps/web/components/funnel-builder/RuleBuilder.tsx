@@ -173,7 +173,8 @@ function SimpleRuleBuilder({
   const selectedEvent = knownEvent ? eventValue : '__custom__';
 
   function updateEvent(value: string) {
-    const nextValue = value === '__custom__' ? eventValue || 'custom_event' : value;
+    const nextValue =
+      value === '__custom__' ? eventValue || 'custom_event' : value;
     onChange(
       buildSimpleRule(
         condition('event_name', 'equals', nextValue),
