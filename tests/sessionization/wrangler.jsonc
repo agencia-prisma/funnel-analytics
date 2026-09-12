@@ -62,5 +62,21 @@
         "period": 60,
       },
     },
+    {
+      "name": "EVENTS_GLOBAL_RATE_LIMITER",
+      "namespace_id": "6002",
+      "simple": {
+        "limit": 6000,
+        "period": 60,
+      },
+    },
+    {
+      "name": "IDENTITY_GLOBAL_RATE_LIMITER",
+      "namespace_id": "6003",
+      "simple": {
+        "limit": 300,
+        "period": 60,
+      },
+    },
   ],
 }
