@@ -17,6 +17,7 @@ export interface CollectorDependencies {
   registry: PixelRegistry;
   queue: QueueProducer;
   rateLimiter: RateLimiter;
+  globalRateLimiter?: RateLimiter;
   now?: () => number;
 }
 
@@ -50,6 +51,24 @@ export function createCollector(dependencies: CollectorDependencies) {
           latency_ms: Math.round(performance.now() - startedAt),
         });
         throw new CollectorError(429, 'RATE_LIMITED', 60);
+      }
+
+      if (dependencies.globalRateLimiter?.allowGlobal) {
+        const globallyAllowed = await dependencies.globalRateLimiter.allowGlobal(
+          pixelKey,
+          `events:${originHost}`,
+        );
+
+        if (!globallyAllowed) {
+          logCollector('collector.pixel_rate_limited', {
+            request_id: requestId,
+            origin_host: originHost,
+            event_count: batch.events.length,
+            status_code: 429,
+            latency_ms: Math.round(performance.now() - startedAt),
+          });
+          throw new CollectorError(429, 'RATE_LIMITED', 60);
+        }
       }
 
       let authorized;
