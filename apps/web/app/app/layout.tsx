@@ -55,6 +55,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
             {can(workspace.role, 'members.view') ? (
               <Link href="/app/settings/members">Membros</Link>
             ) : null}
+            <Link href="/app/duvidas-frequentes">Dúvidas frequentes</Link>
           </nav>
           <form action={logoutAction}>
             <Button type="submit" variant="secondary">
