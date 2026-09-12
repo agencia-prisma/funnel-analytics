@@ -27,11 +27,21 @@ export function createRouter(env: CollectorEnv) {
     registry,
     queue: new CloudflareQueueProducer(env.EVENTS_QUEUE),
     rateLimiter: new CloudflareRateLimiter(env.EVENTS_RATE_LIMITER),
+    globalRateLimiter: new CloudflareRateLimiter(
+      env.EVENTS_GLOBAL_RATE_LIMITER,
+    ),
   });
+  const identityRateLimiter = new CloudflareRateLimiter(
+    env.IDENTITY_RATE_LIMITER,
+  );
   const identityCollector = createIdentityCollector({
     registry,
     queue: new CloudflareIdentityQueueProducer(env.IDENTITY_QUEUE),
-    rateLimiter: new CloudflareRateLimiter(env.IDENTITY_RATE_LIMITER),
+    rateLimiter: identityRateLimiter,
+    subjectRateLimiter: identityRateLimiter,
+    globalRateLimiter: new CloudflareRateLimiter(
+      env.IDENTITY_GLOBAL_RATE_LIMITER,
+    ),
     encryptionKey: env.IDENTITY_ENCRYPTION_KEY_V1 ?? '',
     hmacKey: env.IDENTITY_HMAC_KEY_V1 ?? '',
   });
