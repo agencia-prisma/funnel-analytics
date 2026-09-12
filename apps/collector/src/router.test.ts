@@ -23,6 +23,12 @@ const localRegistry = JSON.stringify({
   ],
 });
 
+const allowAllBinding = {
+  async limit() {
+    return { success: true };
+  },
+};
+
 const env: CollectorEnv = {
   COLLECTOR_ENV: 'local',
   LOCAL_PIXEL_REGISTRY_JSON: localRegistry,
@@ -32,16 +38,10 @@ const env: CollectorEnv = {
   IDENTITY_QUEUE: {
     async send() {},
   },
-  EVENTS_RATE_LIMITER: {
-    async limit() {
-      return { success: true };
-    },
-  },
-  IDENTITY_RATE_LIMITER: {
-    async limit() {
-      return { success: true };
-    },
-  },
+  EVENTS_RATE_LIMITER: allowAllBinding,
+  EVENTS_GLOBAL_RATE_LIMITER: allowAllBinding,
+  IDENTITY_RATE_LIMITER: allowAllBinding,
+  IDENTITY_GLOBAL_RATE_LIMITER: allowAllBinding,
 };
 
 const ctx: ExecutionContextLike = {

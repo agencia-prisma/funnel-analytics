@@ -4,11 +4,14 @@ export type CollectorLogEvent =
   | 'collector.pixel.invalid'
   | 'collector.origin.rejected'
   | 'collector.rate_limited'
+  | 'collector.pixel_rate_limited'
   | 'collector.queue.failed'
   | 'collector.control_plane.failed'
   | 'identity.request.accepted'
   | 'identity.request.rejected'
   | 'identity.request.rate_limited'
+  | 'identity.pixel_rate_limited'
+  | 'identity.subject_rate_limited'
   | 'identity.queue.failed';
 
 export interface CollectorLogFields {

@@ -79,10 +79,26 @@
       },
     },
     {
+      "name": "EVENTS_GLOBAL_RATE_LIMITER",
+      "namespace_id": "7002",
+      "simple": {
+        "limit": 6000,
+        "period": 60,
+      },
+    },
+    {
       "name": "IDENTITY_RATE_LIMITER",
       "namespace_id": "7011",
       "simple": {
         "limit": 30,
+        "period": 60,
+      },
+    },
+    {
+      "name": "IDENTITY_GLOBAL_RATE_LIMITER",
+      "namespace_id": "7012",
+      "simple": {
+        "limit": 300,
         "period": 60,
       },
     },

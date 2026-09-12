@@ -20,6 +20,8 @@ export interface IdentityCollectorDependencies {
   registry: PixelRegistry;
   queue: IdentityQueueProducer;
   rateLimiter: RateLimiter;
+  globalRateLimiter?: RateLimiter;
+  subjectRateLimiter?: RateLimiter;
   encryptionKey: string;
   hmacKey: string;
   encryptionKeyVersion?: number;
@@ -68,6 +70,46 @@ export function createIdentityCollector(
           latency_ms: Math.round(performance.now() - startedAt),
         });
         throw new CollectorError(429, 'RATE_LIMITED', 60);
+      }
+
+      if (dependencies.globalRateLimiter?.allowGlobal) {
+        const globallyAllowed =
+          await dependencies.globalRateLimiter.allowGlobal(
+            payload.pixel_key,
+            `identity:${origin.host}`,
+          );
+
+        if (!globallyAllowed) {
+          logCollector('identity.pixel_rate_limited', {
+            request_id: requestId,
+            origin_host: origin.host,
+            identifier_count: Object.keys(payload.identifiers).length,
+            identifier_types: Object.keys(payload.identifiers),
+            status_code: 429,
+            latency_ms: Math.round(performance.now() - startedAt),
+          });
+          throw new CollectorError(429, 'RATE_LIMITED', 60);
+        }
+      }
+
+      if (dependencies.subjectRateLimiter?.allowGlobal) {
+        const subjectAllowed =
+          await dependencies.subjectRateLimiter.allowGlobal(
+            payload.pixel_key,
+            `identity-subject:${origin.host}:${payload.visitor_id}:${payload.session_id}`,
+          );
+
+        if (!subjectAllowed) {
+          logCollector('identity.subject_rate_limited', {
+            request_id: requestId,
+            origin_host: origin.host,
+            identifier_count: Object.keys(payload.identifiers).length,
+            identifier_types: Object.keys(payload.identifiers),
+            status_code: 429,
+            latency_ms: Math.round(performance.now() - startedAt),
+          });
+          throw new CollectorError(429, 'RATE_LIMITED', 60);
+        }
       }
 
       const { pixel } = await authorizePixel({

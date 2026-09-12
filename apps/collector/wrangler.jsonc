@@ -36,10 +36,26 @@
       },
     },
     {
+      "name": "EVENTS_GLOBAL_RATE_LIMITER",
+      "namespace_id": "4021",
+      "simple": {
+        "limit": 6000,
+        "period": 60,
+      },
+    },
+    {
       "name": "IDENTITY_RATE_LIMITER",
       "namespace_id": "4011",
       "simple": {
         "limit": 30,
+        "period": 60,
+      },
+    },
+    {
+      "name": "IDENTITY_GLOBAL_RATE_LIMITER",
+      "namespace_id": "4031",
+      "simple": {
+        "limit": 300,
         "period": 60,
       },
     },
@@ -72,10 +88,26 @@
           },
         },
         {
+          "name": "EVENTS_GLOBAL_RATE_LIMITER",
+          "namespace_id": "4022",
+          "simple": {
+            "limit": 6000,
+            "period": 60,
+          },
+        },
+        {
           "name": "IDENTITY_RATE_LIMITER",
           "namespace_id": "4012",
           "simple": {
             "limit": 30,
+            "period": 60,
+          },
+        },
+        {
+          "name": "IDENTITY_GLOBAL_RATE_LIMITER",
+          "namespace_id": "4032",
+          "simple": {
+            "limit": 300,
             "period": 60,
           },
         },
@@ -110,10 +142,26 @@
           },
         },
         {
+          "name": "EVENTS_GLOBAL_RATE_LIMITER",
+          "namespace_id": "4023",
+          "simple": {
+            "limit": 6000,
+            "period": 60,
+          },
+        },
+        {
           "name": "IDENTITY_RATE_LIMITER",
           "namespace_id": "4013",
           "simple": {
             "limit": 30,
+            "period": 60,
+          },
+        },
+        {
+          "name": "IDENTITY_GLOBAL_RATE_LIMITER",
+          "namespace_id": "4033",
+          "simple": {
+            "limit": 300,
             "period": 60,
           },
         },
