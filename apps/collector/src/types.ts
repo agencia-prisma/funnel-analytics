@@ -27,7 +27,9 @@ export interface CollectorEnv {
   EVENTS_QUEUE: QueueBinding;
   IDENTITY_QUEUE: IdentityQueueBinding;
   EVENTS_RATE_LIMITER: RateLimitBinding;
+  EVENTS_GLOBAL_RATE_LIMITER: RateLimitBinding;
   IDENTITY_RATE_LIMITER: RateLimitBinding;
+  IDENTITY_GLOBAL_RATE_LIMITER: RateLimitBinding;
 }
 
 export interface ExecutionContextLike {
