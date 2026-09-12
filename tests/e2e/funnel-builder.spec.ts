@@ -31,7 +31,7 @@ async function openFirstStepDialog(page: import('@playwright/test').Page) {
   ).toBeVisible();
 }
 
-test('owner configures rules in dialogs, publishes a funnel, and reloads the immutable version', async ({
+test('owner configures a human-friendly rule, publishes a funnel, and reloads the immutable version', async ({
   page,
 }) => {
   const suffix = Date.now().toString(36);
@@ -54,9 +54,9 @@ test('owner configures rules in dialogs, publishes a funnel, and reloads the imm
   await page.getByRole('button', { name: 'Concluir' }).click();
 
   await openFirstStepDialog(page);
-  await page.getByLabel('Campo').selectOption('page_path');
-  await page.getByLabel('Operador').selectOption('contains');
-  await page.getByLabel('Valor', { exact: true }).fill('/oferta');
+  await expect(page.getByLabel('Ação da etapa')).toHaveValue('page_view');
+  await page.getByLabel('Adicionar condição').selectOption('page_path');
+  await page.getByLabel('Valor da condição 1').fill('/oferta');
   await page.getByRole('button', { name: 'Concluir edição' }).click();
 
   await page.getByRole('button', { name: 'Publicar' }).click();
@@ -76,7 +76,5 @@ test('owner configures rules in dialogs, publishes a funnel, and reloads the imm
   await expect(page.getByText('Base v1')).toBeVisible();
 
   await openFirstStepDialog(page);
-  await expect(page.getByLabel('Valor', { exact: true })).toHaveValue(
-    '/oferta',
-  );
+  await expect(page.getByLabel('Valor da condição 1')).toHaveValue('/oferta');
 });
