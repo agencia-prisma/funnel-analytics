@@ -73,10 +73,11 @@ export function createIdentityCollector(
       }
 
       if (dependencies.globalRateLimiter?.allowGlobal) {
-        const globallyAllowed = await dependencies.globalRateLimiter.allowGlobal(
-          payload.pixel_key,
-          `identity:${origin.host}`,
-        );
+        const globallyAllowed =
+          await dependencies.globalRateLimiter.allowGlobal(
+            payload.pixel_key,
+            `identity:${origin.host}`,
+          );
 
         if (!globallyAllowed) {
           logCollector('identity.pixel_rate_limited', {

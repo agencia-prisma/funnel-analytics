@@ -54,10 +54,11 @@ export function createCollector(dependencies: CollectorDependencies) {
       }
 
       if (dependencies.globalRateLimiter?.allowGlobal) {
-        const globallyAllowed = await dependencies.globalRateLimiter.allowGlobal(
-          pixelKey,
-          `events:${originHost}`,
-        );
+        const globallyAllowed =
+          await dependencies.globalRateLimiter.allowGlobal(
+            pixelKey,
+            `events:${originHost}`,
+          );
 
         if (!globallyAllowed) {
           logCollector('collector.pixel_rate_limited', {
