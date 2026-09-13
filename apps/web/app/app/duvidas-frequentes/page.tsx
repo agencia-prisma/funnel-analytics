@@ -12,9 +12,10 @@ export default function FrequentlyAskedQuestionsPage() {
         </h1>
         <p className="mt-4 max-w-3xl text-sm leading-7 text-zinc-400">
           Encontre respostas sobre Workspaces, Pixels, rastreamento, Funnels,
-          regras, publicação, versões, membros, permissões e configurações. A
-          ideia desta página é permitir que qualquer usuário consiga operar a
-          plataforma com segurança, mesmo sem conhecimento técnico.
+          Analytics, regras, publicação, versões, membros, permissões e
+          configurações. A ideia desta página é permitir que qualquer usuário
+          consiga operar a plataforma com segurança, mesmo sem conhecimento
+          técnico.
         </p>
       </div>
 
@@ -30,6 +31,26 @@ export default function FrequentlyAskedQuestionsPage() {
           do evento e limites de uso antes de aceitar dados. Eventos financeiros
           confiáveis devem usar integrações de servidor e não dependem somente
           dessa chave pública.
+        </p>
+      </aside>
+
+      <aside className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+        <p className="text-sm font-semibold text-white">
+          Como funciona o modo ANALYZE do Funnel?
+        </p>
+        <p className="mt-2 text-sm leading-6 text-zinc-400">
+          Abra um Funnel publicado e clique em <strong>ANALYZE</strong>. A tela
+          mostra os resultados da versão ativa para 7, 30 ou 90 dias, incluindo
+          entradas, conversões, taxa de conclusão, sessões, page views,
+          checkouts, pedidos, receita, AOV e progressão por etapa. Eventos com
+          <code> test_mode: true</code> são excluídos da análise.
+        </p>
+        <p className="mt-3 text-sm leading-6 text-zinc-400">
+          A progressão respeita a ordem das etapas do funil. “Conversão
+          anterior” mostra quantas tentativas que chegaram à etapa anterior
+          também alcançaram a etapa atual; “drop-off” mostra a parcela que não
+          avançou. Receita e AOV usam a moeda principal do Workspace e somente
+          pedidos vinculados a jornadas que alcançaram o funil analisado.
         </p>
       </aside>
 
