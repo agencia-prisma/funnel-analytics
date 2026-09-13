@@ -83,8 +83,9 @@ function AnalyticsUnavailable({ funnelId }: { funnelId: string }) {
       </p>
       <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-400">
         Não foi possível consultar o ClickHouse agora. O Funnel continua ativo e
-        nenhum dado foi alterado. Tente novamente em alguns instantes ou confirme
-        as credenciais de leitura do Analytics no ambiente da aplicação.
+        nenhum dado foi alterado. Tente novamente em alguns instantes ou
+        confirme as credenciais de leitura do Analytics no ambiente da
+        aplicação.
       </p>
       <div className="mt-4 flex gap-2">
         <Link
@@ -153,7 +154,10 @@ export default async function FunnelAnalyticsPage({
 
   const maxSeries = Math.max(
     1,
-    ...analytics.timeSeries.flatMap((point) => [point.entrants, point.conversions]),
+    ...analytics.timeSeries.flatMap((point) => [
+      point.entrants,
+      point.conversions,
+    ]),
   );
 
   return (
@@ -192,11 +196,13 @@ export default async function FunnelAnalyticsPage({
 
       {!analytics.entrants && !analytics.sessions && !analytics.orders ? (
         <div className="mt-8 rounded-2xl border border-white/10 bg-white/[0.03] p-6">
-          <p className="font-medium text-white">Ainda não há dados neste período.</p>
+          <p className="font-medium text-white">
+            Ainda não há dados neste período.
+          </p>
           <p className="mt-2 text-sm leading-6 text-zinc-500">
             O ANALYZE começará a preencher automaticamente quando a versão ativa
-            do funil receber eventos de produção. Eventos em test_mode não entram
-            nos relatórios.
+            do funil receber eventos de produção. Eventos em test_mode não
+            entram nos relatórios.
           </p>
         </div>
       ) : null}
@@ -260,7 +266,9 @@ export default async function FunnelAnalyticsPage({
               Entradas, conversões e receita líquida por dia.
             </p>
           </div>
-          <span className="text-xs text-zinc-600">Últimos {rangeDays} dias</span>
+          <span className="text-xs text-zinc-600">
+            Últimos {rangeDays} dias
+          </span>
         </div>
 
         {analytics.timeSeries.length ? (
@@ -271,13 +279,17 @@ export default async function FunnelAnalyticsPage({
                 key={point.date}
               >
                 <span className="text-xs text-zinc-500">
-                  {new Date(`${point.date}T12:00:00Z`).toLocaleDateString('pt-BR')}
+                  {new Date(`${point.date}T12:00:00Z`).toLocaleDateString(
+                    'pt-BR',
+                  )}
                 </span>
                 <div className="grid gap-1.5">
                   <div className="flex items-center gap-2">
                     <div
                       className="h-2 rounded-full bg-violet-400/70"
-                      style={{ width: `${Math.max(2, (point.entrants / maxSeries) * 100)}%` }}
+                      style={{
+                        width: `${Math.max(2, (point.entrants / maxSeries) * 100)}%`,
+                      }}
                     />
                     <span className="whitespace-nowrap text-[11px] text-zinc-500">
                       {point.entrants} entradas
@@ -286,7 +298,9 @@ export default async function FunnelAnalyticsPage({
                   <div className="flex items-center gap-2">
                     <div
                       className="h-2 rounded-full bg-emerald-400/60"
-                      style={{ width: `${Math.max(2, (point.conversions / maxSeries) * 100)}%` }}
+                      style={{
+                        width: `${Math.max(2, (point.conversions / maxSeries) * 100)}%`,
+                      }}
                     />
                     <span className="whitespace-nowrap text-[11px] text-zinc-500">
                       {point.conversions} conversões
@@ -310,7 +324,8 @@ export default async function FunnelAnalyticsPage({
         <div className="border-b border-white/10 px-5 py-4">
           <h2 className="font-semibold text-white">Progressão por etapa</h2>
           <p className="mt-1 text-sm text-zinc-500">
-            Tentativas únicas que alcançaram cada etapa da versão ativa do funil.
+            Tentativas únicas que alcançaram cada etapa da versão ativa do
+            funil.
           </p>
         </div>
         <div className="overflow-x-auto">
@@ -334,7 +349,8 @@ export default async function FunnelAnalyticsPage({
                       </span>
                       <div>
                         <p className="font-medium text-zinc-200">
-                          {funnel.current_version?.steps[index]?.name ?? step.stepKey}
+                          {funnel.current_version?.steps[index]?.name ??
+                            step.stepKey}
                         </p>
                         <code className="text-[11px] text-zinc-600">
                           {step.stepKey}
@@ -362,8 +378,12 @@ export default async function FunnelAnalyticsPage({
               ))}
               {!analytics.steps.length ? (
                 <tr>
-                  <td className="px-5 py-8 text-center text-zinc-500" colSpan={5}>
-                    Este funil ainda não possui uma versão publicada para análise.
+                  <td
+                    className="px-5 py-8 text-center text-zinc-500"
+                    colSpan={5}
+                  >
+                    Este funil ainda não possui uma versão publicada para
+                    análise.
                   </td>
                 </tr>
               ) : null}
@@ -398,22 +418,34 @@ export default async function FunnelAnalyticsPage({
                 <tr
                   key={`${row.attributionModel}-${row.channel}-${row.source}-${row.campaign ?? 'none'}-${index}`}
                 >
-                  <td className="px-5 py-4 text-zinc-400">{row.attributionModel}</td>
-                  <td className="px-5 py-4 font-medium text-zinc-200">{row.channel}</td>
+                  <td className="px-5 py-4 text-zinc-400">
+                    {row.attributionModel}
+                  </td>
+                  <td className="px-5 py-4 font-medium text-zinc-200">
+                    {row.channel}
+                  </td>
                   <td className="px-5 py-4 text-zinc-300">{row.source}</td>
-                  <td className="px-5 py-4 text-zinc-400">{row.campaign ?? '—'}</td>
+                  <td className="px-5 py-4 text-zinc-400">
+                    {row.campaign ?? '—'}
+                  </td>
                   <td className="px-5 py-4 text-zinc-300">{row.orders}</td>
                   <td className="px-5 py-4 text-zinc-300">
                     {row.sharePct.toFixed(2)}%
                   </td>
                   <td className="px-5 py-4 font-medium text-white">
-                    {formatMoney(row.attributedRevenueMinor, analytics.currency)}
+                    {formatMoney(
+                      row.attributedRevenueMinor,
+                      analytics.currency,
+                    )}
                   </td>
                 </tr>
               ))}
               {!analytics.attribution.length ? (
                 <tr>
-                  <td className="px-5 py-8 text-center text-zinc-500" colSpan={7}>
+                  <td
+                    className="px-5 py-8 text-center text-zinc-500"
+                    colSpan={7}
+                  >
                     Ainda não existem fatos de atribuição para os pedidos deste
                     funil no período selecionado.
                   </td>
@@ -426,8 +458,8 @@ export default async function FunnelAnalyticsPage({
 
       <p className="mt-4 text-xs text-zinc-600">
         Atualizado em {new Date(analytics.generatedAt).toLocaleString('pt-BR')}.
-        Os números consideram somente a versão ativa e excluem eventos em modo de
-        teste. A comparação usa o período imediatamente anterior com a mesma
+        Os números consideram somente a versão ativa e excluem eventos em modo
+        de teste. A comparação usa o período imediatamente anterior com a mesma
         duração.
       </p>
     </main>

@@ -25,10 +25,10 @@ export default function FrequentlyAskedQuestionsPage() {
         </p>
         <p className="mt-2 text-sm leading-6 text-zinc-400">
           Sim. A chave iniciada por <code>px_pub_</code> identifica somente o
-          Pixel correspondente e foi criada para ser usada no navegador. Ela
-          não concede acesso ao Workspace, membros, configurações ou outros
-          Pixels. O Collector também valida domínio, status do Pixel, conteúdo
-          do evento e limites de uso antes de aceitar dados. Eventos financeiros
+          Pixel correspondente e foi criada para ser usada no navegador. Ela não
+          concede acesso ao Workspace, membros, configurações ou outros Pixels.
+          O Collector também valida domínio, status do Pixel, conteúdo do evento
+          e limites de uso antes de aceitar dados. Eventos financeiros
           confiáveis devem usar integrações de servidor e não dependem somente
           dessa chave pública.
         </p>
@@ -63,8 +63,9 @@ export default function FrequentlyAskedQuestionsPage() {
           A seção de atribuição mostra receita atribuída por modelo, canal,
           origem e campanha. O percentual de participação é calculado dentro de
           cada modelo de atribuição, evitando misturar modelos diferentes em uma
-          única base. Receita e AOV usam a moeda principal do Workspace e somente
-          pedidos vinculados a jornadas que alcançaram o funil analisado.
+          única base. Receita e AOV usam a moeda principal do Workspace e
+          somente pedidos vinculados a jornadas que alcançaram o funil
+          analisado.
         </p>
         <p className="mt-3 text-sm leading-6 text-zinc-400">
           Se o ClickHouse ficar temporariamente indisponível, o ANALYZE exibe um

@@ -103,7 +103,11 @@ interface WindowMetrics {
 
 function requireClickHouseConfig(): ClickHouseConfig {
   const env = readServerEnv();
-  if (!env.CLICKHOUSE_URL || !env.CLICKHOUSE_USERNAME || !env.CLICKHOUSE_PASSWORD) {
+  if (
+    !env.CLICKHOUSE_URL ||
+    !env.CLICKHOUSE_USERNAME ||
+    !env.CLICKHOUSE_PASSWORD
+  ) {
     throw new Error('ANALYTICS_CLICKHOUSE_NOT_CONFIGURED');
   }
   return {
@@ -167,12 +171,18 @@ function pct(numerator: number, denominator: number): number {
   return Math.round((numerator / denominator) * 10_000) / 100;
 }
 
-export function analyticsChangePct(current: number, previous: number): number | null {
+export function analyticsChangePct(
+  current: number,
+  previous: number,
+): number | null {
   if (previous === 0) return current === 0 ? 0 : null;
   return Math.round(((current - previous) / Math.abs(previous)) * 10_000) / 100;
 }
 
-function compareMetric(current: number, previous: number): AnalyticsMetricComparison {
+function compareMetric(
+  current: number,
+  previous: number,
+): AnalyticsMetricComparison {
   return {
     current,
     previous,
@@ -209,11 +219,13 @@ async function loadWindowMetrics(input: {
     from_days_ago: input.fromDaysAgo,
     to_days_ago: input.toDaysAgo,
   };
-  const timePredicate = (column: string) => `${column} >= now() - toIntervalDay({from_days_ago:UInt16})\n  AND ${column} < now() - toIntervalDay({to_days_ago:UInt16})`;
+  const timePredicate = (column: string) =>
+    `${column} >= now() - toIntervalDay({from_days_ago:UInt16})\n  AND ${column} < now() - toIntervalDay({to_days_ago:UInt16})`;
 
-  const [stepRows, conversionRows, trafficRows, commerceRows] = await Promise.all([
-    queryClickHouse<{ entrants: number | string }>(
-      `
+  const [stepRows, conversionRows, trafficRows, commerceRows] =
+    await Promise.all([
+      queryClickHouse<{ entrants: number | string }>(
+        `
 SELECT uniqExact(tuple(journey_id, attempt_id)) AS entrants
 FROM funnel_analytics.funnel_step_hits_current
 WHERE workspace_id = {workspace_id:UUID}
@@ -223,14 +235,14 @@ WHERE workspace_id = {workspace_id:UUID}
   AND test_mode = false
   AND ${timePredicate('occurred_at')}
 `,
-      common,
-    ),
-    queryClickHouse<{
-      conversions: number | string;
-      median_conversion_ms: number | string;
-      average_conversion_ms: number | string;
-    }>(
-      `
+        common,
+      ),
+      queryClickHouse<{
+        conversions: number | string;
+        median_conversion_ms: number | string;
+        average_conversion_ms: number | string;
+      }>(
+        `
 SELECT
   uniqExact(tuple(journey_id, attempt_id)) AS conversions,
   quantileExact(0.5)(conversion_ms) AS median_conversion_ms,
@@ -242,13 +254,13 @@ WHERE workspace_id = {workspace_id:UUID}
   AND test_mode = false
   AND ${timePredicate('converted_at')}
 `,
-      common,
-    ),
-    queryClickHouse<{
-      sessions: number | string;
-      page_views: number | string;
-    }>(
-      `
+        common,
+      ),
+      queryClickHouse<{
+        sessions: number | string;
+        page_views: number | string;
+      }>(
+        `
 SELECT
   uniqExact(session_id) AS sessions,
   countIf(event_name = 'page_view') AS page_views
@@ -267,14 +279,14 @@ WHERE workspace_id = {workspace_id:UUID}
       AND ${timePredicate('occurred_at')}
   )
 `,
-      common,
-    ),
-    queryClickHouse<{
-      checkouts: number | string;
-      orders: number | string;
-      revenue_minor: number | string;
-    }>(
-      `
+        common,
+      ),
+      queryClickHouse<{
+        checkouts: number | string;
+        orders: number | string;
+        revenue_minor: number | string;
+      }>(
+        `
 WITH funnel_journeys AS
 (
   SELECT DISTINCT journey_id
@@ -310,9 +322,9 @@ SELECT
      AND ${timePredicate('purchased_at')}
      AND journey_id IN funnel_journeys) AS revenue_minor
 `,
-      { ...common, currency: input.currency },
-    ),
-  ]);
+        { ...common, currency: input.currency },
+      ),
+    ]);
 
   const entrants = numberValue(stepRows[0]?.entrants);
   const conversions = numberValue(conversionRows[0]?.conversions);
@@ -323,8 +335,12 @@ SELECT
     entrants,
     conversions,
     completionRatePct: pct(conversions, entrants),
-    medianConversionMs: Math.round(numberValue(conversionRows[0]?.median_conversion_ms)),
-    averageConversionMs: Math.round(numberValue(conversionRows[0]?.average_conversion_ms)),
+    medianConversionMs: Math.round(
+      numberValue(conversionRows[0]?.median_conversion_ms),
+    ),
+    averageConversionMs: Math.round(
+      numberValue(conversionRows[0]?.average_conversion_ms),
+    ),
     sessions: numberValue(trafficRows[0]?.sessions),
     pageViews: numberValue(trafficRows[0]?.page_views),
     checkouts: numberValue(commerceRows[0]?.checkouts),
@@ -416,7 +432,8 @@ ORDER BY day
     return created;
   };
 
-  for (const row of entryRows) ensure(row.day).entrants = numberValue(row.entrants);
+  for (const row of entryRows)
+    ensure(row.day).entrants = numberValue(row.entrants);
   for (const row of conversionRows)
     ensure(row.day).conversions = numberValue(row.conversions);
   for (const row of revenueRows)
@@ -551,15 +568,16 @@ export async function getFunnelAnalytics(
     range_days: rangeDays,
   };
 
-  const [stepRows, current, previous, timeSeries, attribution] = await Promise.all([
-    queryClickHouse<{
-      step_key: string;
-      step_position: number | string;
-      reached_attempts: number | string;
-      median_elapsed_ms: number | string;
-      average_elapsed_ms: number | string;
-    }>(
-      `
+  const [stepRows, current, previous, timeSeries, attribution] =
+    await Promise.all([
+      queryClickHouse<{
+        step_key: string;
+        step_position: number | string;
+        reached_attempts: number | string;
+        median_elapsed_ms: number | string;
+        average_elapsed_ms: number | string;
+      }>(
+        `
 SELECT
   step_key,
   step_position,
@@ -575,35 +593,35 @@ WHERE workspace_id = {workspace_id:UUID}
 GROUP BY step_key, step_position
 ORDER BY step_position
 `,
-      common,
-    ),
-    loadWindowMetrics({
-      workspaceId: workspace.id,
-      funnelVersionId: version.id,
-      currency: workspace.currency,
-      fromDaysAgo: rangeDays,
-      toDaysAgo: 0,
-    }),
-    loadWindowMetrics({
-      workspaceId: workspace.id,
-      funnelVersionId: version.id,
-      currency: workspace.currency,
-      fromDaysAgo: rangeDays * 2,
-      toDaysAgo: rangeDays,
-    }),
-    loadTimeSeries({
-      workspaceId: workspace.id,
-      funnelVersionId: version.id,
-      currency: workspace.currency,
-      rangeDays,
-    }),
-    loadAttribution({
-      workspaceId: workspace.id,
-      funnelVersionId: version.id,
-      currency: workspace.currency,
-      rangeDays,
-    }),
-  ]);
+        common,
+      ),
+      loadWindowMetrics({
+        workspaceId: workspace.id,
+        funnelVersionId: version.id,
+        currency: workspace.currency,
+        fromDaysAgo: rangeDays,
+        toDaysAgo: 0,
+      }),
+      loadWindowMetrics({
+        workspaceId: workspace.id,
+        funnelVersionId: version.id,
+        currency: workspace.currency,
+        fromDaysAgo: rangeDays * 2,
+        toDaysAgo: rangeDays,
+      }),
+      loadTimeSeries({
+        workspaceId: workspace.id,
+        funnelVersionId: version.id,
+        currency: workspace.currency,
+        rangeDays,
+      }),
+      loadAttribution({
+        workspaceId: workspace.id,
+        funnelVersionId: version.id,
+        currency: workspace.currency,
+        rangeDays,
+      }),
+    ]);
 
   const orderedDefinitionSteps = [...version.steps].sort(
     (a, b) => a.position - b.position,
@@ -625,15 +643,19 @@ ORDER BY step_position
     const reachedAttempts = countsByKey.get(step.step_key) ?? 0;
     const previousStep = index > 0 ? orderedDefinitionSteps[index - 1] : null;
     const previousCount = previousStep
-      ? countsByKey.get(previousStep.step_key) ?? 0
+      ? (countsByKey.get(previousStep.step_key) ?? 0)
       : 0;
-    const fromPrevious = previousStep ? pct(reachedAttempts, previousCount) : null;
+    const fromPrevious = previousStep
+      ? pct(reachedAttempts, previousCount)
+      : null;
     return {
       stepKey: step.step_key,
       position: step.position,
       reachedAttempts,
       medianElapsedMs: Math.round(timingByKey.get(step.step_key)?.median ?? 0),
-      averageElapsedMs: Math.round(timingByKey.get(step.step_key)?.average ?? 0),
+      averageElapsedMs: Math.round(
+        timingByKey.get(step.step_key)?.average ?? 0,
+      ),
       conversionFromPreviousPct: fromPrevious,
       dropOffFromPreviousPct:
         fromPrevious === null
