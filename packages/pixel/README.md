@@ -16,6 +16,13 @@ Outputs:
 
 The runtime bundle has zero external dependencies.
 
+Production distribution:
+
+- `https://funnel-analytics-collector-production.prismaag.workers.dev/pixel.js`
+- versioned alias: `https://funnel-analytics-collector-production.prismaag.workers.dev/pixel.v0.3.0.js`
+
+The default event transport points to the production Collector `/v1/events` endpoint. The browser receives no secret: only the Pixel `public_key` is embedded in the installation snippet.
+
 ## Browser API
 
 After bootstrap:

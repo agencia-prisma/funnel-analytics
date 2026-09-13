@@ -55,13 +55,19 @@ const FAQ: FaqItem[] = [
     category: 'Pixels e rastreamento',
     question: 'O que é a Public Key?',
     answer:
-      'É o identificador público do Pixel. Ela informa ao sistema para qual Pixel os eventos devem ser enviados. A public key pode ser copiada diretamente na tela do Pixel.',
+      'É o identificador público do Pixel. Ela informa ao sistema para qual Pixel os eventos devem ser enviados, pode aparecer com segurança no HTML e no navegador e não concede acesso ao Workspace ou a secrets.',
   },
   {
     category: 'Pixels e rastreamento',
     question: 'Como instalar o Pixel no meu site?',
     answer:
-      'Abra o Pixel e copie o código exibido na seção Instalação. Esse snippet deve ser adicionado às páginas que serão rastreadas.',
+      'Abra o Pixel e copie o código exibido na seção Instalação. Adicione o snippet ao HTML de todas as páginas que serão rastreadas, preferencialmente dentro do <head> ou pelo gerenciador de tags usado pelo site.',
+    steps: [
+      'Confirme que a Public Key no snippet pertence ao Pixel correto.',
+      'Autorize o domínio exato ou o wildcard necessário na seção Domínios.',
+      'Publique a alteração no site e abra uma página instalada.',
+      'Volte ao Pixel e confirme o estado “recebendo eventos” e a data de Último evento.',
+    ],
   },
   {
     category: 'Pixels e rastreamento',
@@ -86,6 +92,19 @@ const FAQ: FaqItem[] = [
     question: 'O que é “Último evento”?',
     answer:
       'É a data e hora do evento mais recente reconhecido pelo sistema para aquele Pixel. Se nenhum evento tiver sido recebido, a interface informa isso.',
+  },
+  {
+    category: 'Pixels e rastreamento',
+    question: 'Como saber se o Pixel está recebendo eventos?',
+    answer:
+      'Depois de instalar o snippet em um domínio autorizado, acesse a página e volte à tela do Pixel. O estado de instalação muda quando existe last_event_at, e os campos Health e Último evento mostram a atividade reconhecida pelo Collector.',
+  },
+  {
+    category: 'Pixels e rastreamento',
+    question:
+      'Qual a diferença entre eventos client-side e eventos financeiros server-to-server?',
+    answer:
+      'Eventos client-side são enviados pelo navegador e servem para page views, navegação, cliques e comportamento. Eventos financeiros, como pedidos, pagamentos e reembolsos, devem vir de integrações server-to-server autenticadas com a plataforma de checkout, pois não devem confiar apenas em dados controlados pelo navegador.',
   },
   {
     category: 'Pixels e rastreamento',

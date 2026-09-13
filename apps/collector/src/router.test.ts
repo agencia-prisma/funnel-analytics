@@ -49,6 +49,25 @@ const ctx: ExecutionContextLike = {
 };
 
 describe('Collector router', () => {
+  it('serves the production browser SDK as JavaScript', async () => {
+    const response = await createRouter(env)(
+      new Request('https://collector.test/pixel.js'),
+      ctx,
+    );
+    const source = await response.text();
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('Content-Type')).toBe(
+      'application/javascript; charset=utf-8',
+    );
+    expect(response.headers.get('X-Pixel-SDK-Version')).toBe('0.3.0');
+    expect(source).toContain(
+      'https://funnel-analytics-collector-production.prismaag.workers.dev',
+    );
+    expect(source).toContain('/v1/events');
+    expect(source).not.toContain('DOMINIO-FUTURO');
+  });
+
   it('serves minimal health', async () => {
     const response = await createRouter(env)(
       new Request('https://collector.test/health'),

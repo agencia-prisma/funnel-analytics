@@ -8,7 +8,37 @@ import { SupabasePixelRegistry } from './pixel-registry-supabase';
 import { CloudflareQueueProducer } from './queue';
 import { CloudflareRateLimiter } from './rate-limit';
 import { errorResponse, jsonResponse } from './responses';
+import {
+  PIXEL_SCRIPT,
+  PIXEL_SCRIPT_ETAG,
+  PIXEL_SCRIPT_VERSION,
+} from './pixel-script.generated';
 import type { CollectorEnv, ExecutionContextLike } from './types';
+
+const VERSIONED_PIXEL_PATH = `/pixel.v${PIXEL_SCRIPT_VERSION}.js`;
+
+function pixelScriptResponse(request: Request, pathname: string): Response {
+  const headers = new Headers({
+    'Cache-Control':
+      pathname === VERSIONED_PIXEL_PATH
+        ? 'public, max-age=31536000, immutable'
+        : 'public, max-age=300, stale-while-revalidate=86400',
+    'Content-Type': 'application/javascript; charset=utf-8',
+    'Cross-Origin-Resource-Policy': 'cross-origin',
+    ETag: PIXEL_SCRIPT_ETAG,
+    'X-Content-Type-Options': 'nosniff',
+    'X-Pixel-SDK-Version': PIXEL_SCRIPT_VERSION,
+  });
+
+  if (request.headers.get('if-none-match') === PIXEL_SCRIPT_ETAG) {
+    return new Response(null, { status: 304, headers });
+  }
+
+  return new Response(request.method === 'HEAD' ? null : PIXEL_SCRIPT, {
+    status: 200,
+    headers,
+  });
+}
 
 function registryForEnv(env: CollectorEnv): PixelRegistry {
   if (env.COLLECTOR_ENV === 'local' && env.LOCAL_PIXEL_REGISTRY_JSON) {
@@ -52,6 +82,17 @@ export function createRouter(env: CollectorEnv) {
   ): Promise<Response> {
     const requestId = crypto.randomUUID();
     const url = new URL(request.url);
+
+    if (url.pathname === '/pixel.js' || url.pathname === VERSIONED_PIXEL_PATH) {
+      if (request.method !== 'GET' && request.method !== 'HEAD') {
+        return new Response(null, {
+          status: 405,
+          headers: { Allow: 'GET, HEAD' },
+        });
+      }
+
+      return pixelScriptResponse(request, url.pathname);
+    }
 
     if (url.pathname === '/health') {
       if (request.method !== 'GET') {
