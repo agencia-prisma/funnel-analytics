@@ -46,11 +46,31 @@ export default function FrequentlyAskedQuestionsPage() {
           <code> test_mode: true</code> são excluídos da análise.
         </p>
         <p className="mt-3 text-sm leading-6 text-zinc-400">
-          A progressão respeita a ordem das etapas do funil. “Conversão
+          Os principais indicadores também são comparados com o período
+          imediatamente anterior de mesma duração. Por exemplo, ao selecionar 30
+          dias, o sistema compara os últimos 30 dias com os 30 dias anteriores.
+          Quando o período anterior é zero e o atual possui dados, o painel
+          informa que o indicador é novo em vez de exibir uma variação infinita.
+        </p>
+        <p className="mt-3 text-sm leading-6 text-zinc-400">
+          A seção “Evolução no período” organiza entradas, conversões e receita
+          por dia. A progressão respeita a ordem das etapas do funil. “Conversão
           anterior” mostra quantas tentativas que chegaram à etapa anterior
           também alcançaram a etapa atual; “drop-off” mostra a parcela que não
-          avançou. Receita e AOV usam a moeda principal do Workspace e somente
+          avançou.
+        </p>
+        <p className="mt-3 text-sm leading-6 text-zinc-400">
+          A seção de atribuição mostra receita atribuída por modelo, canal,
+          origem e campanha. O percentual de participação é calculado dentro de
+          cada modelo de atribuição, evitando misturar modelos diferentes em uma
+          única base. Receita e AOV usam a moeda principal do Workspace e somente
           pedidos vinculados a jornadas que alcançaram o funil analisado.
+        </p>
+        <p className="mt-3 text-sm leading-6 text-zinc-400">
+          Se o ClickHouse ficar temporariamente indisponível, o ANALYZE exibe um
+          estado de indisponibilidade e não altera o Funnel nem seus dados. Se o
+          período ainda não tiver dados de produção, a tela mostra um estado
+          vazio em vez de tratar isso como erro.
         </p>
       </aside>
 
