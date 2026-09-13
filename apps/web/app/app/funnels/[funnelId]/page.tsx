@@ -68,12 +68,20 @@ export default async function FunnelDetailPage({
             {funnel.current_version.steps.length} etapas
           </p>
         </div>
-        <Link
-          className="text-sm text-zinc-400 hover:text-white"
-          href="/app/funnels"
-        >
-          ← Voltar para Funnels
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            className="rounded-lg border border-violet-400/30 bg-violet-400/10 px-4 py-2 text-sm font-medium text-violet-200 hover:bg-violet-400/15"
+            href={`/app/funnels/${funnel.id}/analytics`}
+          >
+            ANALYZE
+          </Link>
+          <Link
+            className="text-sm text-zinc-400 hover:text-white"
+            href="/app/funnels"
+          >
+            ← Voltar para Funnels
+          </Link>
+        </div>
       </div>
 
       <div className="mb-5">
