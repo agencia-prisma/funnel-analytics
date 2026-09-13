@@ -152,8 +152,7 @@ const FAQ: FaqItem[] = [
     question: 'O que é Salvar rascunho?',
     answer:
       'Salvar rascunho mantém as alterações do Builder sem publicar uma nova versão. O rascunho atual é salvo no navegador usado durante a edição.',
-    note:
-      'Como o rascunho é local ao navegador, ele não deve ser tratado como uma versão publicada nem como um backup compartilhado entre dispositivos.',
+    note: 'Como o rascunho é local ao navegador, ele não deve ser tratado como uma versão publicada nem como um backup compartilhado entre dispositivos.',
   },
   {
     category: 'Funnels',
@@ -283,7 +282,10 @@ const FAQ: FaqItem[] = [
   },
 ];
 
-const categories = ['Todas', ...Array.from(new Set(FAQ.map((item) => item.category)))];
+const categories = [
+  'Todas',
+  ...Array.from(new Set(FAQ.map((item) => item.category))),
+];
 
 export function FaqGuide() {
   const [query, setQuery] = useState('');
@@ -292,7 +294,8 @@ export function FaqGuide() {
   const filtered = useMemo(() => {
     const normalized = query.trim().toLocaleLowerCase('pt-BR');
     return FAQ.filter((item) => {
-      const matchesCategory = category === 'Todas' || item.category === category;
+      const matchesCategory =
+        category === 'Todas' || item.category === category;
       const matchesQuery =
         !normalized ||
         `${item.question} ${item.answer} ${item.steps?.join(' ') ?? ''}`
@@ -348,7 +351,9 @@ export function FaqGuide() {
                   </span>
                   {item.question}
                 </span>
-                <span className="mt-1 text-lg text-zinc-500 transition group-open:rotate-45">+</span>
+                <span className="mt-1 text-lg text-zinc-500 transition group-open:rotate-45">
+                  +
+                </span>
               </summary>
               <div className="mt-4 border-t border-white/10 pt-4 text-sm leading-7 text-zinc-400">
                 <p>{item.answer}</p>
@@ -371,7 +376,9 @@ export function FaqGuide() {
           ))
         ) : (
           <div className="rounded-2xl border border-dashed border-white/10 p-8 text-center">
-            <p className="font-medium text-white">Nenhuma resposta encontrada.</p>
+            <p className="font-medium text-white">
+              Nenhuma resposta encontrada.
+            </p>
             <p className="mt-2 text-sm text-zinc-500">
               Tente buscar por outro termo ou selecione “Todas”.
             </p>
@@ -387,7 +394,9 @@ export function FaqGuide() {
           Use este FAQ como guia operacional do sistema.
         </h2>
         <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-400">
-          O conteúdo será atualizado conforme novas funcionalidades forem liberadas, para manter as orientações alinhadas ao que o usuário realmente encontra na plataforma.
+          O conteúdo será atualizado conforme novas funcionalidades forem
+          liberadas, para manter as orientações alinhadas ao que o usuário
+          realmente encontra na plataforma.
         </p>
       </div>
     </div>
