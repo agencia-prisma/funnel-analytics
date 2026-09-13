@@ -44,8 +44,12 @@ const generatedModule = [
   '',
 ].join('\n');
 
-await writeFile(
-  path.join(collectorDirectory, 'src/pixel-script.generated.ts'),
-  generatedModule,
-  'utf8',
+const outputPath = path.join(
+  collectorDirectory,
+  'src/pixel-script.generated.ts',
 );
+const currentModule = await readFile(outputPath, 'utf8').catch(() => null);
+
+if (currentModule !== generatedModule) {
+  await writeFile(outputPath, generatedModule, 'utf8');
+}
