@@ -10,6 +10,8 @@ const fixture = await readFile(
   path.join(process.cwd(), 'tests/fixtures/pixel.html'),
   'utf8',
 );
+const productionCollectorEndpoint =
+  'https://funnel-analytics-collector-production.prismaag.workers.dev/v1/events';
 
 async function openFixture(
   page: Page,
@@ -32,6 +34,7 @@ async function injectPixel(
   options: {
     pixelId?: string;
     testMode?: boolean;
+    testTransport?: boolean;
     consentRequired?: boolean;
     endpoint?: string;
     debug?: boolean;
@@ -46,6 +49,10 @@ async function injectPixel(
 
       if (options.testMode ?? true) {
         script.dataset.testMode = 'true';
+      }
+
+      if (options.testTransport ?? options.testMode ?? true) {
+        script.dataset.testTransport = 'true';
       }
 
       if (options.consentRequired) {
@@ -113,7 +120,7 @@ test('pixel.js creates ids, page_view and keeps session attribution in SPA navig
   expect(tracked[0]).toMatchObject({
     event_name: 'page_view',
     event_version: 1,
-    sdk_version: '0.2.0',
+    sdk_version: '0.3.0',
     pixel_key: 'px_pub_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
     utm_source: 'meta',
     utm_campaign: 'teste',
@@ -152,6 +159,33 @@ test('pixel.js creates ids, page_view and keeps session attribution in SPA navig
   expect(
     tracked.filter((event) => event.event_name === 'page_view'),
   ).toHaveLength(4);
+});
+
+test('production configuration sends a test page_view to the real Collector endpoint', async ({
+  page,
+}) => {
+  const batches: Array<{ events?: Array<Record<string, unknown>> }> = [];
+
+  await page.route(productionCollectorEndpoint, async (route) => {
+    batches.push(route.request().postDataJSON());
+    await route.fulfill({
+      status: 202,
+      contentType: 'application/json',
+      headers: { 'Access-Control-Allow-Origin': 'https://example.test' },
+      body: JSON.stringify({ accepted: true }),
+    });
+  });
+  await openFixture(page);
+  await injectPixel(page, { testMode: true, testTransport: false });
+  await flush(page);
+
+  await expect.poll(() => batches.length).toBe(1);
+  expect(batches[0]?.events?.[0]).toMatchObject({
+    event_name: 'page_view',
+    pixel_key: 'px_pub_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+    sdk_version: '0.3.0',
+    test_mode: true,
+  });
 });
 
 test('visitor and session persist across page reloads', async ({ page }) => {

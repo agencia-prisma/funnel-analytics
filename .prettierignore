@@ -3,6 +3,7 @@
 **/next-env.d.ts
 coverage
 dist
+apps/collector/src/pixel-script.generated.ts
 node_modules
 playwright-report
 pnpm-lock.yaml

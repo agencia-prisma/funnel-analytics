@@ -4,6 +4,10 @@
   "main": "src/index.ts",
   "compatibility_date": "2026-08-29",
   "workers_dev": true,
+  "build": {
+    "command": "node scripts/generate-pixel-script.mjs",
+    "watch_dir": ["src", "../../packages/pixel/src"],
+  },
   "vars": {
     "COLLECTOR_ENV": "local",
   },

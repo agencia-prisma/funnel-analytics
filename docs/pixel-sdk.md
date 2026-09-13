@@ -2,7 +2,7 @@
 
 ## Status
 
-EPIC 03 implements the browser SDK and its transport abstraction. The real Event Collector, Queue and ClickHouse ingestion remain intentionally out of scope until EPIC 04.
+The browser SDK is distributed by the production Collector and sends browser events through the production Event Collector, Queue and ClickHouse pipeline.
 
 ## Installation
 
@@ -11,14 +11,12 @@ The browser build generates:
 - `packages/pixel/dist/pixel.js`
 - `packages/pixel/dist/pixel.min.js`
 
-The production CDN is not active yet. The Control Plane snippet therefore continues to display the explicit future-CDN placeholder instead of pretending a Collector/CDN exists.
-
-Conceptual installation:
+Production installation:
 
 ```html
 <script
   async
-  src="https://cdn.DOMINIO-FUTURO.com/pixel.js"
+  src="https://funnel-analytics-collector-production.prismaag.workers.dev/pixel.js"
   data-pixel-id="px_pub_xxx"
 ></script>
 ```
@@ -26,9 +24,10 @@ Conceptual installation:
 Supported safe data attributes:
 
 - `data-pixel-id` — required public Pixel key.
-- `data-endpoint` — optional HTTP/HTTPS transport endpoint.
+- `data-endpoint` — optional HTTP/HTTPS transport override. By default, events are sent to the production Collector `/v1/events` endpoint.
 - `data-debug="true"` — structured console diagnostics without full payloads.
-- `data-test-mode="true"` — routes batches to the in-browser TestTransport.
+- `data-test-mode="true"` — marks events as test data while preserving HTTP delivery.
+- `data-test-transport="true"` — test-only in-browser transport used by automated SDK tests.
 - `data-consent-required="true"` — blocks analytics until explicit grant.
 
 ## Global API

@@ -52,6 +52,7 @@ export default async function PixelDetailPage({
 
   const snippet = buildPixelInstallSnippet(pixel.public_key);
   const isArchived = pixel.status === 'archived';
+  const hasReceivedEvents = Boolean(pixel.last_event_at);
 
   return (
     <main className="mx-auto w-full max-w-6xl px-6 py-12">
@@ -165,8 +166,31 @@ export default async function PixelDetailPage({
               testId="copy-install-snippet"
               value={snippet}
             />
-            <p className="text-xs text-amber-200">
-              Código preparado — ativação do coletor entra na próxima etapa.
+            <p className="text-xs text-emerald-200">
+              Código pronto para instalação.
+            </p>
+          </div>
+          <div
+            className={`mt-5 rounded-xl border px-4 py-3 ${
+              hasReceivedEvents
+                ? 'border-emerald-400/20 bg-emerald-400/5'
+                : 'border-amber-400/20 bg-amber-400/5'
+            }`}
+            data-testid="pixel-installation-status"
+          >
+            <p
+              className={`text-sm font-medium ${
+                hasReceivedEvents ? 'text-emerald-200' : 'text-amber-200'
+              }`}
+            >
+              {hasReceivedEvents
+                ? 'Pixel instalado e recebendo eventos.'
+                : 'Aguardando o primeiro evento.'}
+            </p>
+            <p className="mt-1 text-xs text-zinc-500">
+              {hasReceivedEvents
+                ? `Última atividade: ${formatDate(pixel.last_event_at)} · Health: ${pixel.health_status}`
+                : 'Instale o código em um domínio autorizado e acesse a página para validar.'}
             </p>
           </div>
         </Card>

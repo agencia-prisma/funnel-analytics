@@ -208,6 +208,32 @@ describe('Collector ingestion', () => {
     expect(response.status).toBe(202);
   });
 
+  it('rejects an unauthorized exact domain', async () => {
+    const deps = dependencies();
+    const { ctx } = context();
+    const collect = createCollector({
+      ...deps,
+      now: () => TEST_NOW,
+    });
+
+    const response = await collect(
+      requestFor(
+        validBatch([
+          validPageView({ page_url: 'https://unauthorized.example/' }),
+        ]),
+        'https://unauthorized.example',
+      ),
+      'request-unauthorized',
+      ctx,
+    );
+
+    expect(response.status).toBe(403);
+    await expect(response.json()).resolves.toMatchObject({
+      error: { code: 'ORIGIN_NOT_ALLOWED' },
+    });
+    expect(deps.envelopes).toHaveLength(0);
+  });
+
   it.each(['https://fakeexample.com', 'https://example-fake.com'])(
     'rejects wildcard lookalike %s',
     async (origin) => {

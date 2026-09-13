@@ -54,13 +54,12 @@ test('Owner creates and manages a Pixel control plane', async ({ page }) => {
   ).toBeVisible();
 
   const snippet = page.getByTestId('installation-snippet');
-  await expect(snippet).toContainText('cdn.DOMINIO-FUTURO.com/pixel.js');
+  await expect(snippet).toContainText(
+    'funnel-analytics-collector-production.prismaag.workers.dev/pixel.js',
+  );
   await expect(snippet).toContainText('data-pixel-id="px_pub_');
-  await expect(
-    page.getByText(
-      'Código preparado — ativação do coletor entra na próxima etapa.',
-    ),
-  ).toBeVisible();
+  await expect(snippet).not.toContainText('DOMINIO-FUTURO');
+  await expect(page.getByText('Código pronto para instalação.')).toBeVisible();
 
   await page.getByTestId('copy-public-key').click();
   await expect(page.getByTestId('copy-public-key')).toHaveText('Copiado');

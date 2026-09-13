@@ -122,7 +122,7 @@ export class PixelRuntime {
     this.debug('pixel.initialized', {
       consent_state: this.consentManager.getState(),
       test_mode: this.config.testMode,
-      transport: this.config.testMode
+      transport: this.config.testTransport
         ? 'test'
         : this.config.endpoint
           ? 'http'
@@ -143,7 +143,7 @@ export class PixelRuntime {
   }
 
   private createTransport(): Transport | null {
-    if (this.config.testMode) {
+    if (this.config.testTransport) {
       return new TestTransport((batch) => {
         const batches = this.windowRef.__funnelAnalyticsTestBatches ?? [];
         batches.push(batch);
